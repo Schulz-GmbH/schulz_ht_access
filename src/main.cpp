@@ -3,8 +3,11 @@
 #include <ESPmDNS.h>
 #include <MDNS.h>
 
+#include "handlers/card.handler.h"
 #include "handlers/wifi.handler.h"
 #include "routes/routes.h"
+
+const int chipSelect = 5;  // SD-Karten-Pin
 
 // Netzwerk Konfiguration für AP
 const char *apSSID = "ESP32-AccessPoint";
@@ -45,8 +48,26 @@ void setup() {
 	}
 
 	// Routen initialisieren
+	initErrorRoutes(server);
 	initBasicRoutes(server);
 	initWiFiRoutes(server);
+
+	Serial.println("Initialisiere SD-Karte...");
+	delay(1000);  // Eine kurze Verzögerung vor dem Initialisieren kann helfen
+
+	// SdSpiConfig erstellen, um die SD-Karte zu initialisieren
+	SdSpiConfig spiConfig(chipSelect, DEDICATED_SPI, SD_SCK_MHZ(5));  // Reduzierte SPI-Geschwindigkeit für bessere Stabilität
+
+	if (!sd.begin(spiConfig)) {
+		Serial.println("Externer Speicher konnte nicht initialisiert werden. Versuch, sie zu formatieren...");
+		delay(500);
+		formatCard(spiConfig);  // Rufe die Formatierungsfunktion auf, wenn die Karte nicht initialisiert werden kann
+	} else {
+		Serial.println("Externer Speicher erfolgreich initialisiert.");
+		writeToFile();  // Schreibe Daten auf die SD-Karte
+		delay(1000);
+		readFromFile();  // Lese die geschriebenen Daten
+	}
 
 	// Webserver starten
 	server.begin();
