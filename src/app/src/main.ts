@@ -6,6 +6,7 @@ import logBuildInfo from "./helpers/buildInfo";
 
 // Import global styles
 import "./assets/css/tailwind.css";
+import "./assets/css/fontawesome.css";
 import "./assets/css/style.css";
 
 /**

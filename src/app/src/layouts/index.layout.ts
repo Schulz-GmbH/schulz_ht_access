@@ -3,6 +3,8 @@ import { defineComponent } from "vue";
 // import { useRouter } from "vue-router";
 
 // Componetns
+import HeaderComponent from "../components/header/header.component.vue";
+import NavbarComponent from "../components/navbar/navbar.component.vue";
 
 /**
  * VueLayout - A Vue component that serves as the layout for the application.
@@ -16,15 +18,57 @@ import { defineComponent } from "vue";
  */
 export default defineComponent({
 	name: "VueLayout",
-	components: {},
+	components: {
+		HeaderComponent: HeaderComponent,
+		NavbarComponent: NavbarComponent,
+	},
 	data() {
-		return {};
+		return {
+			isMenuOpen: false,
+			isNotifyOpen: false,
+			menuItems: [
+				{
+					title: "IoT Dashboard",
+					icon: "fas fa-home",
+					location: "/dashboard",
+				},
+				{
+					title: "Einstellungen",
+					icon: "fas fa-tools",
+					location: "/settings",
+				},
+				{ title: "Konsole", icon: "fas fa-terminal" },
+				{ title: "Geräte", icon: "fas fa-wifi" },
+				{ title: "Log-Dateien", icon: "fas fa-file" },
+				{ title: "DoistDes update", icon: "fas fa-upload" },
+				{ title: "Info", icon: "fas fa-info-circle" },
+			],
+			isMobile: window.innerWidth < 768,
+		};
 	},
 
-	setup() {},
+	setup() {
+		const isDevelopment = process.env.NODE_ENV === "development";
+		return {
+			isDevelopment,
+		};
+	},
 	mounted() {
 		console.log("VueLayout component mounted");
+		window.addEventListener("resize", this.handleResize);
 	},
-	beforeUnmount() {},
-	methods: {},
+	beforeUnmount() {
+		window.removeEventListener("resize", this.handleResize);
+	},
+	methods: {
+		handleToggleMenu() {
+			this.isMenuOpen = !this.isMenuOpen;
+		},
+		handleToggleNotify() {
+			this.isNotifyOpen = !this.isNotifyOpen;
+		},
+		handleResize() {
+			this.isMobile = window.innerWidth < 768;
+		},
+	},
 });

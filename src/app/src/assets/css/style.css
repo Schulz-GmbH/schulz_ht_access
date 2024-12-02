@@ -1,0 +1,134 @@
+@font-face {
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 400;
+	font-display: block;
+	src: url("./fonts/openSans.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Open Sans";
+	font-style: italic;
+	font-weight: 400;
+	font-display: block;
+	src: url("./fonts/openSans-Italic.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Raleway";
+	font-style: normal;
+	font-weight: 400;
+	font-display: block;
+	src: url("./fonts/raleway.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Raleway";
+	font-style: italic;
+	font-weight: 400;
+	font-display: block;
+	src: url("./fonts/raleway-Italic.ttf") format("truetype");
+}
+
+body {
+	font-family: Open Sans;
+	height: 100vh;
+	color: #030303;
+	background: #edf1f7;
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: -webkit-max-content auto;
+	grid-template-rows: max-content auto;
+}
+
+.fas,
+.fab,
+.far {
+	/* color: #8f9bb3; */
+	font-size: 18px;
+}
+
+.header {
+	font-size: 0.8rem;
+	box-shadow: 0px 2px 20px -8px rgba(0, 0, 0, 0.3);
+	z-index: 100;
+}
+
+.header a {
+	font-weight: 600;
+	text-decoration: none;
+	color: #3166ff;
+}
+
+.main-section {
+	display: flex;
+}
+
+.menu {
+	box-shadow: 2px 8px 16px -8px rgba(0, 0, 0, 0.3);
+}
+
+.menu-item .fa-chevron-left {
+	position: absolute;
+	right: 0.8rem;
+	font-size: 0.6rem;
+}
+.menu-item:hover {
+	cursor: pointer;
+	color: #3166ff;
+}
+.menu-item:hover i {
+	color: #3166ff;
+	cursor: pointer;
+	transition: color 0.2s ease-in-out;
+}
+.menu-item:first-child {
+	border-bottom: 1px solid #edf1f7;
+}
+
+/* Main content */
+
+/* Footer */
+.footer {
+	margin-top: 12px;
+	padding: 1rem;
+	background: #fff;
+	display: flex;
+	justify-content: flex-end;
+	z-index: 3;
+	box-shadow: -2px 0px 16px -8px rgba(0, 0, 0, 0.3);
+}
+.footer i {
+	margin-left: 0.5rem;
+}
+.footer i:hover {
+	color: #3166ff;
+	cursor: pointer;
+	transition: color 0.2s ease-in-out;
+}
+
+/* Media */
+@media (max-width: 576px) {
+	.main__panel {
+		padding: 0 12px;
+	}
+
+	.controlls {
+		padding: 12px 0;
+		grid-template-columns: 100%;
+		row-gap: 12px;
+	}
+
+	.weather {
+		width: calc(100% - 24px);
+		margin: 0;
+	}
+
+	.main-section {
+		flex-direction: column;
+	}
+
+	.fa-chevron-left {
+		transform: rotate(-90deg);
+	}
+}
