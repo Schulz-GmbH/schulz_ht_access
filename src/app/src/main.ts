@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import App from "./app.view.vue";
+import router from "./router";
 
 import logBuildInfo from "./helpers/buildInfo";
 
@@ -30,7 +31,7 @@ const app = createApp(App);
  *
  * - `use` function is used to install plugins (router and store) into the Vue application.
  */
-// app.use(router);
+app.use(router);
 
 // Log build information to the console
 logBuildInfo();
