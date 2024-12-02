@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import "vue-router";
 
+// Import Guards and Middleware
+import LogGuard from "../guards/log.guard";
+// import i18nGuard from '@/guards/i18n.guard';
+import MetaInfoGuard from "../guards/metainfo.guard";
+
 /**
  * Route configurations for the Vue application.
  *
@@ -114,6 +119,18 @@ const router = createRouter({
 	routes,
 	linkActiveClass: "active-link",
 	linkExactActiveClass: "exact-active-link",
+});
+
+/**
+ * Global navigation guards (middlewares).
+ *
+ * These are applied before each route navigation to handle tasks such as authentication
+ * checks and setting meta tags for the page.
+ */
+// const globalMiddlewares: NavigationGuard[] = [i18nGuard, AuthenticationGuard, MetaInfoGuard];
+const globalMiddlewares = [LogGuard, MetaInfoGuard];
+router.beforeEach((to, from, next) => {
+	globalMiddlewares.forEach((middleware) => middleware(to, from, next));
 });
 
 export default router;
