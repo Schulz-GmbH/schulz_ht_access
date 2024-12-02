@@ -1,0 +1,31 @@
+{
+	"name": "esp_32_iot_access_webinterface",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"description": "Webinterface für IOT (ESP32) Wireless Adapter for Schulz GmbH",
+	"scripts": {
+		"dev": "vite --host",
+		"build": "vue-tsc -b && vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"axios": "^1.7.7",
+		"vue": "^3.5.12",
+		"vue-router": "^4.4.5"
+	},
+	"devDependencies": {
+		"@types/node": "^22.9.3",
+		"@vitejs/plugin-vue": "^5.1.4",
+		"autoprefixer": "^10.4.20",
+		"postcss": "^8.4.31",
+		"sass": "^1.77.8",
+		"sass-loader": "^16.0.0",
+		"tailwindcss": "^3.3.5",
+		"typescript": "~5.6.2",
+		"vite": "^5.4.10",
+		"vue-tsc": "^2.1.8"
+	},
+	"author": "Simon Marcel Linden",
+	"license": "ISC"
+}
