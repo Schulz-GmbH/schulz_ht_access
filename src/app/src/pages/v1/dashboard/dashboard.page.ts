@@ -3,7 +3,6 @@ import { defineComponent } from "vue";
 // Layouts
 
 // Componetns
-import Widget from "../../../components/widgets/widget.vue";
 
 /**
  * App - The root Vue component of the application.
@@ -13,23 +12,10 @@ import Widget from "../../../components/widgets/widget.vue";
  */
 export default defineComponent({
 	name: "DashboardPage",
-	components: {
-		Widget: Widget,
-	},
+	components: {},
 	data() {
 		return {};
 	},
-
-	methods: {
-		handleMenuClick() {
-			console.log("Menu clicked");
-		},
-		handleActionClick() {
-			console.log("Action clicked");
-		},
-		customFooterAction() {
-			console.log("Benutzerdefinierter Footer-Button angeklickt!");
-		},
-	},
+	methods: {},
 	mounted() {},
 });
