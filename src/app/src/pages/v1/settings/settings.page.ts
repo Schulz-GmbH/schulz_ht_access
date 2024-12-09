@@ -1,5 +1,7 @@
 import { ref, onMounted, defineComponent } from "vue";
-import axios from "axios";
+
+// Services
+import { WiFiService } from "@/services/wifi.service";
 
 // Layouts
 
@@ -34,13 +36,9 @@ export default defineComponent({
 
 		const fetchWiFiConfig = async () => {
 			try {
-				const response = await axios.get("http://192.168.5.1/wifi", {
-					headers: {
-						"Content-Type": "application/json",
-					},
-				});
-				existingWiFiData.value = response.data;
-				wifiData.value.ssid = response.data.ssid || ""; // Setze initiale Daten, falls vorhanden
+				const data = await WiFiService.fetchWiFiConfig();
+				existingWiFiData.value = data;
+				wifiData.value.ssid = data.ssid || ""; // Set initial data if available
 				wifiData.value.password = "******";
 			} catch (error) {
 				console.error("Fehler beim Abrufen der WLAN-Daten:", error);
@@ -51,23 +49,25 @@ export default defineComponent({
 
 		const submitWiFiConfig = async () => {
 			try {
-				const response = await axios.post(
-					"http://192.168.5.1/wifi",
-					wifiData.value,
-					{
-						headers: {
-							"Content-Type": "application/json",
-						},
-					}
+				const statusMessage = await WiFiService.submitWiFiConfig(
+					wifiData.value
 				);
-				message.value =
-					response.data.status || "Erfolgreich gespeichert!";
+				message.value = statusMessage;
 				isError.value = false;
-			} catch (error: any) {
-				console.error("Fehler beim Speichern der WLAN-Daten:", error);
-				message.value =
-					error.response?.data?.error ||
-					"Fehler beim Speichern der WLAN-Daten.";
+			} catch (error) {
+				if (error instanceof Error) {
+					console.error(
+						"Fehler beim Speichern der WLAN-Daten:",
+						error
+					);
+					message.value = error.message;
+				} else {
+					console.error(
+						"Unbekannter Fehler beim Speichern der WLAN-Daten:",
+						error
+					);
+					message.value = "Ein unbekannter Fehler ist aufgetreten.";
+				}
 				isError.value = true;
 			}
 		};
