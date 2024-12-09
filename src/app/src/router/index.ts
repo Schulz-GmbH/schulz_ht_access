@@ -33,6 +33,25 @@ const basicRoutes: Array<RouteRecordRaw> = [
 			],
 		},
 	},
+	{
+		path: "/settings",
+		name: "Settings",
+		component: () => import("@/pages/v1/settings/settings.page.vue"),
+		meta: {
+			title: "Settings",
+			tags: [
+				{ name: "author", value: "Simon Marcel Linden" },
+				{
+					name: "description",
+					value: "HS - Wirelesss Access - Settings",
+				},
+				{
+					name: "og:description",
+					value: "HS - Wirelesss Access - Settings",
+				},
+			],
+		},
+	},
 ];
 
 const basisRoutes: Array<RouteRecordRaw> = [
