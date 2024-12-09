@@ -14,7 +14,7 @@
 			<div v-if="fetchError" class="text-center text-red-500">{{ fetchError }}</div> -->
 		</template>
 		<template v-slot:footer>
-			<span class="text-xs text-gray-500">{{ footerText }}</span>
+			<span class="text-xs text-gray-500">{{ updateText }}</span>
 		</template>
 	</Widget>
 </template>
