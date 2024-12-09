@@ -6,6 +6,7 @@
 #include <SPI.h>  //einbinden SPI Bibliothek
 
 #include "handlers/card.handler.h"
+#include "handlers/cors.handler.h"
 #include "handlers/wifi.handler.h"
 #include "routes/routes.h"
 
@@ -23,6 +24,8 @@ SemaphoreHandle_t sdMutex;
 
 // Funktion, die den Webserver startet
 void startWebServer() {
+	// CORS konfigurieren
+	setupCORS(server);
 	// Routen initialisieren
 	initErrorRoutes(server);
 	initBasicRoutes(server);

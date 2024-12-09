@@ -22,6 +22,27 @@ bool readWiFiConfig(String &ssid, String &password) {
 	return true;
 }
 
+// WLAN-Daten speichern
+bool saveWiFiConfig(const String &ssid, const String &password) {
+	if (ssid.isEmpty() || password.isEmpty()) {
+		Serial.println("SSID oder Passwort ist leer. Abbruch.");
+		return false;  // Speichern nicht möglich
+	}  // Namespace schließen
+
+	preferences.begin("wifi-config", false);                           // Namespace öffnen, Schreibmodus
+	bool ssidSaved = preferences.putString("ssid", ssid);              // SSID speichern
+	bool passwordSaved = preferences.putString("password", password);  // Passwort speichern
+	preferences.end();                                                 // Namespace schließen
+
+	if (ssidSaved && passwordSaved) {
+		Serial.println("WLAN-Daten erfolgreich gespeichert.");
+		return true;
+	} else {
+		Serial.println("Fehler beim Speichern der WLAN-Daten.");
+		return false;
+	}
+}
+
 // WLAN verbinden
 void connectToWiFi(const String &ssid, const String &password) {
 	if (!isWiFiEnabled) {
@@ -89,4 +110,22 @@ void printWiFiError(wl_status_t status) {
 			Serial.println("Status: Unbekannter Fehler.");
 			break;
 	}
+}
+
+String urlDecode(const String &input) {
+	String decoded = "";
+	char a, b;
+	for (size_t i = 0; i < input.length(); i++) {
+		if ((input[i] == '%') && ((a = input[i + 1]) && (b = input[i + 2])) && isxdigit(a) && isxdigit(b)) {
+			a = a <= '9' ? a - '0' : toupper(a) - 'A' + 10;
+			b = b <= '9' ? b - '0' : toupper(b) - 'A' + 10;
+			decoded += char(16 * a + b);
+			i += 2;
+		} else if (input[i] == '+') {
+			decoded += ' ';
+		} else {
+			decoded += input[i];
+		}
+	}
+	return decoded;
 }
