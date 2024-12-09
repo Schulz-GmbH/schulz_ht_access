@@ -44,11 +44,11 @@ export default defineConfig({
 		port: 3000,
 		proxy: {
 			"/api": {
-				target: "http://localhost:8000", // Dein Lumen-Backend
+				target: "http://192.168.1.120:3001", // Dein Lumen-Backend
 				changeOrigin: true,
 			},
 			"/wifi": {
-				target: "http://192.168.4.1", // ESP32 AP-Adresse
+				target: "http://192.168.1.120:3001", // ESP32 AP-Adresse
 				changeOrigin: true,
 			},
 		},
