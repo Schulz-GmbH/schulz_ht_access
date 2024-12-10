@@ -1,5 +1,8 @@
 import { defineComponent } from "vue";
 
+// Mixins
+import LayoutMixin from "@/mixins/layout.mixin";
+
 // Layouts
 
 // Componetns
@@ -18,10 +21,15 @@ export default defineComponent({
 		WlanWidget: WlanWidget,
 		VersionWidget: VersionWidget,
 	},
+	mixins: [LayoutMixin],
 	data() {
 		return {};
 	},
 	setup() {},
-	methods: {},
+	methods: {
+		getLayoutClass() {
+			return "grid-cols-4 sm:grid-cols-[100%]";
+		},
+	},
 	mounted() {},
 });

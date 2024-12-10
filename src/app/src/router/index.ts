@@ -52,6 +52,25 @@ const basicRoutes: Array<RouteRecordRaw> = [
 			],
 		},
 	},
+	{
+		path: "/console",
+		name: "Console",
+		component: () => import("@/pages/v1/console/console.page.vue"),
+		meta: {
+			title: "Console",
+			tags: [
+				{ name: "author", value: "Simon Marcel Linden" },
+				{
+					name: "description",
+					value: "HS - Wirelesss Access - Console",
+				},
+				{
+					name: "og:description",
+					value: "HS - Wirelesss Access - Console",
+				},
+			],
+		},
+	},
 ];
 
 const basisRoutes: Array<RouteRecordRaw> = [

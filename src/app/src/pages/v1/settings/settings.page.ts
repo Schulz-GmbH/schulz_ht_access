@@ -1,5 +1,8 @@
 import { ref, onMounted, defineComponent } from "vue";
 
+// Mixins
+import LayoutMixin from "@/mixins/layout.mixin";
+
 // Services
 import { WiFiService } from "@/services/wifi.service";
 
@@ -21,6 +24,7 @@ export default defineComponent({
 		WlanWidget: WlanWidget,
 		VersionWidget: VersionWidget,
 	},
+	mixins: [LayoutMixin],
 	data() {
 		return {};
 	},
@@ -84,6 +88,10 @@ export default defineComponent({
 			submitWiFiConfig,
 		};
 	},
-	methods: {},
+	methods: {
+		getLayoutClass() {
+			return "grid-cols-4 sm:grid-cols-[100%]";
+		},
+	},
 	mounted() {},
 });
