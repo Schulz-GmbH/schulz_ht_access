@@ -8,23 +8,6 @@ extern SemaphoreHandle_t sdMutex;  // Externe Deklaration des Mutex
 
 void initBasicRoutes(AsyncWebServer &server) {
 	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-		// if (xSemaphoreTake(sdMutex, portMAX_DELAY) == pdTRUE) {
-		// 	String path = request->url();  // Holt den Pfad aus der Anfrage, z.B. /assets/index.js
-		// 	File file = SD.open("/index.html", FILE_READ);
-		// 	if (file) {
-		// 		String contentType = getContentType(path);
-		// 		AsyncWebServerResponse *response = request->beginResponse(file, contentType);
-		// 		response->addHeader("Content-Type", "text/html");
-		// 		request->send(response);
-		// 		file.close();
-		// 		Serial.println("index.html ausgeliefert.");
-		// 	} else {
-		// 		request->send(404, "text/plain", "index.html nicht gefunden!");
-		// 	}
-		// 	xSemaphoreGive(sdMutex);  // Gebe den Mutex wieder frei
-		// } else {
-		// 	request->send(500, "text/plain", "Fehler beim Zugriff auf SD-Karte");
-		// }
 		if (xSemaphoreTake(sdMutex, portMAX_DELAY) == pdTRUE) {
 			String path = request->url();  // Pfad aus Anfrage holen, z.B. /css/style.css
 			Serial.println("Angeforderter Pfad: " + path);

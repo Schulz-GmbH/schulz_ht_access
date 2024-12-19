@@ -26,7 +26,8 @@ void initWiFiRoutes(AsyncWebServer &server) {
 	    "/wifi", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
 	    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 		    // JSON-Daten parsen
-		    StaticJsonDocument<200> jsonDoc;
+		    // StaticJsonDocument<200> jsonDoc;
+		    DynamicJsonDocument jsonDoc(200);
 		    DeserializationError error = deserializeJson(jsonDoc, data, len);
 
 		    if (error) {
@@ -41,13 +42,16 @@ void initWiFiRoutes(AsyncWebServer &server) {
 		    }
 
 		    // Extrahiere SSID und Passwort aus JSON
-		    if (jsonDoc.containsKey("ssid") && jsonDoc.containsKey("password")) {
-			    String ssid = jsonDoc["ssid"].as<String>();
-			    String password = jsonDoc["password"].as<String>();
+		    // if (jsonDoc.containsKey("ssid") && jsonDoc.containsKey("password")) {
+		    //     String ssid = jsonDoc["ssid"].as<String>();
+		    //     String password = jsonDoc["password"].as<String>();
+		    if (jsonDoc["ssid"].is<const char *>() && jsonDoc["password"].is<const char *>()) {
+			    const char *ssid = jsonDoc["ssid"];
+			    const char *password = jsonDoc["password"];
 
-			    Serial.println("Empfangene Daten:");
-			    Serial.println("SSID: " + ssid);
-			    Serial.println("Password: " + password);
+			    // Serial.println("Empfangene Daten:");
+			    // Serial.println("SSID: " + ssid);
+			    // Serial.println("Password: " + password);
 
 			    // Speichere die WLAN-Daten
 			    if (saveWiFiConfig(ssid, password)) {
