@@ -6,6 +6,7 @@
 #include <HTTPClient.h>
 
 void initBasicRoutes(AsyncWebServer &server);
+void handleFileRequest(AsyncWebServerRequest *request, const String &subPath);
 String getContentType(String path);
 
 #endif
