@@ -1,6 +1,20 @@
-#include "../include/handlers/response.handler.h"
+#include "handlers/response.handler.h"
 
-AsyncWebServerResponse *jsonResponse(AsyncWebServerRequest *request, int statusCode, const String &message) {
-	String responseBody = "{\"status\": \"" + message + "\"}";
-	return request->beginResponse(statusCode, "application/json", responseBody);
+// Funktion für detaillierte WebSocket-Antworten
+void sendResponse(AsyncWebSocketClient *client, const String &event, const String &action, const String &status, const String &details,
+                  const String &error) {
+	// JSON-Dokument erstellen
+	StaticJsonDocument<512> jsonResponse;
+	jsonResponse["event"] = event;      // Haupt-Event (z.B. wifi, light, etc.)
+	jsonResponse["action"] = action;    // Ausgeführte Aktion (z.B. get, set, connect, etc.)
+	jsonResponse["status"] = status;    // Status (z.B. on, off, success, error, etc.)
+	jsonResponse["details"] = details;  // Zusätzliche Informationen (z.B. welche Lampe, SSID, etc.)
+	jsonResponse["error"] = error;      // Fehlernachricht, falls vorhanden
+
+	// JSON in einen String konvertieren
+	String response;
+	serializeJson(jsonResponse, response);
+
+	// Antwort an den Client senden
+	client->text(response);
 }

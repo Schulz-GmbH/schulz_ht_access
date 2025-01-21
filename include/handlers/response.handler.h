@@ -2,9 +2,11 @@
 #define RESPONSE_HANDLER_H
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
-// AsyncWebServerResponse *jsonResponse(AsyncWebServerRequest *request, int statusCode, const String &message);
-extern AsyncWebServerResponse *jsonResponse(AsyncWebServerRequest *request, int statusCode, const String &message);
+// Funktion für detaillierte WebSocket-Antworten
+void sendResponse(AsyncWebSocketClient *client, const String &event, const String &action, const String &status, const String &details = "",
+                  const String &error = "");
 
-#endif  // RESPONSE_HANDLER_H
+#endif
