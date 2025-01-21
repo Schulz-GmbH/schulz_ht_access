@@ -166,9 +166,24 @@ void loop() {
 	ws.cleanupClients();
 
 	if (consoleRunning && SerialDevice.available()) {
-		char received = SerialDevice.read();
-		Serial.write(received);
-		String receivedStr = String(received);
-		ws.textAll(receivedStr);
+		// Daten von SerialDevice lesen
+		String receivedData = "";
+		while (SerialDevice.available()) {
+			char received = SerialDevice.read();
+
+			// Nur sichtbare Zeichen oder Zeilenumbrüche beibehalten
+			if ((received >= 32 && received <= 126) || received == '\n' || received == '\r') {
+				receivedData += received;
+			}
+		}
+
+		Serial.print(receivedData);
+
+		// JSON-Antwort an alle verbundenen Clients senden
+		for (AsyncWebSocketClient *client : ws.getClients()) {
+			if (client && client->status() == WS_CONNECTED) {
+				sendResponse(client, "serial", "receive", "success", receivedData, "");
+			}
+		}
 	}
 }

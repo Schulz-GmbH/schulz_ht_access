@@ -47,6 +47,7 @@
 | serial    | disconnect | error      |                                   | no active serial connection |
 | serial    | send       | success    | Command added to queue: <Command> |                             |
 | serial    | send       | error      |                                   | queue full                  |
+| serial    | receive    | success    | Received data                     | queue full                  |
 | serial    | error      | unknown    |                                   | unknown serial setting      |
 
 ---
