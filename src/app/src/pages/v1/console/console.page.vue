@@ -1,17 +1,17 @@
 <template>
-	<div class="h-full p-3 flex flex-col bg-gray-900 text-white" :style="{ height: sectionHeight }">
+	<div class="h-full p-3 flex flex-col bg-gray-900 text-white">
+		<!-- :style="{ height: sectionHeight }"> -->
 		<!-- Terminal Output -->
-		<div ref="terminalOutput" class="debug flex-1 p-4 font-mono text-sm leading-6 overflow-y-auto">
-			<div v-for="(line, index) in terminalLines" :key="index">
-				<span>{{ line }}</span>
-			</div>
+		<div class="debug flex-1 p-4 font-mono text-sm leading-6 overflow-y-auto whitespace-pre-wrap">
+			<textarea name="terminalOutput" id="terminalOutput" readonly :style="{ height: fullHeight }"
+				class="w-full h-full bg-transparent border-none outline-none">{{ terminalOutput }}</textarea>
 		</div>
 
 		<!-- Terminal Input -->
 		<div
 			class="flex sm:items-start items-center p-4 sm:flex-col sm:space-y-4 flex-row bg-gray-800 border-t border-gray-700">
 			<!-- User Input -->
-			<form @submit.prevent="handleCommand" class="flex flex-1 items-center">
+			<form @submit.prevent="sendData" class="flex flex-1 items-center">
 				<span class="text-green-500 mr-2">$</span>
 				<input v-model="userInput" type="text"
 					class="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500"
@@ -27,6 +27,11 @@
 						{{ rate }} Baud
 					</option>
 				</select>
+
+				<!-- Button für Verbindung -->
+				<button v-if="isConnected" @click="sendData" class="bg-green-500 text-white px-4 py-1 rounded">
+					Senden
+				</button>
 
 				<!-- Button für Verbindung -->
 				<button @click="toggleConnection" class="bg-green-500 text-white px-4 py-1 rounded">

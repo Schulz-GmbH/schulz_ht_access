@@ -3,6 +3,7 @@ import App from "./app.view.vue";
 import router from "./router";
 
 import logBuildInfo from "./helpers/buildInfo";
+import WebSocketPlugin from "./services/_websocket.plugin";
 
 // Import global styles
 import "./assets/css/tailwind.css";
@@ -26,6 +27,8 @@ import "./assets/css/style.css";
  * - `store` is the Vuex store instance for state management.
  */
 const app = createApp(App);
+
+app.use(WebSocketPlugin, { url: "ws://192.168.1.112:3000/ws" });
 
 /**
  * Configure the application with plugins and global components.

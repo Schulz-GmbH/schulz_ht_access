@@ -1,4 +1,5 @@
-import { ref, onMounted, defineComponent } from "vue";
+import { defineComponent, ref, onMounted, onUnmounted, nextTick } from "vue";
+import { SerialService } from "@/services/serial/serial.service";
 
 // Mixins
 import LayoutMixin from "@/mixins/layout.mixin";
@@ -18,94 +19,144 @@ import LayoutMixin from "@/mixins/layout.mixin";
 export default defineComponent({
 	name: "ConsolePage",
 	data() {
-		return {
-			terminalLines: [
-				"Willkommen im Terminal! Geben Sie einen Befehl ein:",
-			],
-			userInput: "",
-			isConnected: false,
-			selectedBaudRate: 9600,
-			baudRates: [9600, 14400, 19200, 38400, 57600, 115200], // Baudrate-Optionen
-			dummyDataInterval: null as number | null, // Speichert die Intervall-ID
-			sectionHeight: "auto", // Dynamische Höhe für die Section
-		};
+		return [];
 	},
 	mixins: [LayoutMixin],
+	setup: () => {
+		const terminalOutput = ref<string>("Willkommen im Serial Terminal!\n");
+
+		const userInput = ref<string>("");
+		const isConnected = ref<boolean>(false);
+		const selectedBaudRate = ref<number>(1200);
+		const baudRates = ref<number[]>([
+			1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200,
+		]);
+
+		// Berechne die Höhe des Containers
+		const fullHeight = ref(`${window.innerHeight - 80}px`);
+
+		// Event handler for SerialService
+		const handleSerialData = (status: string, details?: string) => {
+			if (status === "success") {
+				terminalOutput.value +=
+					details || "Empfangene Daten: Keine Details verfügbar.";
+			} else {
+				terminalOutput.value += `Error: ${
+					details || "Unbekannter Fehler."
+				}`;
+			}
+		};
+
+		const handleReceiveData = (message: string) => {
+			if (!isConnected.value) {
+				isConnected.value = true;
+				terminalOutput.value += `\nVerbindung erkannt.\n`;
+			}
+			terminalOutput.value += `${message}`;
+
+			// Automatisch scrollen
+			nextTick(() => {
+				const terminal = document.getElementById("terminalOutput");
+				if (terminal) {
+					terminal.scrollTop = terminal.scrollHeight;
+				}
+			});
+		};
+
+		// Toggle connection
+		const toggleConnection = async () => {
+			if (isConnected.value) {
+				try {
+					await SerialService.disconnect();
+					isConnected.value = false;
+					terminalOutput.value += "\nVerbindung getrennt.\n";
+				} catch (error) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: "Unbekannter Fehler";
+					terminalOutput.value += `\nError: ${errorMessage}\n`;
+				}
+			} else {
+				try {
+					await SerialService.setBaudRate(selectedBaudRate.value);
+					isConnected.value = true;
+					terminalOutput.value += `\nVerbunden mit ${selectedBaudRate.value} Baud.\n`;
+				} catch (error) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: "Unbekannter Fehler";
+					terminalOutput.value += `\nError: ${errorMessage}\n`;
+				}
+			}
+		};
+
+		// Send user input
+		const sendData = async () => {
+			if (!isConnected.value || userInput.value.trim() === "") return;
+
+			terminalOutput.value += `\n$ ${userInput.value}\n`;
+			try {
+				await SerialService.sendMessage(userInput.value);
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "Unbekannter Fehler";
+				terminalOutput.value += `\nError: ${errorMessage}\n`;
+			}
+
+			userInput.value = ""; // Clear input
+		};
+
+		// Lifecycle hooks
+		onMounted(() => {
+			const updateHeight = () => {
+				fullHeight.value = `${window.innerHeight - 300}px`;
+			};
+
+			window.addEventListener("resize", updateHeight);
+
+			// Initiale Höhe setzen
+			updateHeight();
+
+			SerialService.onMessage(handleSerialData);
+			SerialService.onReceive((message: string) => {
+				handleReceiveData(message);
+				if (!isConnected.value) {
+					isConnected.value = true;
+					terminalOutput.value += `\nVerbindung erkannt beim Start.\n`;
+				}
+			});
+		});
+
+		onUnmounted(() => {
+			SerialService.removeListener(handleSerialData);
+			SerialService.removeReceiveListener(handleReceiveData); // Listener entfernen
+			window.removeEventListener("resize", () => {
+				fullHeight.value = `${window.innerHeight - 300}px`;
+			});
+		});
+
+		return {
+			terminalOutput,
+			userInput,
+			isConnected,
+			selectedBaudRate,
+			baudRates,
+			toggleConnection,
+			sendData,
+			fullHeight,
+		};
+	},
 	methods: {
 		getLayoutClass() {
 			return "grid-cols-1subgrid";
 		},
-		handleCommand() {
-			if (this.userInput.trim() === "") return;
-			this.terminalLines.push(`$ ${this.userInput}`);
-			this.terminalLines.push(`Ausgabe für "${this.userInput}": ...`);
-			this.userInput = "";
-			this.scrollToBottom();
-		},
-		startDummyData() {
-			this.dummyDataInterval = setInterval(() => {
-				this.terminalLines.push(
-					`Dummy-Daten: ${new Date().toISOString()}`
-				);
-				this.scrollToBottom();
-			}, 250) as unknown as number; // Typumwandlung von Timeout zu number
-		},
-		scrollToBottom() {
-			this.$nextTick(() => {
-				setTimeout(() => {
-					const terminalOutput = this.$refs
-						.terminalOutput as HTMLDivElement;
-					if (terminalOutput) {
-						terminalOutput.scrollTop = terminalOutput.scrollHeight;
-					} else {
-						console.error("terminalOutput ist nicht verfügbar");
-					}
-				}, 0); // Verzögerung, um sicherzustellen, dass der DOM-Update-Prozess abgeschlossen ist
-			});
-		},
-		stopDummyData() {
-			if (this.dummyDataInterval !== null) {
-				clearInterval(this.dummyDataInterval);
-				this.dummyDataInterval = null;
-			}
-		},
-		toggleConnection() {
-			if (this.isConnected) {
-				this.terminalLines.push("Verbindung getrennt.");
-				this.stopDummyData();
-			} else {
-				this.terminalLines.push(
-					`Verbunden mit ${this.selectedBaudRate} Baud.`
-				);
-				this.startDummyData();
-			}
-			this.isConnected = !this.isConnected;
-		},
-		updateSectionHeight() {
-			const headerHeight =
-				document.querySelector("header")?.offsetHeight || 0;
-			const footerHeight =
-				document.querySelector("footer")?.offsetHeight || 0;
-			const windowHeight = window.innerHeight;
-
-			this.sectionHeight = `${
-				windowHeight - headerHeight - footerHeight - 12
-			}px`;
-		},
 	},
 
-	afterMount() {
-		const terminalOutput = this.$refs.terminalOutput as HTMLDivElement;
-		if (!terminalOutput) {
-			console.error("terminalOutput ist nicht verfügbar");
-		}
-	},
-	mounted() {
-		this.updateSectionHeight();
-		window.addEventListener("resize", this.updateSectionHeight);
-	},
-	beforeUnmount() {
-		this.stopDummyData();
-		window.removeEventListener("resize", this.updateSectionHeight);
-	},
+	afterMount() {},
+	mounted() {},
+	beforeUnmount() {},
 });
