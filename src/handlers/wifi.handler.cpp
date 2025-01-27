@@ -36,7 +36,14 @@ void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketC
 		}
 	} else if (setting == "status") {
 		if (WiFi.status() == WL_CONNECTED) {
-			sendResponse(client, "wifi", "status", "connected", "Connected to: " + WiFi.SSID());
+			StaticJsonDocument<512> doc;
+			JsonArray details = doc.createNestedArray();
+
+			// Key-Value-Paare als Objekte zum Array hinzufügen
+			JsonObject item1 = details.createNestedObject();
+			item1["ssid"] = WiFi.SSID();
+
+			sendResponse(client, "wifi", "status", "connected", details, "");
 		} else {
 			sendResponse(client, "wifi", "status", "disconnected", "", "not connected to any network");
 		}
