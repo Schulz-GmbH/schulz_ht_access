@@ -11,13 +11,18 @@ void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketC
 	if (setting == "get") {
 		preferences.begin("wifi-config", true);  // Namespace im Lesemodus öffnen
 		String storedSSID = preferences.getString("ssid", "");
-		String storedPassword = preferences.getString("password", "");
 		preferences.end();
 
+		StaticJsonDocument<512> doc;
+		JsonArray details = doc.createNestedArray();
+
 		if (storedSSID.isEmpty()) {
-			sendResponse(client, "wifi", "get", "off", "no ssid or password", "no ssid");
+			sendResponse(client, "wifi", "get", "error", "no ssid", "no ssid");
 		} else {
-			sendResponse(client, "wifi", "get", "on", storedSSID);
+			// Key-Value-Paare als Objekte zum Array hinzufügen
+			JsonObject item1 = details.createNestedObject();
+			item1["ssid"] = WiFi.SSID();
+			sendResponse(client, "wifi", "get", "success", details, "");
 		}
 	} else if (setting == "set") {
 		int separatorIndex = value.indexOf(':');

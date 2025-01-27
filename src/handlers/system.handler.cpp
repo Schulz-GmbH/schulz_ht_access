@@ -66,10 +66,10 @@ void handleSystemEvent(const String &setting, const String &value, AsyncWebSocke
 
 		// Key-Value-Paare als Objekte zum Array hinzufügen
 		JsonObject item1 = details.createNestedObject();
-		item1["IP"] = ip;
+		item1["ip"] = ip;
 
 		JsonObject item2 = details.createNestedObject();
-		item2["Port"] = port;
+		item2["port"] = port;
 
 		sendResponse(client, "system", "get", "success", details, "");
 	} else if (setting == "set") {

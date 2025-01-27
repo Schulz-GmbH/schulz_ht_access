@@ -3,6 +3,7 @@ import { SocketService } from "@/services/_socket.service";
 
 export const WifiService = {
 	getStatus,
+	getCredentials,
 	setCredentials,
 	connect,
 	disconnect,
@@ -24,6 +25,30 @@ function getStatus(): Promise<WifiResponse> {
 				resolve(response);
 			} else {
 				reject(new Error(response.error || "Unknown error"));
+			}
+		});
+	});
+}
+
+function getCredentials(): Promise<string> {
+	return new Promise((resolve, reject) => {
+		SocketService.sendMessage(
+			JSON.stringify({
+				command: "wifi",
+				setting: "get",
+			})
+		);
+		SocketService.onMessage("wifi", "get", (response: any) => {
+			if (response.status === "success") {
+				if (Array.isArray(response.details)) {
+					resolve(response.details);
+				} else {
+					reject(new Error("Invalid response format for details"));
+				}
+			} else {
+				reject(
+					new Error(response.error || "Invalid credentials format")
+				);
 			}
 		});
 	});
