@@ -14,7 +14,7 @@ type SystemResponse = {
 
 type SystemAPIResponse = {
 	ip: string;
-	port: string;
+	port: string | number;
 };
 
 function getVersion(): Promise<SystemResponse[]> {
@@ -36,27 +36,31 @@ function getVersion(): Promise<SystemResponse[]> {
 	});
 }
 
-function getApiServer(): Promise<SystemAPIResponse> {
+function getApiServer(): Promise<SystemAPIResponse[]> {
 	return new Promise((resolve, reject) => {
 		SocketService.sendMessage(
-			JSON.stringify({ command: "system", setting: "get", value: "api" })
+			JSON.stringify({
+				command: "system",
+				setting: "get",
+				value: "api",
+			})
 		);
 		SocketService.onMessage("system", "get", (response: any) => {
-			if (response.status === "success") {
-				if (Array.isArray(response.details)) {
-					resolve(response.details);
-				} else {
-					reject(new Error("Invalid response format for details"));
-				}
+			if (
+				response.status === "success" &&
+				Array.isArray(response.details)
+			) {
+				resolve(response.details as SystemAPIResponse[]);
 			} else {
 				reject(
-					new Error(response.error || "Failed to get api information")
+					new Error(
+						response.error || "Failed to fetch API server data"
+					)
 				);
 			}
 		});
 	});
 }
-
 function updateFirmware(url: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		SocketService.sendMessage(

@@ -7,6 +7,16 @@ import LayoutMixin from "@/mixins/layout.mixin";
 import { WifiService } from "@/services/wifi/wifi.service";
 import { SystemService } from "@/services/system/system.service";
 
+type WifiCredential = {
+	ssid: string;
+	password?: string;
+};
+
+type SystemAPIResponse = {
+	ip: string;
+	port: string | number;
+};
+
 export default defineComponent({
 	name: "SettingsPage",
 	components: {},
@@ -58,9 +68,11 @@ export default defineComponent({
 		};
 
 		const fetchWlan = async () => {
-			const response = await handleRequest(WifiService.getCredentials);
+			const response = await handleRequest<WifiCredential[]>(
+				WifiService.getCredentials
+			);
 			if (response && response.length > 0) {
-				const firstCredential = response[0]; // Zugriff auf das erste Element des Arrays
+				const firstCredential = response[0];
 				wifiData.value.ssid = firstCredential.ssid || "";
 			} else {
 				console.error("No credentials received");
@@ -68,13 +80,16 @@ export default defineComponent({
 		};
 
 		const fetchSystem = async () => {
-			const response = await handleRequest(SystemService.getApiServer);
-			if (response) {
-				const api = response[0]; // Zugriff auf das erste Element des Arrays
-				apiData.value.ip = api.ip || "";
-				apiData.value.port = Number(api.port) || 9000;
+			const response = await handleRequest<SystemAPIResponse[]>(
+				SystemService.getApiServer
+			);
+			if (response && response.length > 0) {
+				const api = response;
+				apiData.value.ip = api[0].ip || "";
+				apiData.value.port = Number(api[1].port) || 9000;
+			} else {
+				console.error("No API server data received");
 			}
-			// startUpdateTimer();
 		};
 
 		const validateIPAddress = (): boolean => {

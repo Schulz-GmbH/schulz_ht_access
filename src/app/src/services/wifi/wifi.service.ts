@@ -15,6 +15,11 @@ type WifiResponse = {
 	details?: string;
 };
 
+type WifiCredential = {
+	ssid: string;
+	password?: string;
+};
+
 function getStatus(): Promise<WifiResponse> {
 	return new Promise((resolve, reject) => {
 		SocketService.sendMessage(
@@ -30,7 +35,7 @@ function getStatus(): Promise<WifiResponse> {
 	});
 }
 
-function getCredentials(): Promise<string> {
+function getCredentials(): Promise<WifiCredential[]> {
 	return new Promise((resolve, reject) => {
 		SocketService.sendMessage(
 			JSON.stringify({
@@ -39,12 +44,11 @@ function getCredentials(): Promise<string> {
 			})
 		);
 		SocketService.onMessage("wifi", "get", (response: any) => {
-			if (response.status === "success") {
-				if (Array.isArray(response.details)) {
-					resolve(response.details);
-				} else {
-					reject(new Error("Invalid response format for details"));
-				}
+			if (
+				response.status === "success" &&
+				Array.isArray(response.details)
+			) {
+				resolve(response.details as WifiCredential[]);
 			} else {
 				reject(
 					new Error(response.error || "Invalid credentials format")
