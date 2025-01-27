@@ -1,65 +1,89 @@
-import axios from "axios";
-import config from "@/services/_config";
+// wifi.service.ts
+import { SocketService } from "@/services/_socket.service";
 
-export const WiFiService = {
-	fetchWiFiConfig,
-	submitWiFiConfig,
+export const WifiService = {
+	getStatus,
+	setCredentials,
+	connect,
+	disconnect,
+	onStatusChange,
 };
 
-/**
- * Defines the structure of WiFi configuration data.
- */
-interface WiFiData {
-	ssid: string;
-	password: string;
+type WifiResponse = {
+	status: "connected" | "disconnected";
+	details?: string;
+};
+
+function getStatus(): Promise<WifiResponse> {
+	return new Promise((resolve, reject) => {
+		SocketService.sendMessage(
+			JSON.stringify({ command: "wifi", setting: "status" })
+		);
+		SocketService.onMessage("wifi", "status", (response: any) => {
+			if (response.status) {
+				resolve(response);
+			} else {
+				reject(new Error(response.error || "Unknown error"));
+			}
+		});
+	});
 }
 
-/**
- * Fetches the current WiFi configuration from the server.
- *
- * @returns {Promise<{ ssid: string }>} A promise resolving to the WiFi configuration object.
- */
-async function fetchWiFiConfig(): Promise<{ ssid: string }> {
-	try {
-		const response = await axios.get(`${config.apiUrl}wifi`, {
-			headers: {
-				"Content-Type": "application/json",
-			},
+function setCredentials(ssid: string, password: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		SocketService.sendMessage(
+			JSON.stringify({
+				command: "wifi",
+				setting: "set",
+				value: `${ssid}:${password}`,
+			})
+		);
+		SocketService.onMessage("wifi", "set", (response: any) => {
+			if (response.status === "success") {
+				resolve(response.details);
+			} else {
+				reject(
+					new Error(response.error || "Invalid credentials format")
+				);
+			}
 		});
-		return response.data;
-	} catch (error) {
-		console.error("Fehler beim Abrufen der WLAN-Daten:", error);
-		throw new Error("Fehler beim Abrufen der WLAN-Daten.");
-	}
+	});
 }
 
-/**
- * Submits the WiFi configuration to the server.
- *
- * @param {WiFiData} wifiData - The WiFi configuration data.
- * @returns {Promise<string>} A promise resolving to the status message from the server.
- */
-async function submitWiFiConfig(wifiData: WiFiData): Promise<string> {
-	try {
-		const response = await axios.post(`${config.apiUrl}wifi`, wifiData, {
-			headers: {
-				"Content-Type": "application/json",
-			},
+function connect(): Promise<string> {
+	return new Promise((resolve, reject) => {
+		SocketService.sendMessage(
+			JSON.stringify({ command: "wifi", setting: "connect" })
+		);
+		SocketService.onMessage("wifi", "connect", (response: any) => {
+			if (response.status === "on") {
+				resolve(response.details);
+			} else {
+				reject(new Error(response.error || "Connection failed"));
+			}
 		});
-		return response.data.status || "Erfolgreich gespeichert!";
-	} catch (error: unknown) {
-		if (error instanceof Error && axios.isAxiosError(error)) {
-			console.error("Fehler beim Speichern der WLAN-Daten:", error);
-			throw new Error(
-				error.response?.data?.error ||
-					"Fehler beim Speichern der WLAN-Daten."
-			);
-		} else {
-			console.error(
-				"Unbekannter Fehler beim Speichern der WLAN-Daten:",
-				error
-			);
-			throw new Error("Ein unbekannter Fehler ist aufgetreten.");
-		}
-	}
+	});
+}
+
+function disconnect(): Promise<string> {
+	return new Promise((resolve, reject) => {
+		SocketService.sendMessage(
+			JSON.stringify({ command: "wifi", setting: "disconnect" })
+		);
+		SocketService.onMessage("wifi", "disconnect", (response: any) => {
+			if (response.status === "off") {
+				resolve(response.details);
+			} else {
+				reject(new Error(response.error || "Disconnection failed"));
+			}
+		});
+	});
+}
+
+function onStatusChange(
+	callback: (status: string, details?: string) => void
+): void {
+	SocketService.onMessage("wifi", "status", (response: any) => {
+		callback(response.status, response.details);
+	});
 }
