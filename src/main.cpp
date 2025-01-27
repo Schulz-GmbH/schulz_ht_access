@@ -2,7 +2,6 @@
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <Preferences.h>
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi.h>
@@ -13,6 +12,7 @@
 
 // Handler-Includes
 #include "handlers/light.handler.h"
+#include "handlers/preferences.handler.h"
 #include "handlers/response.handler.h"
 #include "handlers/serial.handler.h"
 #include "handlers/system.handler.h"
@@ -34,6 +34,9 @@ HardwareSerial SerialDevice(1);  // UART2
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 QueueHandle_t commandQueue;
+
+// Instanziierung der Preferences
+Preferences preferences;
 
 // WLAN-Konfiguration
 const char *ap_ssid = "ESP32-AccessPoint";

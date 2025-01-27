@@ -9,4 +9,7 @@
 void sendResponse(AsyncWebSocketClient *client, const String &event, const String &action, const String &status, const String &details = "",
                   const String &error = "");
 
+void sendResponse(AsyncWebSocketClient *client, const String &event, const String &action, const String &status, const JsonArray &details,
+                  const String &error);
+
 #endif

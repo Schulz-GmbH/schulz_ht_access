@@ -1,11 +1,9 @@
 #include "handlers/wifi.handler.h"
 
-#include <Preferences.h>
 #include <WiFi.h>
 
+#include "handlers/preferences.handler.h"
 #include "handlers/response.handler.h"
-
-Preferences preferences;
 
 bool isWiFiEnabled = true;
 
@@ -14,6 +12,7 @@ void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketC
 		preferences.begin("wifi-config", true);  // Namespace im Lesemodus öffnen
 		String storedSSID = preferences.getString("ssid", "");
 		String storedPassword = preferences.getString("password", "");
+		preferences.end();
 
 		if (storedSSID.isEmpty()) {
 			sendResponse(client, "wifi", "get", "off", "no ssid or password", "no ssid");
@@ -21,14 +20,15 @@ void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketC
 			sendResponse(client, "wifi", "get", "on", storedSSID);
 		}
 	} else if (setting == "set") {
-		preferences.begin("wifi-config", false);
 		int separatorIndex = value.indexOf(':');
 		if (separatorIndex != -1) {
+			preferences.begin("wifi-config", false);
 			String ssid = value.substring(0, separatorIndex);
 			String password = value.substring(separatorIndex + 1);
 
 			preferences.putString("ssid", ssid);
 			preferences.putString("password", password);
+			preferences.end();
 
 			sendResponse(client, "wifi", "set", "success", ssid);
 		} else {
@@ -91,6 +91,7 @@ bool readWiFiConfig(String &ssid, String &password) {
 	preferences.begin("wifi-config", true);
 	ssid = preferences.getString("ssid", "");
 	password = preferences.getString("password", "");
+	preferences.end();
 	return !ssid.isEmpty() && !password.isEmpty();
 }
 
