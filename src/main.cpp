@@ -109,6 +109,9 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 void setup() {
 	Serial.begin(9600);
 
+	// CPU-Frequenz auf 240 MHz setzen
+	setCpuFrequencyMhz(240);
+
 	pinMode(RED_LED, OUTPUT);
 	pinMode(GREEN_LED, OUTPUT);
 	pinMode(YELLOW_LED, OUTPUT);
@@ -160,6 +163,9 @@ void setup() {
 	ws.onEvent(onEvent);
 	server.addHandler(&ws);
 	server.serveStatic("/", SD, "/www/html/").setDefaultFile("index.html");
+
+	// Vue-Router Fallback für SPA
+	server.onNotFound([](AsyncWebServerRequest *request) { request->send(SD, "/www/html/index.html", "text/html"); });
 	server.begin();
 
 	Serial.println("WebSocket-Server gestartet.");
