@@ -62,6 +62,19 @@
 
 ---
 
+## Log-Handler
+
+| **Event** | **Action** | **Status** | **Details**                     | **Error**           |
+| --------- | ---------- | ---------- | ------------------------------- | ------------------- |
+| log       | list       | success    | Liste aller Log-Dateien         |                     |
+| log       | list       | error      | Keine/Fehlerhafte Logs          |                     |
+| log       | get        | success    | Inhalt ausgewählter Log-Datei   |                     |
+| log       | get        | unknown    |                                 | unknown log file    |
+| log       | debug      | success    | Status ob aktiviert/deaktiviert |                     |
+| log       | debug      | unknow     |                                 | unknown log setting |
+
+---
+
 # Allgemeine Struktur der Antworten
 
 ```json

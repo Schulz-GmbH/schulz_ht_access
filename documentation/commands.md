@@ -10,7 +10,10 @@
 | `serial`    | `send`       | `message`       | Sendet eine Nachricht über `SerialDevice`.           |
 | `system`    | `get`        | `version`       | Gibt die aktuelle Firmware-Version zurück.           |
 | `system`    | `update`     | `url`           | Startet ein Firmware-Update von der angegebenen URL. |
-| `debug`     | `get`        | `logs`          | Gibt die aktuellen Logs zurück.                      |
+| `log`       | `list`       |                 | Gibt die aktuellen Logs zurück.                      |
+| `log`       | `debug`      | `set:on`        | Aktiviert das erweiterte Logging                     |
+| `log`       | `debug`      | `set:off`       | Deaktiviert das erweiterte Logging                   |
+| `log`       | `debug`      | `status`        | Gibt den Såtatus des erweitereten loggings zurück    |
 | `light`     | `set`        | `red:on`        | Schaltet die rote LED ein.                           |
 | `light`     | `set`        | `red:off`       | Schaltet die rote LED aus.                           |
 | `light`     | `set`        | `green:on`      | Schaltet die grüne LED ein.                          |

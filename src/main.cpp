@@ -6,12 +6,15 @@
 #include <SPI.h>
 #include <WiFi.h>
 
+#include <ctime>  // Zeitstempel für die Log-Datei
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
 
 // Handler-Includes
 #include "handlers/light.handler.h"
+#include "handlers/log.handler.h"
 #include "handlers/preferences.handler.h"
 #include "handlers/response.handler.h"
 #include "handlers/serial.handler.h"
@@ -34,6 +37,7 @@ HardwareSerial SerialDevice(1);  // UART2
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 QueueHandle_t commandQueue;
+File logFile;  // Log-Datei
 
 // Instanziierung der Preferences
 Preferences preferences;
@@ -48,7 +52,7 @@ void processSerialQueue(void *param) {
 		if (xQueueReceive(commandQueue, &command, portMAX_DELAY) == pdPASS) {
 			SerialDevice.println(command);
 			SerialDevice.flush();
-			Serial.printf("Befehl an SerialDevice gesendet: %s\n", command.c_str());
+			logger.info("Befehl an SerialDevice gesendet: " + command);
 		}
 	}
 }
@@ -56,23 +60,25 @@ void processSerialQueue(void *param) {
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 	switch (type) {
 		case WS_EVT_CONNECT:
-			Serial.printf("WebSocket-Client %u verbunden.\n", client->id());
+			logger.info("WebSocket-Client " + String(client->id()) + " verbunden.");
+			// startLogging();
 			break;
 		case WS_EVT_DISCONNECT:
-			Serial.printf("WebSocket-Client %u getrennt.\n", client->id());
+			logger.info("WebSocket-Client " + String(client->id()) + " getrennt.");
+			// stopLogging();
 			break;
 		case WS_EVT_DATA: {
 			AwsFrameInfo *info = (AwsFrameInfo *)arg;
 			if (info->opcode == WS_TEXT) {
 				String message = String((char *)data).substring(0, len);
-				Serial.printf("WebSocket Nachricht empfangen: %s\n", message.c_str());
+				logger.info("WebSocket Nachricht empfangen: " + message);
 
 				// JSON-Daten parsen
 				StaticJsonDocument<512> jsonDoc;
 				DeserializationError error = deserializeJson(jsonDoc, message);
 
 				if (error) {
-					Serial.printf("JSON Parsing Error: %s\n", error.c_str());
+					logger.error("JSON Parsing Error: " + String(error.c_str()));
 					client->text("{\"event\":\"error\",\"details\":\"Invalid JSON format\"}");
 					return;
 				}
@@ -87,6 +93,8 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 					handleWiFiEvent(setting, value, client);
 				} else if (command == "serial") {
 					handleSerialEvent(setting, value, client);
+				} else if (command == "log") {
+					handleLogEvent(setting, value, client);
 				} else if (command == "system") {
 					handleSystemEvent(setting, value, client);
 				} else if (command == "light") {
@@ -98,10 +106,10 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 			break;
 		}
 		case WS_EVT_ERROR:
-			Serial.printf("WebSocket-Fehler bei Client %u.\n", client->id());
+			logger.error("WebSocket-Fehler bei Client " + String(client->id()) + ".");
 			break;
 		case WS_EVT_PONG:
-			Serial.printf("WebSocket-Ping/Pong von Client %u.\n", client->id());
+			logger.info("WebSocket-Ping/Pong von Client " + String(client->id()) + ".");
 			break;
 	}
 }
@@ -121,20 +129,27 @@ void setup() {
 	digitalWrite(YELLOW_LED, LOW);
 
 	if (!SD.begin(SD_CS_PIN)) {
-		Serial.println("Fehler beim Initialisieren der SD-Karte!");
+		logger.error("Fehler beim Initialisieren der SD-Karte!");
 		return;
 	} else {
-		Serial.println("SD-Karte erfolgreich initialisiert.");
+		logger.info("SD-Karte erfolgreich initialisiert.");
 	}
 
 	if (!SD.exists("/www/html")) {
-		Serial.println("Verzeichnis /www/html auf der SD-Karte nicht gefunden!");
+		logger.error("Verzeichnis /www/html auf der SD-Karte nicht gefunden!");
 		return;
+	} else if (!SD.exists("/logs")) {
+		logger.error("Verzeichnis /logs auf der SD-Karte nicht gefunden!");
+		SD.mkdir("/logs");  // Erstellt das Verzeichnis, falls nicht vorhanden
 	}
+
+	preferences.begin("system", true);  // Namespace im Lesemodus öffnen
+	LLog::debugLog = preferences.getBool("debug", false);
+	preferences.end();
 
 	commandQueue = xQueueCreate(10, sizeof(String));
 	if (commandQueue == NULL) {
-		Serial.println("Fehler: Queue konnte nicht erstellt werden!");
+		logger.debug("Queue konnte nicht erstellt werden!");
 		while (true);
 	}
 
@@ -158,17 +173,24 @@ void setup() {
 		connectToWiFi(ssid, password);
 	} else {
 		Serial.println("WLAN-Konfigurationsdatei fehlt oder ist leer. Keine Verbindung hergestellt.");
+		logger.wlan("[WLAN] WLAN-Konfigurationsdatei fehlt oder ist leer. Keine Verbindung hergestellt.");
 	}
 
 	ws.onEvent(onEvent);
 	server.addHandler(&ws);
 	server.serveStatic("/", SD, "/www/html/").setDefaultFile("index.html");
 
+	// REST-Endpunkte dor dynamic log files
+	server.on("/logfile", HTTP_GET, [](AsyncWebServerRequest *request) {
+		logger.http("[HTTP] HTTP-Anfrage erhalten: /logfile");
+		serveLogFile(request);
+	});
+
 	// Vue-Router Fallback für SPA
 	server.onNotFound([](AsyncWebServerRequest *request) { request->send(SD, "/www/html/index.html", "text/html"); });
 	server.begin();
 
-	Serial.println("WebSocket-Server gestartet.");
+	logger.info("WebSocket-Server gestartet.");
 }
 
 void loop() {
@@ -186,7 +208,7 @@ void loop() {
 			}
 		}
 
-		Serial.print(receivedData);
+		logger.info(receivedData);
 
 		// JSON-Antwort an alle verbundenen Clients senden
 		for (AsyncWebSocketClient *client : ws.getClients()) {

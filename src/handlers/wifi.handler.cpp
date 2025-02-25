@@ -73,15 +73,10 @@ void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketC
 	}
 }
 
-bool connectToWiFi(const String &ssid, const String &password) {
-	if (!isWiFiEnabled) {
-		return false;
-	}
-
+void connectToWiFi(const String &ssid, const String &password) {
 	WiFi.begin(ssid.c_str(), password.c_str());
 	unsigned long startAttemptTime = millis();
-
-	while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+	while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 15000) {
 		delay(500);
 		yield();
 		Serial.print(".");
@@ -90,13 +85,9 @@ bool connectToWiFi(const String &ssid, const String &password) {
 	if (WiFi.status() == WL_CONNECTED) {
 		Serial.println("\nSTA-Modus verbunden! IP: " + WiFi.localIP().toString());
 	} else {
-		// Serial.println("Verbindung im STA-Modus fehlgeschlagen. Fehler: " + getWiFiError(WiFi.status()));
-		isWiFiEnabled = false;
-		return false;
+		Serial.println("\n1. Fehler: STA konnte sich nicht verbinden!");
+		WiFi.disconnect();
 	}
-
-	isWiFiEnabled = true;
-	return true;
 }
 
 bool readWiFiConfig(String &ssid, String &password) {

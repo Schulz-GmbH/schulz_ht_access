@@ -7,7 +7,7 @@
 extern bool isWiFiEnabled;
 
 void handleWiFiEvent(const String &setting, const String &value, AsyncWebSocketClient *client);
-bool connectToWiFi(const String &ssid, const String &password);
+void connectToWiFi(const String &ssid, const String &password);
 bool readWiFiConfig(String &ssid, String &password);
 
 #endif
