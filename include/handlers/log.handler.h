@@ -14,7 +14,7 @@ class LLog {
 	void debug(const String &message);
 	void info(const String &message);
 	void system(const String &message);
-	void wlan(const String &message);
+	void warn(const String &message);
 	void error(const String &message);
 	void http(const String &message);
 

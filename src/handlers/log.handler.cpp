@@ -96,8 +96,8 @@ void LLog::info(const String &message) {
 void LLog::system(const String &message) {
 	logMessage("[SYSTEM] " + message, true);
 }
-void LLog::wlan(const String &message) {
-	logMessage("[WLAN] " + message, true);
+void LLog::warn(const String &message) {
+	logMessage("[WRNING] " + message, true);
 }
 void LLog::error(const String &message) {
 	logMessage("[ERROR] " + message, true);
