@@ -17,26 +17,6 @@
 
 ---
 
-## Light-Handler
-
-| **Event** | **Action** | **Status** | **Details**                   | **Error**     |
-| --------- | ---------- | ---------- | ----------------------------- | ------------- |
-| light     | set        | on         | red light on                  |               |
-| light     | set        | off        | red light off                 |               |
-| light     | set        | on         | green light on                |               |
-| light     | set        | off        | green light off               |               |
-| light     | set        | on         | yellow light on               |               |
-| light     | set        | off        | yellow light off              |               |
-| light     | blink      | on         | red light blinking            |               |
-| light     | blink      | on         | green light blinking          |               |
-| light     | blink      | on         | yellow light blinking         |               |
-| light     | stopBlink  | off        | red light stopped blinking    |               |
-| light     | stopBlink  | off        | green light stopped blinking  |               |
-| light     | stopBlink  | off        | yellow light stopped blinking |               |
-| light     | error      | unknown    |                               | unknown value |
-
----
-
 ## Serial-Handler
 
 | **Event** | **Action** | **Status** | **Details**                       | **Error**                   |
