@@ -124,17 +124,18 @@ void handleLogEvent(const String &setting, const String &value, AsyncWebSocketCl
 		Log:
 			logger.info("Erweitertes Logging aktiviert");
 			LLog::debugLog = true;
-			sendResponse(client, "debug", "status", "on", "Erweitertes Logging aktiviert");
+			sendResponse(client, "log", "debug", "on", "Erweitertes Logging aktiviert");
 		} else if (value == "set:off") {
 			preferences.putBool("debug", false);
 			LLog::debugLog = false;
 			logger.info("Erweitertes Logging deaktiviert");
-			sendResponse(client, "debug", "status", "off", "Erweitertes Logging deaktiviert");
+			sendResponse(client, "log", "debug", "off", "Erweitertes Logging deaktiviert");
 		} else if (value == "status") {
 			bool debugState = preferences.getBool("debug", false);
 			String state = debugState ? "on" : "off";
 			logger.info("Erweitertes Logging ist " + state);
-			sendResponse(client, "debug", "status", "status", state == "on" ? "Erweitertes Logging aktiviert" : "Erweitertes Logging deaktiviert");
+			sendResponse(client, "log", "debug", state, state == "on" ? "Erweitertes Logging aktiviert" : "Erweitertes Logging deaktiviert");
+			// sendResponse(client, "log", "status", "status", state);
 		}
 	} else if (setting == "list") {
 		listLogs(client);

@@ -103,6 +103,19 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 	}
 }
 
+void logConnectedClients() {
+	int connectedClients = WiFi.softAPgetStationNum();
+
+	if (connectedClients > 0) {
+		logger.info("Aktuell verbundene Clients:");
+
+		for (int i = 0; i < connectedClients; i++) {
+			IPAddress clientIP = WiFi.softAPIP();
+			logger.info("Client " + String(i + 1) + " IP: " + clientIP.toString() + "\n");
+		}
+	}
+}
+
 void setup() {
 	Serial.begin(9600);
 	setupStatusSystem();  // Status-LEDs initialisieren
@@ -208,6 +221,18 @@ void setup() {
 	server.begin();
 
 	logger.info("WebSocket-Server gestartet.");
+	// **Liste der erreichbaren WebSocket-Adressen ausgeben**
+	logger.info("WebSocket-Server erreichbar unter:");
+
+	// SoftAP-IP-Adresse (Access Point Modus)
+	if (WiFi.getMode() & WIFI_AP) {
+		logger.info("  ws://" + WiFi.softAPIP().toString() + "/ws");
+	}
+
+	// Station-IP-Adresse (wenn mit WLAN verbunden)
+	if (WiFi.getMode() & WIFI_STA) {
+		logger.info("  ws://" + WiFi.localIP().toString() + "/ws");
+	}
 }
 
 void loop() {
@@ -225,6 +250,8 @@ void loop() {
 			logger.warn("Kein Gerät mit AP verbunden.");
 			updateStatus(STATUS_NO_DEVICE_CONNECTED);
 		}
+
+		logConnectedClients();  // Liste der verbundenen Clients ausgeben
 		lastConnectedClients = connectedClients;
 	}
 
