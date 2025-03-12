@@ -36,6 +36,7 @@
 .pio
 .idea
 .vscode
+.archives
 *.suo
 *.ntvs*
 *.njsproj
@@ -47,6 +48,7 @@ package-lock.json
 .diff
 diff
 diff.txt
+documentation/*.pdf
 .DS_Store
 
 *.code-workspace
