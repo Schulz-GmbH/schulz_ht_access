@@ -33,6 +33,7 @@ static portMUX_TYPE g_statusMux = portMUX_INITIALIZER_UNLOCKED;
 
 // Taskhandle für das LED-Blinken
 static TaskHandle_t statusTaskHandle = NULL;
+static TaskHandle_t apStationMonitorTaskHandle = NULL;
 
 /**
  * @brief Schaltet in den READY-Zustand: Grüne LED an, rote und gelbe LED aus,
@@ -45,6 +46,27 @@ static void displayReadyState(int delayMs) {
 	digitalWrite(YELLOW_LED, LOW);
 	digitalWrite(GREEN_LED, HIGH);
 	vTaskDelay(pdMS_TO_TICKS(delayMs));
+}
+
+/**
+ * @brief Prüft, ob ein bestimmter Systemstatus aktiv ist.
+ *
+ * Diese Funktion überprüft, ob der angegebene Status im internen Status-Array vorhanden ist.
+ *
+ * @param status Der zu prüfende Systemstatus.
+ * @return true, falls der Status aktiv ist; andernfalls false.
+ */
+bool isStatusActive(SystemStatus status) {
+	bool found = false;
+	portENTER_CRITICAL(&g_statusMux);
+	for (size_t i = 0; i < g_statusCount; i++) {
+		if (g_statusArray[i] == status) {
+			found = true;
+			break;
+		}
+	}
+	portEXIT_CRITICAL(&g_statusMux);
+	return found;
 }
 
 /**
@@ -68,11 +90,11 @@ static void doBlinkPattern(SystemStatus status) {
 
 	switch (status) {
 		case STATUS_INITIALIZING:
-			// Grünes kurzes Blinken (1 Sekunde)
+			// Grünes kurzes Blinken (0,5 Sekunden)
 			digitalWrite(GREEN_LED, HIGH);
-			vTaskDelay(pdMS_TO_TICKS(delayFast));
+			vTaskDelay(pdMS_TO_TICKS(delaySlow));
 			digitalWrite(GREEN_LED, LOW);
-			vTaskDelay(pdMS_TO_TICKS(delayFast));
+			vTaskDelay(pdMS_TO_TICKS(delaySlow));
 			break;
 
 		case STATUS_READY:
@@ -101,6 +123,15 @@ static void doBlinkPattern(SystemStatus status) {
 			}
 			break;
 
+		case STATUS_WIFI_NOT_AVAILABLE:
+			digitalWrite(RED_LED, HIGH);
+			vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			digitalWrite(RED_LED, LOW);
+			break;
+
+		case STATUS_NO_WIFI_DEVICE:
+			digitalWrite(YELLOW_LED, HIGH);
+			break;
 		default:
 			vTaskDelay(pdMS_TO_TICKS(2000));
 			break;
@@ -138,7 +169,12 @@ static void statusTask(void *param) {
 		}
 		portEXIT_CRITICAL(&g_statusMux);
 
-		if (localCount == 0) {
+		// Falls STATUS_NO_WIFI_DEVICE aktiv ist, direkt dessen Muster ausführen
+		if (isStatusActive(STATUS_NO_WIFI_DEVICE)) {
+			doBlinkPattern(STATUS_NO_WIFI_DEVICE);
+		}
+		// Falls kein Status aktiv ist -> READY anzeigen (grüne LED)
+		else if (localCount == 0) {
 			// Wenn kein Status aktiv ist -> LED grün an
 			displayReadyState(2000);
 		} else {
@@ -150,13 +186,86 @@ static void statusTask(void *param) {
 }
 
 /**
+ * @brief Task-Funktion zur Überwachung der mit dem Access Point verbundenen Stationen.
+ *
+ * Diese Funktion überwacht kontinuierlich, ob Geräte (Stationen) mit dem Access Point verbunden sind.
+ * Bei längerer Abwesenheit von Geräten wird der Status STATUS_NO_WIFI_DEVICE gesetzt.
+ * Sobald Geräte wieder verbunden sind, wird dieser Fehlerstatus entfernt.
+ * Zudem werden neu verbundene Geräte (MAC-Adressen) erkannt und geloggt.
+ *
+ * @param param Unbenutzter Parameter.
+ */
+static void apStationMonitorTask(void *param) {
+	const int threshold = 2;  // z.B. 2 Zyklen à 2000ms = 4 Sekunden Debounce
+	int consecutiveNoDevice = 0;
+	int consecutiveDevicePresent = 0;
+
+	// Liste der bisher bekannten MAC-Adressen
+	std::vector<String> connectedMACs;
+
+	for (;;) {
+		wifi_sta_list_t wifi_sta_list;
+		// Hole die Liste der verbundenen Stationen
+		esp_wifi_ap_get_sta_list(&wifi_sta_list);
+		int currentCount = wifi_sta_list.num;
+
+		if (currentCount == 0) {
+			consecutiveNoDevice++;
+			consecutiveDevicePresent = 0;
+			if (consecutiveNoDevice >= threshold) {
+				// Kein Gerät verbunden: Status setzen, falls noch nicht vorhanden
+				addStatus(STATUS_NO_WIFI_DEVICE);
+				// Falls zuvor Geräte bekannt waren, dann leere die Liste und logge einmalig
+				if (!connectedMACs.empty()) {
+					connectedMACs.clear();
+					logger.info("Kein Gerät mit dem AP verbunden.");
+				}
+			}
+		} else {
+			consecutiveDevicePresent++;
+			consecutiveNoDevice = 0;
+			if (consecutiveDevicePresent >= threshold) {
+				// Mindestens ein Gerät verbunden: Fehlerstatus entfernen
+				removeStatus(STATUS_NO_WIFI_DEVICE);
+
+				// Erstelle eine Liste der aktuell verbundenen MAC-Adressen
+				std::vector<String> newMACs;
+				for (int i = 0; i < currentCount; i++) {
+					uint8_t *mac = wifi_sta_list.sta[i].mac;
+					char macStr[18];
+					snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+					newMACs.push_back(String(macStr));
+				}
+				// Prüfe, ob es neue Geräte gibt (MACs, die in der alten Liste nicht vorhanden sind)
+				for (const auto &mac : newMACs) {
+					bool found = false;
+					for (const auto &oldMac : connectedMACs) {
+						if (mac == oldMac) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						// Neues Gerät gefunden – logge dessen MAC-Adresse
+						logger.info("Gerät mit dem AP verbunden. MAC: " + mac);
+					}
+				}
+				// Aktualisiere die Liste der bekannten Geräte
+				connectedMACs = newMACs;
+			}
+		}
+		vTaskDelay(pdMS_TO_TICKS(2000));
+	}
+}
+
+/**
  * @brief Initialisiert die LED-Pins und startet den Status-Task.
  *
  * Diese Funktion konfiguriert die verwendeten LED-Pins als Output, setzt sie initial auf LOW
  * und fügt optional den Initialisierungsstatus hinzu. Anschließend wird der FreeRTOS Task gestartet,
  * der die aktiven Status zyklisch abarbeitet.
  */
-void setupStatusSystem() {
+void startStatusSystem() {
 	pinMode(RED_LED, OUTPUT);
 	pinMode(GREEN_LED, OUTPUT);
 	pinMode(YELLOW_LED, OUTPUT);
@@ -170,6 +279,10 @@ void setupStatusSystem() {
 
 	if (statusTaskHandle == NULL) {
 		xTaskCreate(statusTask, "StatusTask", 4096, NULL, 1, &statusTaskHandle);
+	}
+
+	if (apStationMonitorTaskHandle == NULL) {
+		xTaskCreate(apStationMonitorTask, "APStationMonitor", 2048, NULL, 1, &apStationMonitorTaskHandle);
 	}
 }
 
@@ -228,23 +341,14 @@ void addStatus(SystemStatus status) {
  */
 void removeStatus(SystemStatus status) {
 	portENTER_CRITICAL(&g_statusMux);
-
-	bool removed = false;
 	for (size_t i = 0; i < g_statusCount; i++) {
 		if (g_statusArray[i] == status) {
 			for (size_t j = i; j < (g_statusCount - 1); j++) {
 				g_statusArray[j] = g_statusArray[j + 1];
 			}
 			g_statusCount--;
-			removed = true;
 			break;
 		}
 	}
-
 	portEXIT_CRITICAL(&g_statusMux);
-
-	// Falls keine Fehlerstatus mehr vorhanden sind, setze STATUS_READY
-	if (g_statusCount == 0) {
-		g_statusArray[g_statusCount++] = STATUS_READY;
-	}
 }

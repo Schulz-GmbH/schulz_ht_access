@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <IPAddress.h>
 #include <Preferences.h>
 
 // Firmware-Version
@@ -23,5 +24,14 @@
 #define YELLOW_LED 25
 
 extern Preferences preferences;
+
+// Feste Zugangsdaten für den Access Point
+static const char *AP_SSID = "ESP32-AccessPoint";
+static const char *AP_PASSWORD = "12345678";
+
+// IP-Konfiguration für den Access Point
+static const IPAddress AP_LOCAL_IP(192, 168, 5, 1);
+static const IPAddress AP_GATEWAY(192, 168, 5, 1);
+static const IPAddress AP_SUBNET(255, 255, 255, 0);
 
 #endif
