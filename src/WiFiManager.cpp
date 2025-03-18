@@ -197,7 +197,6 @@ void WiFiManager::loadSavedNetworks() {
 	netsPreferences.end();
 
 	savedNetworks.clear();
-	logger.debug("Geladenes Netzwerke JSON: " + json);
 
 	if (json.length() > 0) {
 		StaticJsonDocument<1024> doc;

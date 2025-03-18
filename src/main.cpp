@@ -3,11 +3,13 @@
 #include "LLog.h"
 #include "SDCard.h"
 #include "StatusHandler.h"
+#include "WebServerManager.h"
 #include "WiFiManager.h"
 
 // Instanziierung der Preferences
 Preferences preferences;
 WiFiManager wifiManager;
+WebServerManager webServerManager(80);
 
 void setup() {
 	// CPU-Frequenz auf 240 MHz setzen
@@ -31,6 +33,9 @@ void setup() {
 
 	// WLAN initialisieren (AP + STA, STA-Daten werden aus den Preferences geladen)
 	wifiManager.init();
+
+	// Webserver und WebSocket-Server initialisieren
+	webServerManager.init();
 }
 
 void loop() {
