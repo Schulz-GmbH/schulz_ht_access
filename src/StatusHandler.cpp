@@ -7,7 +7,7 @@
  * für jeden Status ein individuelles LED-Muster an. Ist kein Fehlerstatus aktiv,
  * wird automatisch STATUS_READY gesetzt und die grüne LED leuchtet dauerhaft.
  *
- * @author SimonMarcelLinden
+ * @author Simon Macel Linden
  * @since 1.0.0
  */
 
@@ -15,7 +15,7 @@
 
 #include "LLog.h"
 
-#define MAX_STATUSES 3
+#define MAX_STATUSES 6
 
 /*
    FreeRTOS Task verwenden, um alle aktiven Status nacheinander anzuzeigen.
@@ -62,20 +62,43 @@ static void doBlinkPattern(SystemStatus status) {
 	digitalWrite(GREEN_LED, LOW);
 	digitalWrite(YELLOW_LED, LOW);
 
-	int delayTicks = 2000;  // Standardverzögerung
+	int delaySlow = 500;    // Standardverzögerung
+	int delayFast = 100;    // Kurze Verzögerung
+	int delayPause = 1500;  // Standardverzögerung
 
 	switch (status) {
 		case STATUS_INITIALIZING:
-			delayTicks = 300;  // Grünes kurzes Blinken (300 ms)
 			// Grünes kurzes Blinken (1 Sekunde)
 			digitalWrite(GREEN_LED, HIGH);
-			vTaskDelay(pdMS_TO_TICKS(delayTicks));
+			vTaskDelay(pdMS_TO_TICKS(delayFast));
 			digitalWrite(GREEN_LED, LOW);
-			vTaskDelay(pdMS_TO_TICKS(delayTicks));
+			vTaskDelay(pdMS_TO_TICKS(delayFast));
 			break;
 
 		case STATUS_READY:
 			displayReadyState(100);
+			break;
+
+		case STATUS_NO_SD_CARD:
+			digitalWrite(RED_LED, HIGH);
+			break;
+
+		case STATUS_NO_HTML_DIR:
+			for (int i = 0; i < 3; i++) {
+				digitalWrite(RED_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(RED_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
+			break;
+
+		case STATUS_NO_LOGS_DIR:
+			for (int i = 0; i < 2; i++) {
+				digitalWrite(RED_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(RED_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
 			break;
 
 		default:
@@ -84,7 +107,7 @@ static void doBlinkPattern(SystemStatus status) {
 	}
 
 	// Kleine Pause zwischen den einzelnen Status-Mustern
-	vTaskDelay(pdMS_TO_TICKS(delayTicks));
+	vTaskDelay(pdMS_TO_TICKS(delayPause));
 }
 
 /**

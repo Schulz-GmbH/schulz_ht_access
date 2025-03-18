@@ -11,6 +11,9 @@
 enum SystemStatus {
 	STATUS_INITIALIZING,
 	STATUS_READY,
+	STATUS_NO_SD_CARD,
+	STATUS_NO_HTML_DIR,
+	STATUS_NO_LOGS_DIR,
 	/*
 	 * Weitere Status hier ergänzen,
 	 * falls z.B. andere Fehlerzustände angezeigt werden sollen
