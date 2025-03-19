@@ -72,32 +72,42 @@ void WiFiManager::init() {
 	}
 	if (!WiFi.softAP(AP_SSID, AP_PASSWORD)) {
 		logger.error("Access Point konnte nicht gestartet werden.");
-		addStatus(STATUS_WIFI_NOT_AVAILABLE);  // Neuen Fehlerstatus setzen
+		addStatus(STATUS_WIFI_NOT_AVAILABLE);  // Fehlerstatus setzen
 	} else {
 		logger.info("Access Point gestartet! IP-Adresse: " + WiFi.softAPIP().toString());
 		removeStatus(STATUS_WIFI_NOT_AVAILABLE);
 	}
 
-	// Falls eine STA-Konfiguration vorhanden ist, versuche, als Station zu verbinden
+	// Versuche, als Station zu verbinden.
+	// Zuerst: Falls eine STA-Konfiguration vorhanden ist, verwende diese.
 	if (staSSID != "") {
 		WiFi.begin(staSSID.c_str(), staPassword.c_str());
 		logger.info("Versuche, zum WLAN zu verbinden: " + staSSID);
-
-		unsigned long startAttemptTime = millis();
-		const unsigned long timeout = 10000;  // 10 Sekunden Timeout
-
-		while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < timeout) {
-			delay(500);
-			logger.debug("Verbinde mit STA...");
-		}
-
-		if (WiFi.status() == WL_CONNECTED) {
-			logger.info("STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
-		} else {
-			logger.error("STA Verbindung fehlgeschlagen!");
-		}
+	}
+	// Falls keine explizite STA-Konfiguration vorhanden ist, aber gespeicherte Netzwerke existieren,
+	// verwende das erste gespeicherte Netzwerk.
+	else if (!savedNetworks.empty()) {
+		staSSID = savedNetworks[0].ssid;
+		staPassword = savedNetworks[0].password;
+		saveConfig();  // Aktualisiere die STA-Konfiguration in den Preferences
+		WiFi.begin(staSSID.c_str(), staPassword.c_str());
+		logger.info("Keine STA-Konfiguration gesetzt. Verbinde mit gespeichertem Netzwerk: " + staSSID);
 	} else {
-		logger.warn("Keine STA-Konfiguration gesetzt.");
+		logger.warn("Keine STA-Konfiguration gesetzt und keine gespeicherten Netzwerke vorhanden.");
+	}
+
+	// Versuche, die STA-Verbindung aufzubauen:
+	unsigned long startAttemptTime = millis();
+	const unsigned long timeout = 10000;  // 10 Sekunden Timeout
+	while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < timeout) {
+		delay(500);
+		logger.debug("Verbinde mit STA...");
+	}
+
+	if (WiFi.status() == WL_CONNECTED) {
+		logger.info("STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
+	} else {
+		logger.error("STA Verbindung fehlgeschlagen!");
 	}
 }
 
