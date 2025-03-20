@@ -222,7 +222,9 @@ void WiFiManager::loadSavedNetworks() {
 			nw.password = net["password"].as<String>();
 			savedNetworks.push_back(nw);
 		}
-		// logger.info("Gespeicherte Netzwerke geladen.");
+		logger.info("Gespeicherte Netzwerke geladen.");
+	} else {
+		logger.info("Keine gespeicherten Netzwerke gefunden.");
 	}
 }
 

@@ -57,7 +57,7 @@ void LLog::system(const String &message) {
 	logMessage("[SYSTEM] " + message, true);
 }
 void LLog::warn(const String &message) {
-	logMessage("[WRNING] " + message, true);
+	logMessage("[WARNING] " + message, true);
 }
 void LLog::error(const String &message) {
 	logMessage("[ERROR] " + message, true);

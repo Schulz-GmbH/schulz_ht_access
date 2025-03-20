@@ -6,6 +6,7 @@
 #include <ESPAsyncWebServer.h>
 
 #include "LLog.h"
+#include "WiFiManager.h"
 
 // Enum für die WebSocket-Events
 enum WsEvents { WS_EVT_SYSTEM, WS_EVT_LOG, WS_EVT_SERIAL };
@@ -32,5 +33,7 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
 
 // Prototyp für den WebSocket-Event-Handler:
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
+
+void scanNetworksTask(void *parameter);
 
 #endif

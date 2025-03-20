@@ -152,4 +152,6 @@ class WiFiManager {
 	void saveSavedNetworks();
 };
 
+extern WiFiManager wifiManager;
+
 #endif  // WIFI_MANAGER_H
