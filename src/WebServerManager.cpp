@@ -37,19 +37,18 @@ void WebServerManager::init() {
 	server.serveStatic("/", SD, "/www/html/").setDefaultFile("index.html");
 
 	// REST-Endpunkt Beispiel: Logdateien abrufen
-	server.on("/logfile", HTTP_GET, [](AsyncWebServerRequest *request) {
+	server.on("/logfile", HTTP_GET, [this](AsyncWebServerRequest *request) {
 		logger.info("[HTTP] HTTP-Anfrage erhalten: /logfile");
-		// serveLogFile(request); // ToDo: Implementierung
+		serveLogFile(request);
 	});
-
 	// Fallback (SPA Routing-Unterstützung)
 	server.onNotFound([](AsyncWebServerRequest *request) { request->send(SD, "/www/html/index.html", "text/html"); });
 
 	// Webserver starten
 	server.begin();
-	logger.info("Webserver und WebSocket-Server gestartet.");
+	logger.info("[HTTP] Webserver und WebSocket-Server gestartet.");
 	// Beispiel: Adresse des WebSocket-Servers ausgeben
-	logger.info("WebSocket erreichbar unter: ws://" + WiFi.softAPIP().toString() + "/ws");
+	logger.info("[HTTP] WebSocket erreichbar unter: ws://" + WiFi.softAPIP().toString() + "/ws");
 }
 
 /**
@@ -57,4 +56,32 @@ void WebServerManager::init() {
  */
 void WebServerManager::cleanupWebSocketClients() {
 	ws.cleanupClients();
+}
+
+void WebServerManager::serveLogFile(AsyncWebServerRequest *request) {
+	if (!request->hasParam("file")) {
+		request->send(400, "text/plain", "Missing file parameter");
+		return;
+	}
+
+	String fileName = "/logs/" + request->getParam("file")->value();
+
+	if (!SD.exists(fileName)) {
+		logger.error("[HTTP] " + request->getParam("file")->value() + " nicht gefunden!");
+		request->send(404, "text/plain", request->getParam("file")->value() + " nicht gefunden!");
+		return;
+	}
+
+	File file = SD.open(fileName, FILE_READ);
+	if (!file) {
+		logger.error("[HTTP] " + request->getParam("file")->value() + " konnte nicht geöffnet werden!");
+		request->send(500, "text/plain", "Fehler beim Öffnen des Logs " + request->getParam("file")->value() + "!");
+		return;
+	}
+
+	AsyncWebServerResponse *response = request->beginResponse(SD, fileName, "text/plain");
+	response->addHeader("Access-Control-Allow-Origin", "*");
+	response->addHeader("Access-Control-Allow-Methods", "GET, POST");
+	response->addHeader("Access-Control-Allow-Headers", "Content-Type");
+	request->send(response);
 }

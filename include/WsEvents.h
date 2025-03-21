@@ -35,5 +35,9 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
 void scanNetworksTask(void *parameter);
+void listLogFiles(AsyncWebSocketClient *client);
+void renameLogFile(AsyncWebSocketClient *client, const String &jsonData);
+void deleteSingleLogFile(AsyncWebSocketClient *client, const String &fileName);
+void deleteLogFiles(AsyncWebSocketClient *client, const String &jsonData);
 
 #endif

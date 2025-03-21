@@ -31,7 +31,7 @@ static bool checkDirectories() {
 
 	// Überprüfung des Verzeichnisses /www/html
 	if (!SD.exists("/www/html")) {
-		logger.error("Verzeichnis /www/html fehlt auf der SD-Karte!");
+		logger.error("[SD-CARD] Verzeichnis /www/html fehlt auf der SD-Karte!");
 		addStatus(STATUS_NO_HTML_DIR);
 		missingAnything = true;
 	} else {
@@ -40,7 +40,7 @@ static bool checkDirectories() {
 
 	// Überprüfung des Verzeichnisses /logs
 	if (!SD.exists("/logs")) {
-		logger.error("Verzeichnis /logs fehlt auf der SD-Karte!");
+		logger.error("[SD-CARD] Verzeichnis /logs fehlt auf der SD-Karte!");
 		addStatus(STATUS_NO_LOGS_DIR);
 		missingAnything = true;
 	} else {
@@ -64,7 +64,7 @@ void initSDCard() {
 	bool sdCardOk = SD.begin(SD_CS_PIN);
 
 	if (!sdCardOk) {
-		logger.error("SD-Karte konnte nicht initialisiert werden!");
+		logger.error("[SD-CARD] SD-Karte konnte nicht initialisiert werden!");
 		addStatus(STATUS_NO_SD_CARD);
 
 		removeStatus(STATUS_NO_HTML_DIR);
@@ -75,7 +75,7 @@ void initSDCard() {
 		return;
 	} else {
 		removeStatus(STATUS_NO_SD_CARD);
-		logger.info("SD-Karte erfolgreich initialisiert.");
+		logger.info("[SD-CARD] SD-Karte erfolgreich initialisiert.");
 	}
 
 	// Entferne den Initialisierungsstatus, da die Überprüfung abgeschlossen ist
@@ -104,7 +104,7 @@ void checkSDCard() {
 	bool sdCardOk = SD.begin(SD_CS_PIN);
 	if (!sdCardOk) {
 		// SD-Karte ist entfernt oder nicht mehr erreichbar
-		logger.error("SD-Karte nicht verfügbar!");
+		logger.error("[SD-CARD] SD-Karte nicht verfügbar!");
 		addStatus(STATUS_NO_SD_CARD);
 		// Die Überprüfung der Verzeichnisse macht keinen Sinn, daher werden diese Status entfernt
 		removeStatus(STATUS_NO_HTML_DIR);

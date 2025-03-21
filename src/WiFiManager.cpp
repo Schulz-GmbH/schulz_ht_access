@@ -35,9 +35,9 @@ void WiFiManager::loadConfig() {
 	staPreferences.end();
 
 	if (staSSID != "") {
-		logger.info("Geladene STA-Konfiguration: " + staSSID);
+		logger.info("[WiFi] Geladene STA-Konfiguration: " + staSSID);
 	} else {
-		logger.info("Keine gespeicherte STA-Konfiguration gefunden.");
+		logger.info("[WiFi] Keine gespeicherte STA-Konfiguration gefunden.");
 	}
 }
 
@@ -52,7 +52,7 @@ void WiFiManager::saveConfig() {
 	staPreferences.putString("ssid", staSSID);
 	staPreferences.putString("password", staPassword);
 	staPreferences.end();
-	logger.info("STA-Konfiguration gespeichert.");
+	logger.info("[WiFi] STA-Konfiguration gespeichert.");
 }
 
 /**
@@ -68,13 +68,13 @@ void WiFiManager::init() {
 
 	// Konfiguriere den Access Point mit den globalen IP-Definitionen
 	if (!WiFi.softAPConfig(AP_LOCAL_IP, AP_GATEWAY, AP_SUBNET)) {
-		logger.error("Fehler bei der Konfiguration des Access Points.");
+		logger.error("[WiFi] Fehler bei der Konfiguration des Access Points.");
 	}
 	if (!WiFi.softAP(AP_SSID, AP_PASSWORD)) {
-		logger.error("Access Point konnte nicht gestartet werden.");
+		logger.error("[WiFi] Access Point konnte nicht gestartet werden.");
 		addStatus(STATUS_WIFI_NOT_AVAILABLE);  // Fehlerstatus setzen
 	} else {
-		logger.info("Access Point gestartet! IP-Adresse: " + WiFi.softAPIP().toString());
+		logger.info("[WiFi] Access Point gestartet! IP-Adresse: " + WiFi.softAPIP().toString());
 		removeStatus(STATUS_WIFI_NOT_AVAILABLE);
 	}
 
@@ -82,7 +82,7 @@ void WiFiManager::init() {
 	// Zuerst: Falls eine STA-Konfiguration vorhanden ist, verwende diese.
 	if (staSSID != "") {
 		WiFi.begin(staSSID.c_str(), staPassword.c_str());
-		logger.info("Versuche, zum WLAN zu verbinden: " + staSSID);
+		logger.info("[WiFi] Versuche, zum WLAN zu verbinden: " + staSSID);
 	}
 	// Falls keine explizite STA-Konfiguration vorhanden ist, aber gespeicherte Netzwerke existieren,
 	// verwende das erste gespeicherte Netzwerk.
@@ -91,9 +91,9 @@ void WiFiManager::init() {
 		staPassword = savedNetworks[0].password;
 		saveConfig();  // Aktualisiere die STA-Konfiguration in den Preferences
 		WiFi.begin(staSSID.c_str(), staPassword.c_str());
-		logger.info("Keine STA-Konfiguration gesetzt. Verbinde mit gespeichertem Netzwerk: " + staSSID);
+		logger.info("[WiFi] Keine STA-Konfiguration gesetzt. Verbinde mit gespeichertem Netzwerk: " + staSSID);
 	} else {
-		logger.warn("Keine STA-Konfiguration gesetzt und keine gespeicherten Netzwerke vorhanden.");
+		logger.warn("[WiFi] Keine STA-Konfiguration gesetzt und keine gespeicherten Netzwerke vorhanden.");
 	}
 
 	// Versuche, die STA-Verbindung aufzubauen:
@@ -101,13 +101,13 @@ void WiFiManager::init() {
 	const unsigned long timeout = 10000;  // 10 Sekunden Timeout
 	while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < timeout) {
 		delay(500);
-		logger.debug("Verbinde mit STA...");
+		logger.debug("[WiFi] Verbinde mit STA...");
 	}
 
 	if (WiFi.status() == WL_CONNECTED) {
-		logger.info("STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
+		logger.info("[WiFi] STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
 	} else {
-		logger.error("STA Verbindung fehlgeschlagen!");
+		logger.error("[WiFi] STA Verbindung fehlgeschlagen!");
 	}
 }
 
@@ -124,7 +124,7 @@ void WiFiManager::setSTAConfig(const String &ssid, const String &password) {
 	staSSID = ssid;
 	staPassword = password;
 	saveConfig();
-	logger.info("STA-Konfiguration gesetzt: " + ssid);
+	logger.info("[WiFi] STA-Konfiguration gesetzt: " + ssid);
 }
 
 /**
@@ -176,11 +176,11 @@ bool WiFiManager::removeNetwork(const String &ssid) {
 		if (it->ssid == ssid) {
 			savedNetworks.erase(it);
 			saveSavedNetworks();  // Persistenz aktualisieren
-			logger.info("Netzwerk entfernt: " + ssid);
+			logger.info("[WiFi] Netzwerk entfernt: " + ssid);
 			return true;
 		}
 	}
-	logger.warn("Netzwerk nicht gefunden: " + ssid);
+	logger.warn("[WiFi] Netzwerk nicht gefunden: " + ssid);
 	return false;
 }
 
@@ -212,7 +212,7 @@ void WiFiManager::loadSavedNetworks() {
 		StaticJsonDocument<1024> doc;
 		DeserializationError error = deserializeJson(doc, json);
 		if (error) {
-			logger.error("Fehler beim Laden der Netzwerke: " + String(error.c_str()));
+			logger.error("[WiFi] Fehler beim Laden der Netzwerke: " + String(error.c_str()));
 			return;
 		}
 		JsonArray array = doc.as<JsonArray>();
@@ -222,9 +222,9 @@ void WiFiManager::loadSavedNetworks() {
 			nw.password = net["password"].as<String>();
 			savedNetworks.push_back(nw);
 		}
-		logger.info("Gespeicherte Netzwerke geladen.");
+		logger.info("[WiFi] Gespeicherte Netzwerke geladen.");
 	} else {
-		logger.info("Keine gespeicherten Netzwerke gefunden.");
+		logger.info("[WiFi] Keine gespeicherten Netzwerke gefunden.");
 	}
 }
 
@@ -245,12 +245,12 @@ void WiFiManager::saveSavedNetworks() {
 	}
 	String json;
 	serializeJson(doc, json);
-	logger.debug("Speichere Netzwerke JSON: " + json);
+	logger.debug("[WiFi] Speichere Netzwerke JSON: " + json);
 
 	netsPreferences.begin("wifi_nets", false);  // Schreib-Modus für Netzwerke
 	netsPreferences.putString("networks", json);
 	netsPreferences.end();
-	logger.info("Gespeicherte Netzwerke aktualisiert.");
+	logger.info("[WiFi] Gespeicherte Netzwerke aktualisiert.");
 }
 
 /**
@@ -267,53 +267,53 @@ bool WiFiManager::connectSTA() {
 	// Versuche, mit der gespeicherten STA-Konfiguration zu verbinden
 	if (staSSID != "") {
 		WiFi.begin(staSSID.c_str(), staPassword.c_str());
-		logger.info("Versuche, mit der gespeicherten STA-Konfiguration zu verbinden: " + staSSID);
+		logger.info("[WiFi] Versuche, mit der gespeicherten STA-Konfiguration zu verbinden: " + staSSID);
 
 		unsigned long startAttemptTime = millis();
 		const unsigned long timeout = 10000;  // 10 Sekunden Timeout
 		while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < timeout) {
 			delay(500);
-			logger.debug("Verbinde mit STA...");
+			logger.debug("[WiFi] Verbinde mit STA...");
 		}
 		if (WiFi.status() == WL_CONNECTED) {
-			logger.info("STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
+			logger.info("[WiFi] STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
 			return true;
 		} else {
-			logger.error("Verbindung mit gespeicherter STA-Konfiguration fehlgeschlagen.");
+			logger.error("[WiFi] Verbindung mit gespeicherter STA-Konfiguration fehlgeschlagen.");
 		}
 	} else {
-		logger.warn("Keine STA-Konfiguration vorhanden.");
+		logger.warn("[WiFi] Keine STA-Konfiguration vorhanden.");
 	}
 
 	// Führe einen Scan durch, um ein bekanntes Netzwerk zu finden
-	logger.info("Starte Scan, um ein bekanntes Netzwerk zu finden...");
+	logger.info("[WiFi] Starte Scan, um ein bekanntes Netzwerk zu finden...");
 	std::vector<ScannedNetwork> scanned = scanNetworks();
 	for (const auto &scannedNet : scanned) {
 		// Prüfe, ob eines der gesicherten Netzwerke im Scan-Ergebnis vorhanden ist.
 		for (const auto &savedNet : savedNetworks) {
 			if (scannedNet.ssid == savedNet.ssid) {
-				logger.info("Bekanntes Netzwerk gefunden: " + savedNet.ssid + ". Versuche Verbindung...");
+				logger.info("[WiFi] Bekanntes Netzwerk gefunden: " + savedNet.ssid + ". Versuche Verbindung...");
 				WiFi.begin(savedNet.ssid.c_str(), savedNet.password.c_str());
 				unsigned long scanAttemptTime = millis();
 				const unsigned long timeout = 10000;  // 10 Sekunden Timeout
 				while (WiFi.status() != WL_CONNECTED && millis() - scanAttemptTime < timeout) {
 					delay(500);
-					logger.debug("Verbinde mit " + savedNet.ssid + "...");
+					logger.debug("[WiFi] Verbinde mit " + savedNet.ssid + "...");
 				}
 				if (WiFi.status() == WL_CONNECTED) {
-					logger.info("STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
+					logger.info("[WiFi] STA verbunden! IP-Adresse: " + WiFi.localIP().toString());
 					// Aktualisiere die STA-Konfiguration
 					staSSID = savedNet.ssid;
 					staPassword = savedNet.password;
 					saveConfig();
 					return true;
 				} else {
-					logger.error("Verbindung zu " + savedNet.ssid + " fehlgeschlagen.");
+					logger.error("[WiFi] Verbindung zu " + savedNet.ssid + " fehlgeschlagen.");
 				}
 			}
 		}
 	}
-	logger.error("Keines der gespeicherten Netzwerke konnte verbunden werden.");
+	logger.error("[WiFi] Keines der gespeicherten Netzwerke konnte verbunden werden.");
 	return false;
 }
 
@@ -324,7 +324,7 @@ bool WiFiManager::connectSTA() {
  */
 void WiFiManager::disconnectSTA() {
 	WiFi.disconnect(true);
-	logger.info("STA-Verbindung getrennt.");
+	logger.info("[WiFi] STA-Verbindung getrennt.");
 }
 
 /**
@@ -336,10 +336,10 @@ void WiFiManager::disconnectSTA() {
  */
 std::vector<ScannedNetwork> WiFiManager::scanNetworks() {
 	std::vector<ScannedNetwork> results;
-	logger.info("Starte WLAN-Scan...");
+	logger.info("[WiFi] Starte WLAN-Scan...");
 	int n = WiFi.scanNetworks();
 	if (n == 0) {
-		logger.info("Keine Netzwerke gefunden.");
+		logger.info("[WiFi] Keine Netzwerke gefunden.");
 	} else {
 		for (int i = 0; i < n; i++) {
 			ScannedNetwork net;
@@ -349,7 +349,7 @@ std::vector<ScannedNetwork> WiFiManager::scanNetworks() {
 			net.channel = WiFi.channel(i);
 			results.push_back(net);
 		}
-		logger.info("Scan abgeschlossen: " + String(n) + " Netzwerke gefunden.");
+		logger.info("[WiFi] Scan abgeschlossen: " + String(n) + " Netzwerke gefunden.");
 	}
 	// Optional: WiFi.scanDelete(); // Löscht Ergebnisse, falls benötigt.
 	return results;

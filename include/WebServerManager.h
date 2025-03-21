@@ -17,6 +17,7 @@ class WebServerManager {
 
 	/// Räumt die WebSocket-Clients auf (soll im loop() regelmäßig aufgerufen werden)
 	void cleanupWebSocketClients();
+	void serveLogFile(AsyncWebServerRequest *request);
 
    private:
 	AsyncWebServer server;

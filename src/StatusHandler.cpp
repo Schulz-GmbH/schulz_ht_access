@@ -218,7 +218,7 @@ static void apStationMonitorTask(void *param) {
 				// Falls zuvor Geräte bekannt waren, dann leere die Liste und logge einmalig
 				if (!connectedMACs.empty()) {
 					connectedMACs.clear();
-					logger.info("Kein Gerät mit dem AP verbunden.");
+					logger.info("[WiFi] Kein Gerät mit dem AP verbunden.");
 				}
 			}
 		} else {
@@ -247,7 +247,7 @@ static void apStationMonitorTask(void *param) {
 					}
 					if (!found) {
 						// Neues Gerät gefunden – logge dessen MAC-Adresse
-						logger.info("Gerät mit dem AP verbunden. MAC: " + mac);
+						logger.info("[WiFi] Gerät mit dem AP verbunden. MAC: " + mac);
 					}
 				}
 				// Aktualisiere die Liste der bekannten Geräte

@@ -67,19 +67,19 @@ ParsedMessage parseWebSocketMessage(const char *jsonData) {
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 	switch (type) {
 		case WS_EVT_CONNECT:
-			logger.info("WebSocket-Client " + String(client->id()) + " verbunden.");
+			logger.info("[WebSocket] Client " + String(client->id()) + " verbunden.");
 			break;
 
 		case WS_EVT_DISCONNECT:
-			logger.info("WebSocket-Client" + String(client->id()) + " getrennt.");
+			logger.info("[WebSocket] Client" + String(client->id()) + " getrennt.");
 			break;
 
 		case WS_EVT_ERROR:
-			logger.info("WebSocket-Fehler bei Client " + String(client->id()) + ".");
+			logger.info("[WebSocket] Fehler bei Client " + String(client->id()) + ".");
 			break;
 
 		case WS_EVT_PONG:
-			logger.info("WebSocket-Ping/Pong von Client " + String(client->id()) + " .");
+			logger.info("[WebSocket] Ping/Pong von Client " + String(client->id()) + " .");
 			break;
 
 		case WS_EVT_DATA: {
@@ -95,12 +95,12 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 					handleSerialEvent(client, msg);
 					break;
 				default:
-					logger.warn("Unbekannter WebSocket-Event im DATA-Payload!");
+					logger.warn("[WebSocket] Unbekanntes Event im DATA-Payload!");
 			}
 			break;
 		}
 		default:
-			logger.warn("Unbekannter WebSocket-Event!");
+			logger.warn("[WebSocket] Unbekannter Event!");
 			break;
 	}
 }
@@ -112,8 +112,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
  * @param msg Die empfangene Nachricht als ParsedMessage.
  */
 void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
-	logger.info("handleSystemEvent: command=" + msg.command + ", key=" + msg.key + ", value=" + msg.value);
-
 	// Prüfe den Command-Typ und führe die entsprechenden Aktionen aus
 	if (msg.command == "wifi") {
 		if (msg.key == "get") {
@@ -218,8 +216,40 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
  * @param msg Die empfangene Nachricht als ParsedMessage.
  */
 void handleLogEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
-	logger.info("handleLogEvent: command=" + msg.command + ", key=" + msg.key + ", value=" + msg.value);
-	sendResponse(client, "log", "response", "success", "Log Event verarbeitet", "");
+	// Command-Auswertung:
+	if (msg.command == "debug") {
+		// 1) log debug <-> activate / deactivate / status
+		if (msg.key == "activate") {
+			LLog::setActive(true);
+			sendResponse(client, "log", "debug", "success", "Debug logging aktiviert", "");
+		} else if (msg.key == "deactivate") {
+			LLog::setActive(false);
+			sendResponse(client, "log", "debug", "success", "Debug logging deaktiviert", "");
+		} else if (msg.key == "status") {
+			bool active = LLog::isActive();
+			// `active` ist true/false – sende das als String
+			sendResponse(client, "log", "debug", "success", active ? "true" : "false", "");
+		} else {
+			sendResponse(client, "log", "debug", "error", "Unbekannter Key für 'debug'", "");
+		}
+	} else if (msg.command == "files") {
+		// 2) log files <-> list / rename / delete
+		if (msg.key == "list") {
+			// Liste aller .log-Dateien im Ordner /logs
+			listLogFiles(client);
+		} else if (msg.key == "rename") {
+			// Wert parsen => { "fileName": "...", "newFileName": "..." }
+			renameLogFile(client, msg.value);
+		} else if (msg.key == "delete") {
+			// Wert parsen => entweder "fileName": String oder "fileNames": Array
+			deleteLogFiles(client, msg.value);
+		} else {
+			sendResponse(client, "log", "files", "error", "Unbekannter Key für 'files'", "");
+		}
+	} else {
+		// Unbekanntes Command
+		sendResponse(client, "log", "response", "error", "Unbekannter Command bei 'log'", "");
+	}
 }
 
 /**
@@ -253,6 +283,14 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
 	jsonResponse["error"] = error;
 	String response;
 	serializeJson(jsonResponse, response);
+
+	if (details.length() > 0) {
+		logger.info(response);
+	} else if (error.length() > 0) {
+		logger.error(response);
+	} else {
+		logger.info("Keine Details oder Fehlermeldung.");
+	}
 	client->text(response);
 }
 
@@ -276,6 +314,13 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
 	jsonResponse["error"] = error;
 	String response;
 	serializeJson(jsonResponse, response);
+
+	if (details.size() == 0) {
+		logger.error(response);
+	} else {
+		logger.info(response);
+	}
+
 	client->text(response);
 }
 
@@ -301,8 +346,6 @@ void scanNetworksTask(void *parameter) {
 
 	// Prüfe, ob überhaupt Netzwerke gefunden wurden
 	if (scannedNetworks.empty()) {
-		logger.info("Keine Netzwerke gefunden.");
-		// Leeres Array zum Senden vorbereiten
 		JsonArray emptyArray;
 		sendResponse((AsyncWebSocketClient *)parameter, "system", "wifi", "success", emptyArray, "");
 	} else {
@@ -313,15 +356,163 @@ void scanNetworksTask(void *parameter) {
 			networkObj["rssi"] = net.rssi;
 			networkObj["encryptionType"] = net.encryptionType;
 			networkObj["channel"] = net.channel;
-
-			logger.info("SSID=" + net.ssid + " RSSI=" + String(net.rssi) + " Kanal=" + String(net.channel));
 		}
-
-		logger.info("Scan abgeschlossen: " + String(scannedNetworks.size()) + " Netzwerke gefunden.");
-
 		// Sende das komplette Array an den Client
 		sendResponse((AsyncWebSocketClient *)parameter, "system", "wifi", "success", networkList, "");
 	}
 	// Lösche den Task, wenn das Scannen abgeschlossen ist
 	vTaskDelete(NULL);
 }
+
+void listLogFiles(AsyncWebSocketClient *client) {
+	StaticJsonDocument<1024> doc;
+	JsonArray filesArray = doc.createNestedArray("files");
+
+	File dir = SD.open("/logs");
+	if (!dir) {
+		sendResponse(client, "log", "files", "error", "Verzeichnis /logs nicht gefunden oder nicht lesbar", "");
+		return;
+	}
+
+	// Durch alle Einträge iterieren
+	File entry;
+	while ((entry = dir.openNextFile())) {
+		if (!entry.isDirectory()) {
+			String fileName = entry.name();
+			// Wenn gewünscht, nur .log-Dateien erfassen:
+			if (fileName.endsWith(".log")) {
+				JsonObject fileObj = filesArray.createNestedObject();
+				fileObj["name"] = fileName;
+				fileObj["size"] = (unsigned long)entry.size();
+			}
+		}
+		entry.close();
+	}
+	dir.close();
+
+	// Sende das JSON
+	sendResponse(client, "log", "files", "success", filesArray, "");
+}
+
+void renameLogFile(AsyncWebSocketClient *client, const String &jsonValue) {
+	// JSON parsen
+	DynamicJsonDocument doc(256);
+	DeserializationError err = deserializeJson(doc, jsonValue);
+	if (err) {
+		sendResponse(client, "log", "files", "error", "JSON-Parsing fehlgeschlagen", err.c_str());
+		return;
+	}
+
+	String oldName = doc["fileName"] | "";
+	String newName = doc["newFileName"] | "";
+
+	// Safety-Checks
+	if (oldName.length() == 0 || newName.length() == 0) {
+		sendResponse(client, "log", "files", "error", "Alte oder neue Datei wurde nicht angegeben", "");
+		return;
+	}
+
+	// Beispiel: /logs/ + name
+	String oldPath = "/logs/" + oldName;
+	String newPath = "/logs/" + newName;
+
+	// Vorhanden?
+	if (!SD.exists(oldPath)) {
+		sendResponse(client, "log", "files", "error", "Alte Datei existiert nicht: " + oldName, "");
+		return;
+	}
+
+	// Umbenennen
+	bool success = SD.rename(oldPath, newPath);
+	if (!success) {
+		sendResponse(client, "log", "files", "error", "Konnte Datei nicht umbenennen", "");
+		return;
+	}
+
+	sendResponse(client, "log", "files", "success", "Datei umbenannt von " + oldName + " zu " + newName, "");
+}
+
+void deleteLogFiles(AsyncWebSocketClient *client, const String &jsonValue) {
+	DynamicJsonDocument doc(512);
+	DeserializationError err = deserializeJson(doc, jsonValue);
+	if (err) {
+		sendResponse(client, "log", "files", "error", "JSON-Parsing fehlgeschlagen", err.c_str());
+		return;
+	}
+
+	// Prüfe zuerst auf "fileName"
+	if (doc.containsKey("fileName") && doc["fileName"].is<String>()) {
+		String fileName = doc["fileName"].as<String>();
+		deleteSingleLogFile(client, fileName);
+	}
+	// Prüfe auf Array "fileNames"
+	else if (doc.containsKey("fileNames") && doc["fileNames"].is<JsonArray>()) {
+		JsonArray arr = doc["fileNames"].as<JsonArray>();
+		for (JsonVariant v : arr) {
+			if (v.is<String>()) {
+				deleteSingleLogFile(client, v.as<String>());
+			}
+		}
+		// Am Ende ggf. Erfolgsmeldung
+		sendResponse(client, "log", "files", "success", "Mehrere Dateien gelöscht", "");
+	} else {
+		// Nichts passendes gefunden
+		sendResponse(client, "log", "files", "error", "Weder fileName noch fileNames im JSON gefunden.", "");
+	}
+}
+
+void deleteSingleLogFile(AsyncWebSocketClient *client, const String &fileName) {
+	if (fileName.isEmpty()) return;
+
+	String path = "/logs/" + fileName;
+	if (!SD.exists(path)) {
+		sendResponse(client, "log", "files", "error", "", "Datei: " + path + " nicht vorhanden");
+		return;
+	}
+
+	bool removed = SD.remove(path);
+	if (removed) {
+		sendResponse(client, "log", "files", "success", "Datei: " + path + " gelöscht.", "");
+	} else {
+		sendResponse(client, "log", "files", "error", "", "Datei: " + path + " konnte nicht gelöscht werden");
+	}
+}
+
+// // Handler für System-Events
+// void handleSystemEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
+// 	if (msg.command == "wifi") {
+// 		if (msg.key == "get") {
+// 			sendWebSocketResponse(client, "system", "wifi", "get", "{\"ssid\":\"MyWiFi\",\"password\":\"*****\"}");
+// 		} else if (msg.key == "set") {
+// 			Serial.printf("Speichere WiFi-Daten: %s\n", msg.value.c_str());
+// 			sendWebSocketResponse(client, "system", "wifi", "set", "{\"status\":\"OK\"}");
+// 		}
+// 	} else if (msg.command == "version" && msg.key == "get") {
+// 		sendWebSocketResponse(client, "system", "version", "get", "{\"version\":\"1.0.0\"}");
+// 	}
+// }
+
+// // Handler für Log-Events
+// void handleLogEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
+// 	if (msg.command == "debug") {
+// 		if (msg.key == "activate") {
+// 			Serial.println("Debug-Logging aktiviert.");
+// 		} else if (msg.key == "deactivate") {
+// 			Serial.println("Debug-Logging deaktiviert.");
+// 		}
+// 	} else if (msg.command == "files" && msg.key == "list") {
+// 		sendWebSocketResponse(client, "log", "files", "list", "[\"log1.txt\",\"log2.txt\"]");
+// 	}
+// }
+
+// // Handler für Serial-Events
+// void handleSerialEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
+// 	if (msg.key == "connect") {
+// 		int baudRate = msg.value.toInt();
+// 		Serial.printf("Verbinde Serial mit Baudrate: %d\n", baudRate);
+// 	} else if (msg.key == "disconnect") {
+// 		Serial.println("Serial-Verbindung getrennt.");
+// 	} else if (msg.key == "send") {
+// 		Serial.printf("Sende über Serial: %s\n", msg.value.c_str());
+// 	}
+// }

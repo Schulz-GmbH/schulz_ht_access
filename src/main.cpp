@@ -17,17 +17,17 @@ void setup() {
 
 	Serial.begin(9600);
 
+	startStatusSystem();
+
+	// SD-Karte initialisieren (legt ggf. Status in Statusliste)
+	initSDCard();
+
 	preferences.begin("system", false);
 	// LLog::active = preferences.getBool("debug", false);
 	LLog::setActive(true);
 	preferences.end();
 
-	logger.info("System startet...");
-
-	startStatusSystem();
-
-	// SD-Karte initialisieren (legt ggf. Status in Statusliste)
-	initSDCard();
+	logger.info("[System] System startet...");
 
 	wifiManager = WiFiManager();
 
