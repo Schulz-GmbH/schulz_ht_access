@@ -5,7 +5,7 @@
  * Dieses Modul verwaltet mithilfe eines statischen Arrays und FreeRTOS-Tasks
  * verschiedene System-Status (z. B. INITIALIZING, READY, NO_SD_CARD, etc.) und zeigt
  * für jeden Status ein individuelles LED-Muster an. Ist kein Fehlerstatus aktiv,
- * wird automatisch STATUS_READY gesetzt und die grüne LED leuchtet dauerhaft.
+ * wird automatisch SYSTEM_READY gesetzt und die grüne LED leuchtet dauerhaft.
  *
  * @author Simon Macel Linden
  * @since 1.0.0
@@ -41,11 +41,10 @@ static TaskHandle_t apStationMonitorTaskHandle = NULL;
  *
  * @param delayMs Die Dauer (in Millisekunden), für die die grüne LED leuchten soll.
  */
-static void displayReadyState(int delayMs) {
+static void displayReadyState() {
 	digitalWrite(RED_LED, LOW);
 	digitalWrite(YELLOW_LED, LOW);
-	digitalWrite(GREEN_LED, HIGH);
-	vTaskDelay(pdMS_TO_TICKS(delayMs));
+	digitalWrite(GREEN_LED, LOW);
 }
 
 /**
@@ -84,37 +83,34 @@ static void doBlinkPattern(SystemStatus status) {
 	digitalWrite(GREEN_LED, LOW);
 	digitalWrite(YELLOW_LED, LOW);
 
-	int delaySlow = 500;    // Standardverzögerung
-	int delayFast = 100;    // Kurze Verzögerung
-	int delayPause = 1500;  // Standardverzögerung
+	const int delaySlow = 500;    // 500ms (langsames Blinken)
+	const int delayFast = 100;    // 100ms (schnelles Blinken)
+	const int delayPause = 1500;  // 1,5s Pause zwischen den Mustern
 
 	switch (status) {
-		case STATUS_INITIALIZING:
-			// Grünes kurzes Blinken (0,5 Sekunden)
+		// Systemstatus
+		case SYSTEM_INITIALIZING: {
+			// Grün blinkt 1× langsam (500ms an, 500ms aus)
 			digitalWrite(GREEN_LED, HIGH);
 			vTaskDelay(pdMS_TO_TICKS(delaySlow));
 			digitalWrite(GREEN_LED, LOW);
 			vTaskDelay(pdMS_TO_TICKS(delaySlow));
 			break;
-
-		case STATUS_READY:
-			displayReadyState(100);
+		}
+		case SYSTEM_READY: {
+			// Alle LEDs aus (keine Blinkaktion)
+			// -> Einfach nichts tun, kurze Pause
 			break;
-
-		case STATUS_NO_SD_CARD:
+		}
+		// SD-Karten-Status
+		case SD_CARD_NOT_AVAILABLE: {
+			// Rote LED dauerhaft an
 			digitalWrite(RED_LED, HIGH);
 			break;
-
-		case STATUS_NO_HTML_DIR:
-			for (int i = 0; i < 3; i++) {
-				digitalWrite(RED_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(RED_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
-			break;
-
-		case STATUS_NO_LOGS_DIR:
+		}
+		// Log-Status
+		case LOG_NO_DIR: {
+			// Rote LED blinkt 2× langsam
 			for (int i = 0; i < 2; i++) {
 				digitalWrite(RED_LED, HIGH);
 				vTaskDelay(pdMS_TO_TICKS(delaySlow));
@@ -122,16 +118,96 @@ static void doBlinkPattern(SystemStatus status) {
 				vTaskDelay(pdMS_TO_TICKS(delaySlow));
 			}
 			break;
+		}
 
-		case STATUS_WIFI_NOT_AVAILABLE:
-			digitalWrite(RED_LED, HIGH);
-			vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			digitalWrite(RED_LED, LOW);
+		case LOG_FILE_ERROR: {
+			// Gelbe LED blinkt 2× langsam
+			for (int i = 0; i < 2; i++) {
+				digitalWrite(YELLOW_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(YELLOW_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
 			break;
+		}
 
-		case STATUS_NO_WIFI_DEVICE:
+		case LOG_WRITE: {
+			// Grüne LED blinkt 2× schnell (100ms an/aus)
+			for (int i = 0; i < 2; i++) {
+				digitalWrite(GREEN_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delayFast));
+				digitalWrite(GREEN_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delayFast));
+			}
+			break;
+		}
+
+		// WEBSERVER Status
+		case WEBSERVER_NO_HTML_DIR: {
+			// Rote LED blinkt 3× langsam
+			for (int i = 0; i < 3; i++) {
+				digitalWrite(RED_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(RED_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
+			break;
+		}
+
+		// WLAN-Status
+		case WIFI_AP_NOT_AVAILABLE:
+		case WIFI_STA_NOT_AVAILABLE: {
+			// Rote LED blinkt 4× langsam
+			for (int i = 0; i < 4; i++) {
+				digitalWrite(RED_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(RED_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
+			break;
+		}
+
+		case WIFI_AP_NO_DEVICE: {
+			// Gelbe LED dauerhaft an
 			digitalWrite(YELLOW_LED, HIGH);
 			break;
+		}
+
+		case WIFI_AP_DEVICE_AVAILABLE: {
+			// Gelbe LED aus (keine Blinkaktion)
+			digitalWrite(YELLOW_LED, LOW);
+			break;
+		}
+
+		// Serial-Status
+		case SERIAL_NOT_CONNECTED: {
+			// Gelbe LED blinkt 3× langsam
+			for (int i = 0; i < 3; i++) {
+				digitalWrite(YELLOW_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+				digitalWrite(YELLOW_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delaySlow));
+			}
+			break;
+		}
+
+		case SERIAL_CONNECTED: {
+			// Grüne LED dauerhaft an
+			digitalWrite(GREEN_LED, HIGH);
+			break;
+		}
+
+		case SERIAL_SEND: {
+			// Grüne LED blinkt 3× schnell (100ms an/aus)
+			for (int i = 0; i < 3; i++) {
+				digitalWrite(GREEN_LED, HIGH);
+				vTaskDelay(pdMS_TO_TICKS(delayFast));
+				digitalWrite(GREEN_LED, LOW);
+				vTaskDelay(pdMS_TO_TICKS(delayFast));
+			}
+			break;
+		}
+		// DEFAULT: Kein passender Status
 		default:
 			vTaskDelay(pdMS_TO_TICKS(2000));
 			break;
@@ -170,13 +246,13 @@ static void statusTask(void *param) {
 		portEXIT_CRITICAL(&g_statusMux);
 
 		// Falls STATUS_NO_WIFI_DEVICE aktiv ist, direkt dessen Muster ausführen
-		if (isStatusActive(STATUS_NO_WIFI_DEVICE)) {
-			doBlinkPattern(STATUS_NO_WIFI_DEVICE);
+		if (isStatusActive(WIFI_AP_NO_DEVICE)) {
+			doBlinkPattern(WIFI_AP_NO_DEVICE);
 		}
 		// Falls kein Status aktiv ist -> READY anzeigen (grüne LED)
 		else if (localCount == 0) {
 			// Wenn kein Status aktiv ist -> LED grün an
-			displayReadyState(2000);
+			displayReadyState();
 		} else {
 			for (size_t i = 0; i < localCount; i++) {
 				doBlinkPattern(localArray[i]);
@@ -214,7 +290,7 @@ static void apStationMonitorTask(void *param) {
 			consecutiveDevicePresent = 0;
 			if (consecutiveNoDevice >= threshold) {
 				// Kein Gerät verbunden: Status setzen, falls noch nicht vorhanden
-				addStatus(STATUS_NO_WIFI_DEVICE);
+				addStatus(WIFI_AP_NO_DEVICE);
 				// Falls zuvor Geräte bekannt waren, dann leere die Liste und logge einmalig
 				if (!connectedMACs.empty()) {
 					connectedMACs.clear();
@@ -226,7 +302,7 @@ static void apStationMonitorTask(void *param) {
 			consecutiveNoDevice = 0;
 			if (consecutiveDevicePresent >= threshold) {
 				// Mindestens ein Gerät verbunden: Fehlerstatus entfernen
-				removeStatus(STATUS_NO_WIFI_DEVICE);
+				removeStatus(WIFI_AP_NO_DEVICE);
 
 				// Erstelle eine Liste der aktuell verbundenen MAC-Adressen
 				std::vector<String> newMACs;
@@ -274,8 +350,8 @@ void startStatusSystem() {
 	digitalWrite(GREEN_LED, LOW);
 	digitalWrite(YELLOW_LED, LOW);
 
-	// Falls gewünscht: Initialstatus "STATUS_INITIALIZING" direkt hinzufügen
-	addStatus(STATUS_INITIALIZING);
+	// Falls gewünscht: Initialstatus "SYSTEM_INITIALIZING" direkt hinzufügen
+	addStatus(SYSTEM_INITIALIZING);
 
 	if (statusTaskHandle == NULL) {
 		xTaskCreate(statusTask, "StatusTask", 4096, NULL, 1, &statusTaskHandle);
@@ -289,8 +365,8 @@ void startStatusSystem() {
 /**
  * @brief Fügt einen Status zur Liste hinzu, falls dieser noch nicht vorhanden ist.
  *
- * Wird ein Fehlerstatus (ungleich STATUS_READY) hinzugefügt, wird eventuell vorhandener
- * STATUS_READY entfernt, um anzuzeigen, dass ein Fehler vorliegt. Anschließend wird der Status
+ * Wird ein Fehlerstatus (ungleich SYSTEM_READY) hinzugefügt, wird eventuell vorhandener
+ * SYSTEM_READY entfernt, um anzuzeigen, dass ein Fehler vorliegt. Anschließend wird der Status
  * dem internen Array hinzugefügt, sofern noch Platz vorhanden ist.
  *
  * @param status Systemstatus.
@@ -300,10 +376,10 @@ void addStatus(SystemStatus status) {
 	bool wasInserted = false;
 	bool found = false;
 
-	// Entferne STATUS_READY, wenn ein Fehlerstatus hinzugefügt wird
-	if (status != STATUS_READY) {
+	// Entferne SYSTEM_READY, wenn ein Fehlerstatus hinzugefügt wird
+	if (status != SYSTEM_READY) {
 		for (size_t i = 0; i < g_statusCount; i++) {
-			if (g_statusArray[i] == STATUS_READY) {
+			if (g_statusArray[i] == SYSTEM_READY) {
 				for (size_t j = i; j < (g_statusCount - 1); j++) {
 					g_statusArray[j] = g_statusArray[j + 1];
 				}
@@ -335,7 +411,7 @@ void addStatus(SystemStatus status) {
  *
  * Diese Funktion sucht den übergebenen Status im internen Array und entfernt ihn,
  * indem sie die folgenden Elemente nachrückt. Falls danach keine Fehlerstatus mehr vorhanden
- * sind, wird automatisch STATUS_READY gesetzt.
+ * sind, wird automatisch SYSTEM_READY gesetzt.
  *
  * @param status Systemstatus.
  */

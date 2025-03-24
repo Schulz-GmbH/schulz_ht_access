@@ -12,17 +12,28 @@ Diese Dokumentation beschreibt die verschiedenen **Systemstatus-Codes**, die üb
 
 ## 🛠 **Systemstatus-Codes**
 
-| Status-Code                  | Bedeutung                                               | LED-Anzeige                              |
-| ---------------------------- | ------------------------------------------------------- | ---------------------------------------- |
-| `STATUS_INITIALIZING`        | System wird gestartet                                   | 🟩 **Grüne LED blinkt langsam**          |
-| `STATUS_READY`               | System bereit                                           | 🟩 **Grüne LED dauerhaft an**            |
-| `STATUS_NO_SD_CARD`          | SD-Karte fehlt                                          | 🟥 **Rote LED dauerhaft an**             |
-| `STATUS_NO_HTML_DIR`         | `/www/html` fehlt                                       | 🟥 **Rote LED blinkt 3x langsam**        |
-| `STATUS_NO_LOGS_DIR`         | `/logs` fehlt                                           | 🟥 **Rote LED blinkt 2x langsam**        |
-| `STATUS_LOG_FILE_ERROR`      | Log-Datei existiert, kann aber nicht beschrieben werden | 🟩 **Grüne LED an**, 🟨 **Gelbe LED an** |
-| `STATUS_LOG_WRITE`           | Log-Datei wird geschrieben                              | 🟨 **Gelbe LED blinkt schnell**          |
-| `STATUS_NO_DEVICE_CONNECTED` | Kein Gerät mit AP verbunden                             | 🟥 **Rote LED dauerhaft an**             |
-| `STATUS_DEVICE_CONNECTED`    | Ein Gerät ist mit dem AP verbunden                      | 🟥 **Rote LED aus**                      |
+| Status-Code                   | Bedeutung                                               | LED-Anzeige                                                                                 |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `SYSTEM_INITIALIZING`         | System wird gestartet                                   | 🟩 **Grün blinkt 1× langsam (500ms an/aus), dann Pause.**                                   |
+| `SYSTEM_READY`                | System ist bereit                                       | 🟩🟨🟥 **Alle LEDs aus.**                                                                   |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `SD_CARD_NOT_AVAILABLE`       | SD-Karte oder Modul fehlt                               | 🟥 **Rote LED dauerhaft an (Grün/Gelb aus).**                                               |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `LOG_NO_DIR`                  | /logs auf SD-Karte fehlt                                | 🟥 **Rot blinkt 2× langsam (500ms an/aus).**                                                |
+| `LOG_FILE_ERROR`              | Log-Datei vorhanden, kann aber nicht geschrieben werden | 🟨 **Gelb blinkt 2× langsam (500ms an/aus).**                                               |
+| `LOG_WRITE`                   | Schreibt gerade in die Log-Datei                        | 🟩 **Grün blinkt 2× schnell (100ms an/aus)**                                                |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `WEBSERVER_NO_HTML_DIR`       | /www/html auf SD-Karte fehlt                            | 🟥 **Rot blinkt 3× langsam (500 ms an, 500 ms aus).**                                       |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `WIFI_STA_NOT_AVAILABLE`      | (STA) Wifi nicht verfügbar                              | 🟥 **Rot blinkt 4× langsam (500 ms an, 500 ms aus).**                                       |
+| `WIFI_AP_NOT_AVAILABLE`       | AP nicht verfügbar                                      | 🟥 **Rot blinkt 4× langsam (500 ms an, 500 ms aus).**                                       |
+| `WIFI_AP_NO_DEVICE`           | Kein Gerät mit dem Access Point verbunden               | 🟨 **Gelb dauerhaft an (kein Blinken).**                                                    |
+| `WIFI_AP_DEVICE_AVAILABLE`    | Mindestens ein Gerät mit dem Access Point verbunden     | 🟨 **Gelb aus (keine Blinkaktion).**                                                        |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `SERIAL_NOT_CONNECTED`        | Externes serielles Gerät getrennt                       | 🟨 **Gelb blinkt 3× langsam (500ms an/aus).**                                               |
+| `SERIAL_CONNECTED`            | Externes serielles Gerät verbunden                      | 🟩 **Grün dauerhaft an (Rot/Gelb aus)..**                                                   |
+| `SERIAL_SEND`                 | Sendet eine Nachricht an das externe serielle Gerät     | 🟩 **Grün blinkt 3× schnell (100ms an/aus).**                                               |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 
 ---
 

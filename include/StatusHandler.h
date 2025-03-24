@@ -12,13 +12,26 @@
 
 // Status-Codes für das System
 enum SystemStatus {
-	STATUS_INITIALIZING,
-	STATUS_READY,
-	STATUS_NO_SD_CARD,
-	STATUS_NO_HTML_DIR,
-	STATUS_NO_LOGS_DIR,
-	STATUS_WIFI_NOT_AVAILABLE,
-	STATUS_NO_WIFI_DEVICE
+	SYSTEM_INITIALIZING,
+	SYSTEM_READY,
+	// SD-Karten-Status
+	SD_CARD_NOT_AVAILABLE,
+	// Log-Status
+	LOG_NO_DIR,
+	LOG_FILE_ERROR,
+	LOG_WRITE,
+	// Webserver-Status
+	WEBSERVER_NO_HTML_DIR,
+	// WLAN-Status
+	WIFI_STA_NOT_AVAILABLE,
+	WIFI_AP_NOT_AVAILABLE,
+	WIFI_AP_NO_DEVICE,
+	WIFI_AP_DEVICE_AVAILABLE,
+	// Serial-Status
+	SERIAL_NOT_CONNECTED,
+	SERIAL_CONNECTED,
+	SERIAL_SEND,
+
 	/*
 	 * Weitere Status hier ergänzen,
 	 * falls z.B. andere Fehlerzustände angezeigt werden sollen

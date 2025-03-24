@@ -72,10 +72,10 @@ void WiFiManager::init() {
 	}
 	if (!WiFi.softAP(AP_SSID, AP_PASSWORD)) {
 		logger.error("[WiFi] Access Point konnte nicht gestartet werden.");
-		addStatus(STATUS_WIFI_NOT_AVAILABLE);  // Fehlerstatus setzen
+		addStatus(WIFI_AP_NOT_AVAILABLE);  // Fehlerstatus setzen
 	} else {
 		logger.info("[WiFi] Access Point gestartet! IP-Adresse: " + WiFi.softAPIP().toString());
-		removeStatus(STATUS_WIFI_NOT_AVAILABLE);
+		removeStatus(WIFI_AP_NOT_AVAILABLE);
 	}
 
 	// Versuche, als Station zu verbinden.

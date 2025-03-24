@@ -40,7 +40,7 @@ void setup() {
 
 void loop() {
 	// vTaskDelay(pdMS_TO_TICKS(20000));
-	// removeStatus(STATUS_INITIALIZING);
+	// removeStatus(SYSTEM_INITIALIZING);
 
 	// Hier fortlaufend prüfen, ob SD-Karte & Ordner noch da sind.
 	// Je nach Anforderung z.B. alle paar Sekunden:
