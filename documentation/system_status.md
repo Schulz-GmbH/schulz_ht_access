@@ -35,6 +35,31 @@ Diese Dokumentation beschreibt die verschiedenen **Systemstatus-Codes**, die üb
 | `SERIAL_SEND`                 | Sendet eine Nachricht an das externe serielle Gerät     | 🟩 **Grün blinkt 3× schnell (100ms an/aus).**                                               |
 | ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 
+## 🛠 **Systemstatus-Codes (Priority)**
+
+| Status-Code                                 | Bedeutung                                               | LED-Anzeige                                           |
+| ------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
+| **`Kritischer Fehler: Rote LED dauerhaft`** |                                                         |                                                       |
+| `SD_CARD_NOT_AVAILABLE`                     | SD-Karte oder Modul fehlt                               | 🟥 **Rote LED dauerhaft an (Grün/Gelb aus).**         |
+| **`2) Kritischer Fehler (Rot blinkend)`**   |                                                         |                                                       |
+| `LOG_NO_DIR`                                | /logs auf SD-Karte fehlt                                | 🟥 **Rot blinkt 2× langsam (500ms an/aus).**          |
+| `WEBSERVER_NO_HTML_DIR`                     | /www/html auf SD-Karte fehlt                            | 🟥 **Rot blinkt 3× langsam (500 ms an, 500 ms aus).** |
+| **`3) Warning (Gelb dauerhaft)`**           |                                                         |                                                       |
+| `WIFI_AP_NO_DEVICE`                         | Kein Gerät mit dem Access Point verbunden               | 🟨 **Gelb dauerhaft an (kein Blinken).**              |
+| **`4) Warning (Gelb blinkend)`**            |                                                         |                                                       |
+| `SERIAL_NOT_CONNECTED`                      | Externes serielles Gerät getrennt                       | 🟨 **Gelb blinkt 1× langsam (500ms an/aus).**         |
+| `LOG_FILE_ERROR`                            | Log-Datei vorhanden, kann aber nicht geschrieben werden | 🟨 **Gelb blinkt 2× langsam (500ms an/aus).**         |
+| `WIFI_STA_NOT_AVAILABLE`                    | (STA) Wifi nicht verfügbar                              | 🟨 **Gelb blinkt 3× langsam (500 ms an/aus).**        |
+| `WIFI_AP_NOT_AVAILABLE`                     | AP nicht verfügbar                                      | 🟨 **Gelb blinkt 4× langsam (500 ms an/aus).**        |
+| **`5) Systemstatus (Ready, etc.)`**         |                                                         |                                                       |
+| `SERIAL_CONNECTED`                          | Externes serielles Gerät verbunden                      | 🟩 **Grün dauerhaft an (Rot/Gelb aus)..**             |
+| `SYSTEM_INITIALIZING`                       | System wird gestartet                                   | 🟩 **Grün blinkt 1× langsam (500ms an/aus).**         |
+| `LOG_WRITE`                                 | Schreibt gerade in die Log-Datei                        | 🟩 **Grün blinkt 2× schnell (100ms an/aus)**          |
+| `SERIAL_SEND`                               | Sendet eine Nachricht an das externe serielle Gerät     | 🟩 **Grün blinkt 3× schnell (100ms an/aus).**         |
+| **`6) Sonstiges`**                          |                                                         |                                                       |
+| `SYSTEM_READY`                              | System ist bereit                                       | 🟩🟨🟥 **Alle LEDs aus.**                             |
+| `WIFI_AP_DEVICE_AVAILABLE`                  | Mindestens ein Gerät mit dem Access Point verbunden     | 🟨 **Gelb aus (keine Blinkaktion).**                  |
+
 ---
 
 ## 📌 **Detaillierte LED-Anzeige**

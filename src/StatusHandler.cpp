@@ -15,7 +15,7 @@
 
 #include "LLog.h"
 
-#define MAX_STATUSES 6
+#define MAX_STATUSES 16
 
 /*
    FreeRTOS Task verwenden, um alle aktiven Status nacheinander anzuzeigen.
@@ -35,6 +35,49 @@ static portMUX_TYPE g_statusMux = portMUX_INITIALIZER_UNLOCKED;
 static TaskHandle_t statusTaskHandle = NULL;
 static TaskHandle_t apStationMonitorTaskHandle = NULL;
 
+int statusPriority(SystemStatus status) {
+	switch (status) {
+		// 1) Kritischer Fehler: Rote LED dauerhaft
+		case SD_CARD_NOT_AVAILABLE:
+			return 100;  // höchste Prio
+
+		// 2) Kritischer Fehler (Rot blinkend)
+		case LOG_NO_DIR:
+		case WEBSERVER_NO_HTML_DIR:
+			return 90;
+
+		// 3) Warning (Gelb dauerhaft)
+		case WIFI_AP_NO_DEVICE:
+			return 80;
+
+		// 4) Warning (Gelb blinkend)
+		case LOG_FILE_ERROR:
+		case WIFI_STA_NOT_AVAILABLE:
+		case WIFI_AP_NOT_AVAILABLE:
+		case SERIAL_NOT_CONNECTED:
+			return 70;
+
+		// 5) Alles andere (Grün, etc.)
+		case SERIAL_CONNECTED:
+		case SYSTEM_INITIALIZING:
+		case LOG_WRITE:
+		case SERIAL_SEND:
+			return 10;  // niedrige Prio
+
+		default:
+			return 1;  // Falls unbekannt
+	}
+}
+
+void blinkedLED(int ledPin, int counter, int delayMs) {
+	for (int i = 0; i < counter; i++) {
+		digitalWrite(ledPin, HIGH);
+		vTaskDelay(pdMS_TO_TICKS(delayMs));
+		digitalWrite(ledPin, LOW);
+		vTaskDelay(pdMS_TO_TICKS(delayMs));
+	}
+}
+/********************************************************************/
 /**
  * @brief Schaltet in den READY-Zustand: Grüne LED an, rote und gelbe LED aus,
  *        und führt eine Verzögerung aus.
@@ -88,125 +131,71 @@ static void doBlinkPattern(SystemStatus status) {
 	const int delayPause = 1500;  // 1,5s Pause zwischen den Mustern
 
 	switch (status) {
-		// Systemstatus
-		case SYSTEM_INITIALIZING: {
-			// Grün blinkt 1× langsam (500ms an, 500ms aus)
-			digitalWrite(GREEN_LED, HIGH);
-			vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			digitalWrite(GREEN_LED, LOW);
-			vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			break;
-		}
-		case SYSTEM_READY: {
-			// Alle LEDs aus (keine Blinkaktion)
-			// -> Einfach nichts tun, kurze Pause
-			break;
-		}
-		// SD-Karten-Status
+		// 1) Kritischer Fehler: Rote LED dauerhaft
 		case SD_CARD_NOT_AVAILABLE: {
 			// Rote LED dauerhaft an
 			digitalWrite(RED_LED, HIGH);
 			break;
 		}
-		// Log-Status
+		// 2) Kritischer Fehler (Rot blinkend)
 		case LOG_NO_DIR: {
 			// Rote LED blinkt 2× langsam
-			for (int i = 0; i < 2; i++) {
-				digitalWrite(RED_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(RED_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
+			blinkedLED(RED_LED, 2, delaySlow);
 			break;
 		}
-
-		case LOG_FILE_ERROR: {
-			// Gelbe LED blinkt 2× langsam
-			for (int i = 0; i < 2; i++) {
-				digitalWrite(YELLOW_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(YELLOW_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
-			break;
-		}
-
-		case LOG_WRITE: {
-			// Grüne LED blinkt 2× schnell (100ms an/aus)
-			for (int i = 0; i < 2; i++) {
-				digitalWrite(GREEN_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delayFast));
-				digitalWrite(GREEN_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delayFast));
-			}
-			break;
-		}
-
-		// WEBSERVER Status
 		case WEBSERVER_NO_HTML_DIR: {
-			// Rote LED blinkt 3× langsam
-			for (int i = 0; i < 3; i++) {
-				digitalWrite(RED_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(RED_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
+			blinkedLED(RED_LED, 3, delaySlow);
 			break;
 		}
-
-		// WLAN-Status
-		case WIFI_AP_NOT_AVAILABLE:
-		case WIFI_STA_NOT_AVAILABLE: {
-			// Rote LED blinkt 4× langsam
-			for (int i = 0; i < 4; i++) {
-				digitalWrite(RED_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(RED_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
-			break;
-		}
-
+		// 3) Warning (Gelb dauerhaft)
 		case WIFI_AP_NO_DEVICE: {
 			// Gelbe LED dauerhaft an
 			digitalWrite(YELLOW_LED, HIGH);
 			break;
 		}
+		// 4) Warning (Gelb blinkend)
+		case SERIAL_NOT_CONNECTED: {
+			blinkedLED(YELLOW_LED, 1, delaySlow);
+			break;
+		}
+		case LOG_FILE_ERROR: {
+			blinkedLED(YELLOW_LED, 2, delaySlow);
+			break;
+		}
+		case WIFI_STA_NOT_AVAILABLE: {
+			blinkedLED(YELLOW_LED, 3, delaySlow);
+			break;
+		}
+		case WIFI_AP_NOT_AVAILABLE: {
+			blinkedLED(YELLOW_LED, 4, delaySlow);
+			break;
+		}
+		// 5) Systemstatus (Ready, etc.)
+		case SERIAL_CONNECTED: {
+			digitalWrite(GREEN_LED, HIGH);
+			break;
+		}
+		case SYSTEM_INITIALIZING: {
+			blinkedLED(GREEN_LED, 1, delaySlow);
+			break;
+		}
+		case LOG_WRITE: {
+			blinkedLED(GREEN_LED, 2, delaySlow);
+			break;
+		}
+		case SERIAL_SEND: {
+			blinkedLED(GREEN_LED, 3, delaySlow);
+			break;
+		}
 
+		case SYSTEM_READY: {
+			break;
+		}
 		case WIFI_AP_DEVICE_AVAILABLE: {
-			// Gelbe LED aus (keine Blinkaktion)
 			digitalWrite(YELLOW_LED, LOW);
 			break;
 		}
 
-		// Serial-Status
-		case SERIAL_NOT_CONNECTED: {
-			// Gelbe LED blinkt 3× langsam
-			for (int i = 0; i < 3; i++) {
-				digitalWrite(YELLOW_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-				digitalWrite(YELLOW_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delaySlow));
-			}
-			break;
-		}
-
-		case SERIAL_CONNECTED: {
-			// Grüne LED dauerhaft an
-			digitalWrite(GREEN_LED, HIGH);
-			break;
-		}
-
-		case SERIAL_SEND: {
-			// Grüne LED blinkt 3× schnell (100ms an/aus)
-			for (int i = 0; i < 3; i++) {
-				digitalWrite(GREEN_LED, HIGH);
-				vTaskDelay(pdMS_TO_TICKS(delayFast));
-				digitalWrite(GREEN_LED, LOW);
-				vTaskDelay(pdMS_TO_TICKS(delayFast));
-			}
-			break;
-		}
 		// DEFAULT: Kein passender Status
 		default:
 			vTaskDelay(pdMS_TO_TICKS(2000));
@@ -231,12 +220,12 @@ static void doBlinkPattern(SystemStatus status) {
  */
 static void statusTask(void *param) {
 	for (;;) {
+		// 1) Kopie der aktiven Status anlegen
 		SystemStatus localArray[MAX_STATUSES];
 		size_t localCount = 0;
 
 		portENTER_CRITICAL(&g_statusMux);
 		localCount = g_statusCount;
-		// Grenzen checken, um Sicherheit zu haben
 		if (localCount > MAX_STATUSES) {
 			localCount = MAX_STATUSES;
 		}
@@ -245,19 +234,31 @@ static void statusTask(void *param) {
 		}
 		portEXIT_CRITICAL(&g_statusMux);
 
-		// Falls STATUS_NO_WIFI_DEVICE aktiv ist, direkt dessen Muster ausführen
-		if (isStatusActive(WIFI_AP_NO_DEVICE)) {
-			doBlinkPattern(WIFI_AP_NO_DEVICE);
-		}
-		// Falls kein Status aktiv ist -> READY anzeigen (grüne LED)
-		else if (localCount == 0) {
-			// Wenn kein Status aktiv ist -> LED grün an
+		// 2) Falls kein Status aktiv -> System ready
+		if (localCount == 0) {
+			// -> LED aus oder Grün an, je nach Definition:
 			displayReadyState();
-		} else {
-			for (size_t i = 0; i < localCount; i++) {
-				doBlinkPattern(localArray[i]);
+			// Kurze Pause und dann Schleife erneut
+			vTaskDelay(pdMS_TO_TICKS(2000));
+			continue;
+		}
+
+		// 3) Ermittle den Status mit der höchsten Priorität
+		SystemStatus highestStatus = localArray[0];
+		int highestPrio = statusPriority(highestStatus);
+
+		for (size_t i = 1; i < localCount; i++) {
+			int prio = statusPriority(localArray[i]);
+			if (prio > highestPrio) {
+				highestPrio = prio;
+				highestStatus = localArray[i];
 			}
 		}
+
+		// 4) Blinkmuster nur für diesen einen Status ausführen
+		doBlinkPattern(highestStatus);
+
+		// Danach loop erneut, um zu prüfen, ob sich was geändert hat
 	}
 }
 
