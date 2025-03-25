@@ -1,3 +1,30 @@
+/**
+ * @file LLog.cpp
+ * @brief Singleton-Modul zur Verwaltung von systemweitem Logging auf SD-Karte und serielle Schnittstelle.
+ *
+ * Das LLog-Modul stellt eine zentrale, einfache Möglichkeit bereit, Log-Ausgaben strukturiert
+ * und einheitlich zu erstellen. Dabei werden Logeinträge sowohl auf der seriellen Schnittstelle
+ * ausgegeben als auch dauerhaft in einer Logdatei auf einer SD-Karte gespeichert.
+ *
+ * Unterstützte Log-Level:
+ * - DEBUG
+ * - INFO
+ * - SYSTEM
+ * - WARNING
+ * - ERROR
+ *
+ * Das Modul unterstützt zudem das dynamische Aktivieren und Deaktivieren des Loggings. Beim Aktivieren
+ * des Loggings wird eine neue Logdatei mit Zeitstempel erstellt. Ist keine gültige Uhrzeit vorhanden
+ * (z.B. RTC nicht verfügbar), wird stattdessen eine eindeutige ID als Dateiname verwendet.
+ *
+ * Durch Nutzung des Singleton-Patterns ist eine systemweite, konsistente Nutzung gewährleistet.
+ *
+ * Zusätzlich bietet das Modul flexible Methoden zum Loggen mit oder ohne Zeilenumbruch und optionalem Zeitstempel.
+ *
+ * @author Simon Marcel Linden
+ * @since 1.0.0
+ */
+
 #include "LLog.h"
 
 // Globale Singleton-Instanz
@@ -8,13 +35,25 @@ bool LLog::m_active = false;  // Default (kann aber auch true sein)
 File LLog::m_logFile;
 String LLog::m_logFileName = "";
 
-// Singleton-Getter
+/**
+ * @brief Liefert die Singleton-Instanz des Loggers.
+ *
+ * Stellt sicher, dass während der Laufzeit nur eine einzige Instanz existiert.
+ *
+ * @return Referenz auf die LLog Singleton-Instanz.
+ */
 LLog &LLog::getInstance() {
 	static LLog instance;
 	return instance;
 }
 
-// Setter/Getter für den aktiven Modus
+/**
+ * @brief Aktiviert oder deaktiviert das Logging.
+ *
+ * Beim Aktivieren wird eine Logdatei erstellt und geöffnet. Beim Deaktivieren wird die Datei geschlossen.
+ *
+ * @param state true aktiviert Logging, false deaktiviert es.
+ */
 void LLog::setActive(bool state) {
 	// Wenn wir den Logger einschalten
 	if (state && !m_active) {
@@ -59,11 +98,20 @@ void LLog::setActive(bool state) {
 	m_active = state;
 }
 
+/**
+ * @brief Prüft, ob das Logging aktuell aktiv ist.
+ *
+ * @return true, wenn Logging aktiv; andernfalls false.
+ */
 bool LLog::isActive() {
 	return m_active;
 }
 
-// Zeitstempel generieren
+/**
+ * @brief Erstellt einen aktuellen Zeitstempel.
+ *
+ * @return Zeitstempel als String im Format "YYYY-MM-DD hh:mm:ss".
+ */
 String LLog::getTimestamp() {
 	time_t now = time(nullptr);
 	struct tm timeinfo;
@@ -75,10 +123,24 @@ String LLog::getTimestamp() {
 	return String(buffer);
 }
 
-// Generelle Log-Funktion ohne Level, aber mit Zeitstempel und optionalem Zeilenumbruch
-void LLog::logMessage(const String &message, bool newLine) {
+/**
+ * @brief Generelle Methode zum Loggen einer Nachricht.
+ *
+ * Kann optional Zeilenumbrüche und Zeitstempel hinzufügen.
+ *
+ * @param message Nachricht, die geloggt wird.
+ * @param newLine true für Zeilenumbruch, false ohne Zeilenumbruch.
+ * @param timestamp true für Zeitstempel, false ohne Zeitstempel.
+ */
+void LLog::logMessage(const String &message, bool newLine, bool timestamp) {
 	if (m_active) {
-		String logEntry = "[" + getTimestamp() + "] " + message;
+		String logEntry;
+		if (timestamp) {
+			// Zeitstempel hinzufügen
+			logEntry = "[" + getTimestamp() + "] " + message;
+		} else {
+			logEntry = " " + message;
+		}
 
 		// Seriell ausgeben
 		if (newLine) {
@@ -100,28 +162,51 @@ void LLog::logMessage(const String &message, bool newLine) {
 	}
 }
 
-// Logging-Methoden für verschiedene Log-Level
-void LLog::debug(const String &message) {
-	logMessage("[DEBUG] " + message, true);
-}
-void LLog::info(const String &message) {
-	logMessage("[INFO] " + message, true);
-}
-void LLog::system(const String &message) {
-	logMessage("[SYSTEM] " + message, true);
-}
-void LLog::warn(const String &message) {
-	logMessage("[WARNING] " + message, true);
-}
-void LLog::error(const String &message) {
-	logMessage("[ERROR] " + message, true);
+/**
+ * @brief Loggt eine DEBUG-Nachricht.
+ */
+void LLog::debug(const String &message, bool newLine) {
+	logMessage("[DEBUG]" + message, newLine, true);
 }
 
-// Neue Methoden für `print()` und `printLn()` (nutzen `logMessage()`)
-void LLog::print(const String &message) {
-	logMessage(message, false);  // Ohne Zeilenumbruch
+/**
+ * @brief Loggt eine INFO-Nachricht.
+ */
+void LLog::info(const String &message, bool newLine) {
+	logMessage("[INFO]" + message, newLine, true);
 }
 
-void LLog::println(const String &message) {
-	logMessage(message, true);  // Mit Zeilenumbruch
+/**
+ * @brief Loggt eine SYSTEM-Nachricht.
+ */
+void LLog::system(const String &message, bool newLine) {
+	logMessage("[SYSTEM]" + message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine WARNING-Nachricht.
+ */
+void LLog::warn(const String &message, bool newLine) {
+	logMessage("[WARNING]" + message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine ERROR-Nachricht.
+ */
+void LLog::error(const String &message, bool newLine) {
+	logMessage("[ERROR]" + message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine Nachricht ohne Zeilenumbruch und optional ohne Zeitstempel.
+ */
+void LLog::print(const String &message, bool timestamp) {
+	logMessage(message, false, timestamp);
+}
+
+/**
+ * @brief Loggt eine Nachricht mit Zeilenumbruch und optional ohne Zeitstempel.
+ */
+void LLog::println(const String &message, bool timestamp) {
+	logMessage(message, true, timestamp);
 }
