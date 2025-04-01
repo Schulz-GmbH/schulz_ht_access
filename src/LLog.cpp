@@ -1,10 +1,10 @@
 /**
  * @file LLog.cpp
- * @brief Singleton-Modul zur Verwaltung von systemweitem Logging auf SD-Karte und serielle Schnittstelle.
+ * @brief Singleton-Modul zur Verwaltung von systemweitem Logging auf LittleFS und serielle Schnittstelle.
  *
  * Das LLog-Modul stellt eine zentrale, einfache Möglichkeit bereit, Log-Ausgaben strukturiert
  * und einheitlich zu erstellen. Dabei werden Logeinträge sowohl auf der seriellen Schnittstelle
- * ausgegeben als auch dauerhaft in einer Logdatei auf einer SD-Karte gespeichert.
+ * ausgegeben als auch dauerhaft in einer Logdatei im Flash-Dateisystem (LittleFS) gespeichert.
  *
  * Unterstützte Log-Level:
  * - DEBUG
@@ -26,6 +26,9 @@
  */
 
 #include "LLog.h"
+
+#include <Arduino.h>
+#include <LittleFS.h>  // Statt SD verwenden wir jetzt LittleFS
 
 // Globale Singleton-Instanz
 LLog &logger = LLog::getInstance();
@@ -55,31 +58,31 @@ LLog &LLog::getInstance() {
  * @param state true aktiviert Logging, false deaktiviert es.
  */
 void LLog::setActive(bool state) {
-	// Wenn wir den Logger einschalten
 	if (state && !m_active) {
 		// Aktuelle Zeit abfragen
 		time_t now = time(nullptr);
 		struct tm timeinfo;
 		localtime_r(&now, &timeinfo);
 
-		// Dateiname vorbereiten
 		char filename[64];
-
-		// Prüfen, ob die Uhrzeit auf 1970 steht -> RTC/Internetzeit nicht vorhanden
 		if (timeinfo.tm_year + 1900 == 1970) {
-			// => stattdessen eine eindeutige ID anhängen (z. B. esp_random())
 			uint32_t randomID = esp_random();
-			snprintf(filename, sizeof(filename),
-			         "/logs/SystemLog-1970-01-01-%u.log",  // z. B. SystemLog-1970-01-01-123456789.log
-			         (unsigned)randomID);
+			snprintf(filename, sizeof(filename), "/logs/SystemLog-1970-01-01-%u.log", (unsigned)randomID);
+			snprintf(filename, sizeof(filename), "/logs/log_1970-01-01-%u.log", (unsigned)randomID);
 		} else {
-			// Uhrzeit plausibel, also normalen Dateinamen mit Datum
-			snprintf(filename, sizeof(filename), "/logs/SystemLog-%04d-%02d-%02d.log", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1,
-			         timeinfo.tm_mday);
+			snprintf(filename, sizeof(filename), "/logs/log_%04d-%02d-%02d.log", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday);
 		}
 
-		m_logFileName = filename;
-		m_logFile = SD.open(m_logFileName, FILE_APPEND);
+		m_logFileName = String(filename);
+		// Datei explizit anlegen, wenn sie noch nicht existiert
+		if (!LittleFS.exists(m_logFileName)) {
+			File tmp = LittleFS.open(m_logFileName, "w");
+			if (tmp) {
+				tmp.close();
+			}
+		}
+
+		m_logFile = LittleFS.open(m_logFileName, FILE_APPEND);
 
 		if (!m_logFile) {
 			Serial.println("[LLog] Fehler beim Öffnen der Logdatei!");
@@ -87,9 +90,7 @@ void LLog::setActive(bool state) {
 			Serial.print("[LLog] Schreibe in Logdatei: ");
 			Serial.println(m_logFileName);
 		}
-	}
-	// Wenn wir den Logger ausschalten und eine Datei offen ist
-	else if (!state && m_active) {
+	} else if (!state && m_active) {
 		if (m_logFile) {
 			m_logFile.close();
 		}
