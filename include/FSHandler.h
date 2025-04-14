@@ -1,13 +1,13 @@
-#ifndef SDCARD_H
-#define SDCARD_H
+#ifndef FSHANDLER_H
+#define FSHANDLER_H
 
-#include <SD.h>
+#include <LittleFS.h>
 
 #include "LLog.h"
 #include "StatusHandler.h"
 #include "global.h"
 
-void initSDCard();
-void checkSDCard();
+void initFS();
+void checkFS();
 
 #endif

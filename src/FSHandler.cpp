@@ -1,27 +1,26 @@
 /**
- * @file SDCard.cpp
- * @brief Modul zur Initialisierung und Überwachung der SD-Karte.
+ * @file FSHandler.cpp
+ * @brief Modul zur Initialisierung und Überwachung des LittleFS-Dateisystems.
  *
- * Dieses Modul übernimmt die Initialisierung der SD-Karte und prüft, ob
+ * Dieses Modul übernimmt die Initialisierung von LittleFS und prüft, ob
  * die erforderlichen Verzeichnisse "/www/html" und "/logs" vorhanden sind.
  * Bei Fehlern werden entsprechende Status (STATUS_NO_SD_CARD, WEBSERVER_NO_HTML_DIR,
  * LOG_NO_DIR) gesetzt bzw. entfernt. Sind alle Verzeichnisse vorhanden,
  * wird SYSTEM_READY aktiviert.
  *
- * Die Funktion initSDCard() führt eine einmalige Initialisierung und Überprüfung der
- * SD-Karte durch, während checkSDCard() zur regelmäßigen Überwachung (z. B. in der
- * loop()-Funktion) verwendet wird.
+ * Die Funktion initFS() führt eine einmalige Initialisierung und Überprüfung durch,
+ * während checkFS() zur regelmäßigen Überwachung (z. B. in der loop()-Funktion) verwendet wird.
  *
- * @author Simon MArcel Linden
+ * @author Simon Marcel Linden
  * @since 1.0.0
  */
 
-#include "SDCard.h"
+#include "FSHandler.h"
 
 /**
- * @brief Überprüft die erforderlichen Verzeichnisse auf der SD-Karte.
+ * @brief Überprüft die erforderlichen Verzeichnisse im LittleFS.
  *
- * Diese Funktion prüft, ob das Verzeichnis "/www/html" und "/logs" vorhanden sind.
+ * Diese Funktion prüft, ob die Verzeichnisse "/www/html" und "/logs" vorhanden sind.
  * Bei fehlenden Verzeichnissen werden die entsprechenden Fehlerstatus gesetzt.
  *
  * @return true, wenn mindestens ein Verzeichnis fehlt, andernfalls false.
@@ -29,18 +28,16 @@
 static bool checkDirectories() {
 	bool missingAnything = false;
 
-	// Überprüfung des Verzeichnisses /www/html
-	if (!SD.exists("/www/html")) {
-		logger.error("[SD-CARD] Verzeichnis /www/html fehlt auf der SD-Karte!");
+	if (!LittleFS.exists("/www/html")) {
+		logger.error("[LittleFS] Verzeichnis /www/html fehlt im Dateisystem!");
 		addStatus(WEBSERVER_NO_HTML_DIR);
 		missingAnything = true;
 	} else {
 		removeStatus(WEBSERVER_NO_HTML_DIR);
 	}
 
-	// Überprüfung des Verzeichnisses /logs
-	if (!SD.exists("/logs")) {
-		logger.error("[SD-CARD] Verzeichnis /logs fehlt auf der SD-Karte!");
+	if (!LittleFS.exists("/logs")) {
+		logger.error("[LittleFS] Verzeichnis /logs fehlt im Dateisystem!");
 		addStatus(LOG_NO_DIR);
 		missingAnything = true;
 	} else {
@@ -51,37 +48,41 @@ static bool checkDirectories() {
 }
 
 /**
- * @brief Initialisiert die SD-Karte und überprüft die erforderlichen Verzeichnisse.
+ * @brief Initialisiert das LittleFS-Dateisystem und überprüft die erforderlichen Verzeichnisse.
  *
- * Diese Funktion versucht, die SD-Karte zu initialisieren. Wird die SD-Karte nicht
+ * Diese Funktion versucht, das LittleFS-Dateisystem zu initialisieren. Wird es nicht
  * erkannt, wird der Fehlerstatus STATUS_NO_SD_CARD gesetzt und die Status für fehlende
  * Verzeichnisse (WEBSERVER_NO_HTML_DIR, LOG_NO_DIR) entfernt. Ist die Initialisierung
- * erfolgreich, wird überprüft, ob die Verzeichnisse "/www/html" und "/logs" vorhanden sind.
- * Fehlt eines der Verzeichnisse, wird der entsprechende Fehlerstatus gesetzt. Sind beide
- * Verzeichnisse vorhanden, so wird SYSTEM_READY aktiviert.
+ * erfolgreich, wird geprüft, ob die Verzeichnisse vorhanden sind.
+ *
+ * Fehlt eines der Verzeichnisse, wird der entsprechende Fehlerstatus gesetzt.
+ * Sind beide Verzeichnisse vorhanden, so wird SYSTEM_READY aktiviert.
  */
-void initSDCard() {
-	bool sdCardOk = SD.begin(SD_CS_PIN);
+void initFS() {
+	bool fsOk = LittleFS.begin();
 
-	if (!sdCardOk) {
-		logger.error("[SD-CARD] SD-Karte konnte nicht initialisiert werden!");
-		addStatus(SD_CARD_NOT_AVAILABLE);
-
+	if (!fsOk) {
+		logger.error("[LittleFS] Dateisystem konnte nicht initialisiert werden!");
+		addStatus(FS_NOT_AVAILABLE);
 		removeStatus(WEBSERVER_NO_HTML_DIR);
 		removeStatus(LOG_NO_DIR);
-		// Entferne SYSTEM_INITIALIZING, da die Initialisierung abgeschlossen ist
 		removeStatus(SYSTEM_INITIALIZING);
-
 		return;
 	} else {
-		removeStatus(SD_CARD_NOT_AVAILABLE);
-		logger.info("[SD-CARD] SD-Karte erfolgreich initialisiert.");
+		removeStatus(FS_NOT_AVAILABLE);
+		logger.info("[LittleFS] Dateisystem erfolgreich initialisiert.");
 	}
 
-	// Entferne den Initialisierungsstatus, da die Überprüfung abgeschlossen ist
+	// Verzeichnisse anlegen, falls nicht vorhanden:
+	if (!LittleFS.exists("/www/html")) {
+		LittleFS.mkdir("/www/html");
+	}
+	if (!LittleFS.exists("/logs")) {
+		LittleFS.mkdir("/logs");
+	}
+
 	removeStatus(SYSTEM_INITIALIZING);
 
-	// Falls alle Verzeichnisse vorhanden sind, wird SYSTEM_READY gesetzt
 	if (!checkDirectories()) {
 		addStatus(SYSTEM_READY);
 	} else {
@@ -90,33 +91,26 @@ void initSDCard() {
 }
 
 /**
- * @brief Überprüft regelmäßig den Zustand der SD-Karte und der erforderlichen Verzeichnisse.
+ * @brief Überprüft regelmäßig den Zustand des Dateisystems und der erforderlichen Verzeichnisse.
  *
- * Diese Funktion wird beispielsweise in der loop()-Funktion aufgerufen, um den aktuellen
- * Zustand der SD-Karte zu überwachen. Dabei wird erneut versucht, die SD-Karte zu initialisieren.
- * Ist die SD-Karte nicht mehr verfügbar, wird STATUS_NO_SD_CARD gesetzt und die anderen
- * Verzeichnis-Status entfernt. Andernfalls werden die Verzeichnisse "/www/html" und "/logs"
- * überprüft. Fehlende Verzeichnisse führen zur Setzung der entsprechenden Fehlerstatus.
+ * Diese Funktion wird z. B. in der loop()-Funktion aufgerufen, um den aktuellen
+ * Zustand des Dateisystems zu überwachen. Dabei wird erneut versucht,
+ * LittleFS zu initialisieren. Ist es nicht mehr verfügbar, wird STATUS_NO_SD_CARD
+ * gesetzt und die anderen Verzeichnis-Status entfernt.
  */
+void checkFS() {
+	bool fsOk = LittleFS.begin();
 
-void checkSDCard() {
-	// Einfachheitshalber wird hier erneut SD.begin() aufgerufen.
-	bool sdCardOk = SD.begin(SD_CS_PIN);
-	if (!sdCardOk) {
-		// SD-Karte ist entfernt oder nicht mehr erreichbar
-		logger.error("[SD-CARD] SD-Karte nicht verfügbar!");
-		addStatus(SD_CARD_NOT_AVAILABLE);
-		// Die Überprüfung der Verzeichnisse macht keinen Sinn, daher werden diese Status entfernt
+	if (!fsOk) {
+		logger.error("[LittleFS] Dateisystem nicht verfügbar!");
+		addStatus(FS_NOT_AVAILABLE);
 		removeStatus(WEBSERVER_NO_HTML_DIR);
 		removeStatus(LOG_NO_DIR);
-
 		return;
 	} else {
-		// SD-Karte ist noch vorhanden
-		removeStatus(SD_CARD_NOT_AVAILABLE);
+		removeStatus(FS_NOT_AVAILABLE);
 	}
 
-	// Falls alle Verzeichnisse vorhanden sind, wird SYSTEM_READY gesetzt
 	if (!checkDirectories()) {
 		addStatus(SYSTEM_READY);
 	} else {
