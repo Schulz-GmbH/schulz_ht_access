@@ -18,6 +18,8 @@
 
 #include "WebServerManager.h"
 
+#include <LittleFS.h>
+
 /**
  * @brief Konstruktor für WebServerManager.
  *
@@ -29,20 +31,46 @@ WebServerManager::WebServerManager(uint16_t port) : server(port), ws("/ws") {
 }
 
 void WebServerManager::init() {
+	// FFat mounten
+	if (!LittleFS.begin()) {
+		logger.error("[HTTP] LittleFS konnte nicht gemountet werden!");
+		return;
+	}
+	logger.info("[HTTP] LittleFS erfolgreich gemountet.");
 	// WebSocket-Event-Handler registrieren
 	ws.onEvent(onEvent);
 	server.addHandler(&ws);
 
 	// Statische Dateien bereitstellen (SPA)
-	server.serveStatic("/", SD, "/www/html/").setDefaultFile("index.html");
+	server.serveStatic("/", LittleFS, "/www/html").setDefaultFile("index.html");
 
 	// REST-Endpunkt Beispiel: Logdateien abrufen
 	server.on("/logfile", HTTP_GET, [this](AsyncWebServerRequest *request) {
 		logger.info("[HTTP] HTTP-Anfrage erhalten: /logfile");
-		serveLogFile(request);
+		// serveLogFile(request);
+		request->send(LittleFS, "/log.txt", "text/plain");
 	});
+
+	server.on("/logs", HTTP_GET, [](AsyncWebServerRequest *request) {
+		String output = "<ul>";
+		File root = LittleFS.open("/logs");
+		if (!root || !root.isDirectory()) {
+			request->send(500, "text/html", "Log-Verzeichnis nicht gefunden!");
+			return;
+		}
+
+		File file = root.openNextFile();
+		while (file) {
+			output += "<li>" + String(file.name()) + " (" + String(file.size()) + " Bytes)</li>";
+			file = root.openNextFile();
+		}
+		output += "</ul>";
+
+		request->send(200, "text/html", output);
+	});
+
 	// Fallback (SPA Routing-Unterstützung)
-	server.onNotFound([](AsyncWebServerRequest *request) { request->send(SD, "/www/html/index.html", "text/html"); });
+	server.onNotFound([](AsyncWebServerRequest *request) { request->send(LittleFS, "/www/html/index.html", "text/html"); });
 
 	// Webserver starten
 	server.begin();
