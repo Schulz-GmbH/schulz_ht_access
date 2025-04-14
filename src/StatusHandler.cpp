@@ -13,6 +13,8 @@
 
 #include "StatusHandler.h"
 
+#include <Arduino.h>
+
 #include "LLog.h"
 
 #define MAX_STATUSES 16
@@ -38,7 +40,7 @@ static TaskHandle_t apStationMonitorTaskHandle = NULL;
 int statusPriority(SystemStatus status) {
 	switch (status) {
 		// 1) Kritischer Fehler: Rote LED dauerhaft
-		case SD_CARD_NOT_AVAILABLE:
+		case FS_NOT_AVAILABLE:
 			return 100;  // höchste Prio
 
 		// 2) Kritischer Fehler (Rot blinkend)
@@ -132,7 +134,7 @@ static void doBlinkPattern(SystemStatus status) {
 
 	switch (status) {
 		// 1) Kritischer Fehler: Rote LED dauerhaft
-		case SD_CARD_NOT_AVAILABLE: {
+		case FS_NOT_AVAILABLE: {
 			// Rote LED dauerhaft an
 			digitalWrite(RED_LED, HIGH);
 			break;
@@ -359,7 +361,7 @@ void startStatusSystem() {
 	}
 
 	if (apStationMonitorTaskHandle == NULL) {
-		xTaskCreate(apStationMonitorTask, "APStationMonitor", 2048, NULL, 1, &apStationMonitorTaskHandle);
+		xTaskCreate(apStationMonitorTask, "APStationMonitor", 4096, NULL, 1, &apStationMonitorTaskHandle);
 	}
 }
 

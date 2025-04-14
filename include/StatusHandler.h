@@ -14,8 +14,8 @@
 enum SystemStatus {
 	SYSTEM_INITIALIZING,
 	SYSTEM_READY,
-	// SD-Karten-Status
-	SD_CARD_NOT_AVAILABLE,
+	// Filesystem-Status
+	FS_NOT_AVAILABLE,
 	// Log-Status
 	LOG_NO_DIR,
 	LOG_FILE_ERROR,
