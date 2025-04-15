@@ -20,11 +20,13 @@
 
 #include "WsEvents.h"
 
+#include "LittleFS.h"
+
 /**
- * @brief Bestimmt den WebSocket-Ereignistyp aus einem String.
+ * @brief Ermittelt den Typ eines WebSocket-Events anhand eines Strings.
  *
- * @param type String, der den Ereignistyp repräsentiert.
- * @return Der passende WsEvents-Enum-Wert.
+ * @param type Zeichenkette wie "system", "log" oder "serial".
+ * @return Der zugehörige WsEvents-Wert.
  */
 WsEvents getEventType(const String &type) {
 	if (type == "system") return WS_EVT_SYSTEM;
@@ -34,10 +36,10 @@ WsEvents getEventType(const String &type) {
 }
 
 /**
- * @brief Parst eine WebSocket-Nachricht im JSON-Format in eine ParsedMessage-Struktur.
+ * @brief Parst eine JSON-WebSocket-Nachricht in eine ParsedMessage-Struktur.
  *
- * @param jsonData Eingehende JSON-formatierte Nachricht.
- * @return ParsedMessage mit extrahierten Daten.
+ * @param jsonData Eingehende JSON-Daten.
+ * @return ParsedMessage-Struktur mit Event-Typ, Kommando, Key und Wert.
  */
 ParsedMessage parseWebSocketMessage(const char *jsonData) {
 	ParsedMessage msg;
@@ -55,14 +57,14 @@ ParsedMessage parseWebSocketMessage(const char *jsonData) {
 }
 
 /**
- * @brief WebSocket Event-Handler für Verbindung, Datenempfang, Trennung und Fehler.
+ * @brief Haupt-Event-Dispatcher für WebSocket-Ereignisse.
  *
- * @param server WebSocket-Server-Instanz.
- * @param client WebSocket-Client, der das Ereignis ausgelöst hat.
- * @param type Ereignistyp (Verbindung, Trennung, Datenempfang, Fehler).
- * @param arg Zusätzliche Argumente (nicht genutzt).
- * @param data Empfangene Daten.
- * @param len Länge der empfangenen Daten.
+ * @param server WebSocket-Server.
+ * @param client Aktueller Client.
+ * @param type Typ des WebSocket-Ereignisses.
+ * @param arg Zusätzliche Daten (nicht verwendet).
+ * @param data Nachrichtendaten.
+ * @param len Länge der Nachrichtendaten.
  */
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 	switch (type) {
@@ -106,7 +108,14 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 }
 
 /**
- * @brief Behandelt "system"-Ereignisse vom WebSocket.
+ * @brief Verarbeitet WebSocket-Nachrichten vom Typ "system".
+ *
+ * Diese Funktion wertet das `command`- und `key`-Feld der empfangenen Nachricht aus
+ * und führt entsprechende Systemaktionen durch, etwa zur Verwaltung der WLAN-Verbindung.
+ *
+ * Unterstützte Kommandos:
+ * - `wifi` mit `key`: get, set, status, connect, disconnect, enable, disable, list, scan, add, remove
+ * - `version` mit `key`: get
  *
  * @param client Client, der das Ereignis gesendet hat.
  * @param msg Die empfangene Nachricht als ParsedMessage.
@@ -115,59 +124,48 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 	// Prüfe den Command-Typ und führe die entsprechenden Aktionen aus
 	if (msg.command == "wifi") {
 		if (msg.key == "get") {
-			// Liefert die SSID und das Passwort
 			String ssid, password;
-			wifiManager.getSTAConfig(ssid, password);
+			wifiManager.getNetwork(ssid);
 
 			StaticJsonDocument<256> doc;
 			JsonArray details = doc.createNestedArray("details");
-			details.add(ssid);      // SSID als erstes Element
-			details.add(password);  // Passwort als zweites Element
+			details.add(ssid);
 
-			// Antwort senden mit Array
 			sendResponse(client, "system", "wifi", "success", details, "");
 		} else if (msg.key == "set") {
-			// Setzt SSID und Passwort
 			DynamicJsonDocument doc(1024);
 			deserializeJson(doc, msg.value);
 			String ssid = doc["ssid"];
 			String password = doc["password"];
-			wifiManager.setSTAConfig(ssid, password);
+			// wifiManager.saveConfig();
 			sendResponse(client, "system", "wifi", "success", "SSID und Passwort gesetzt", "");
 		} else if (msg.key == "status") {
-			// Überprüfen, ob das STA verbunden ist oder nicht
+			uint8_t mode = WiFi.getMode();
 			String connectionStatus;
-			if (WiFi.status() == WL_CONNECTED) {
-				connectionStatus = "true";
+
+			if (mode == WIFI_OFF || mode == WIFI_AP) {
+				connectionStatus = "disabled";
 			} else {
-				connectionStatus = "false";
+				connectionStatus = WiFi.status() == WL_CONNECTED ? "connected" : "disconnected";
 			}
-
-			// Antwort senden
-			sendResponse(client, "system", "response", "success", connectionStatus, "");
-
+			sendResponse(client, "system", "wifi", "status", connectionStatus, "");
 		} else if (msg.key == "connect") {
-			// Verbindet das Wifi mit den gespeicherten Zugangsdaten
-			if (wifiManager.connectSTA()) {
+			if (wifiManager.connect()) {
 				sendResponse(client, "system", "wifi", "success", "Verbindung erfolgreich", "");
 			} else {
 				sendResponse(client, "system", "wifi", "error", "Verbindung fehlgeschlagen", "");
 			}
 		} else if (msg.key == "disconnect") {
-			// Trennt die Verbindung zum Wifi
-			wifiManager.disconnectSTA();
+			wifiManager.disconnect();
 			sendResponse(client, "system", "wifi", "success", "Verbindung getrennt", "");
 		} else if (msg.key == "enable") {
-			// Aktiviert Wifi
 			WiFi.mode(WIFI_AP_STA);
 			sendResponse(client, "system", "wifi", "success", "Wifi aktiviert", "");
 		} else if (msg.key == "disable") {
-			// Deaktiviert Wifi
 			WiFi.mode(WIFI_OFF);
 			sendResponse(client, "system", "wifi", "success", "Wifi deaktiviert", "");
 		} else if (msg.key == "list") {
-			// Liefert ein Array mit allen gespeicherten Netzwerken
-			std::vector<WiFiNetwork> savedNetworks = wifiManager.getSavedNetworks();
+			std::vector<WiFiNetwork> savedNetworks = wifiManager.listNetwork();
 
 			StaticJsonDocument<1024> doc;
 			JsonArray networkList = doc.to<JsonArray>();
@@ -185,7 +183,6 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 		} else if (msg.key == "scan") {
 			xTaskCreate(scanNetworksTask, "ScanNetworks", 8192, client, 1, NULL);
 		} else if (msg.key == "add") {
-			// Fügt ein Netzwerk zu den bekannten Netzwerken hinzu
 			DynamicJsonDocument doc(1024);
 			deserializeJson(doc, msg.value);
 			String ssid = doc["ssid"];
@@ -193,7 +190,6 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 			wifiManager.addNetwork(ssid, password);
 			sendResponse(client, "system", "wifi", "success", "Netzwerk hinzugefügt", "");
 		} else if (msg.key == "remove") {
-			// Entfernt ein Netzwerk aus den bekannten Netzwerken
 			String ssid = msg.value;
 			if (wifiManager.removeNetwork(ssid)) {
 				sendResponse(client, "system", "wifi", "success", "Netzwerk entfernt", "");
@@ -202,7 +198,6 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 			}
 		}
 	} else if (msg.command == "version" && msg.key == "get") {
-		// Gibt die aktuelle Firmware-Version zurück
 		sendResponse(client, "system", "version", "success", FIRMWARE_VERSION, "");
 	} else {
 		sendResponse(client, "system", "response", "error", "Unbekannter Command oder Key", "");
@@ -210,10 +205,23 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 }
 
 /**
- * @brief Behandelt "log"-Ereignisse vom WebSocket.
+ * @brief Verarbeitet WebSocket-Nachrichten vom Typ "log".
  *
- * @param client Client, der das Ereignis gesendet hat.
- * @param msg Die empfangene Nachricht als ParsedMessage.
+ * Diese Funktion verarbeitet WebSocket-Nachrichten mit dem Ereignistyp "log".
+ * Sie unterstützt folgende Kommandos:
+ *
+ * - `debug`:
+ *   - `activate`: Aktiviert das Debug-Logging.
+ *   - `deactivate`: Deaktiviert das Debug-Logging.
+ *   - `status`: Gibt zurück, ob das Debug-Logging aktiv ist.
+ *
+ * - `files`:
+ *   - `list`: Listet alle Logdateien im `/logs`-Verzeichnis.
+ *   - `rename`: Bennennt eine vorhandene Logdatei um.
+ *   - `delete`: Löscht eine einzelne oder mehrere Logdateien.
+ *
+ * @param client Der WebSocket-Client, von dem das Ereignis empfangen wurde.
+ * @param msg Die parste WebSocket-Nachricht.
  */
 void handleLogEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 	// Command-Auswertung:
@@ -227,7 +235,6 @@ void handleLogEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 			sendResponse(client, "log", "debug", "success", "Debug logging deaktiviert", "");
 		} else if (msg.key == "status") {
 			bool active = LLog::isActive();
-			// `active` ist true/false – sende das als String
 			sendResponse(client, "log", "debug", "success", active ? "true" : "false", "");
 		} else {
 			sendResponse(client, "log", "debug", "error", "Unbekannter Key für 'debug'", "");
@@ -253,10 +260,23 @@ void handleLogEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 }
 
 /**
- * @brief Behandelt "serial"-Ereignisse vom WebSocket.
+ * @brief Verarbeitet WebSocket-Nachrichten vom Typ "serial".
  *
- * @param client Client, der das Ereignis gesendet hat.
- * @param msg Die empfangene Nachricht als ParsedMessage.
+ * Diese Funktion dient aktuell als Platzhalter für zukünftige Funktionen zur Steuerung oder
+ * Kommunikation über die serielle Schnittstelle. Sie verarbeitet WebSocket-Nachrichten mit dem
+ * Ereignistyp `WS_EVT_SERIAL`, analysiert die enthaltenen Kommandos und Schlüssel,
+ * und führt entsprechende Aktionen aus.
+ *
+ * Derzeit wird lediglich der Empfang protokolliert und eine generische Erfolgsmeldung
+ * an den Client zurückgeschickt.
+ *
+ * Unterstützte Felder in der Nachricht:
+ * - `command`: Der auszuführende Befehl (aktuell ohne weitere Verarbeitung).
+ * - `key`: Weitere Spezifikation des Befehls.
+ * - `value`: Optionaler Wert zur Ausführung oder Konfiguration.
+ *
+ * @param client Zeiger auf den WebSocket-Client, der das Ereignis gesendet hat.
+ * @param msg Die parste Nachricht im Format einer `ParsedMessage`-Struktur.
  */
 void handleSerialEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 	logger.info("handleSerialEvent: command=" + msg.command + ", key=" + msg.key + ", value=" + msg.value);
@@ -264,7 +284,7 @@ void handleSerialEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 }
 
 /**
- * @brief Sendet eine Antwort über WebSocket an den Client.
+ * @brief Sendet eine JSON-Antwort an einen WebSocket-Client.
  *
  * @param client Ziel-Client.
  * @param event Ereignistyp als String.
@@ -295,7 +315,7 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
 }
 
 /**
- * @brief Sendet eine Antwort über WebSocket an den Client.
+ * @brief Überladene Version von sendResponse mit JSON-Array.
  *
  * @param client Ziel-Client.
  * @param event Ereignistyp als String.
@@ -338,7 +358,7 @@ void sendResponse(AsyncWebSocketClient *client, const String &event, const Strin
  * @param parameter Pointer auf den AsyncWebSocketClient, der den Scan angefordert hat.
  */
 void scanNetworksTask(void *parameter) {
-	std::vector<ScannedNetwork> scannedNetworks = wifiManager.scanNetworks();
+	std::vector<Network> scannedNetworks = wifiManager.scan();
 	StaticJsonDocument<1024> doc;
 
 	// Erzeuge ein Array "networks" im JSON-Dokument
@@ -364,22 +384,61 @@ void scanNetworksTask(void *parameter) {
 	vTaskDelete(NULL);
 }
 
+// Todo: Code nach LLog auslagern?
+
+/**
+ * @brief Startet einen FreeRTOS-Task zur Auflistung aller Log-Dateien.
+ *
+ * Diese Funktion dient als Einstiegspunkt, um asynchron (nicht blockierend)
+ * alle vorhandenen Logdateien im `/logs`-Verzeichnis zu erfassen.
+ * Die tatsächliche Verarbeitung erfolgt in `listLogFilesTask()`.
+ *
+ * @param client Zeiger auf den WebSocket-Client, der die Anfrage gesendet hat.
+ */
 void listLogFiles(AsyncWebSocketClient *client) {
-	StaticJsonDocument<1024> doc;
+	Serial.println("listLogFiles");
+	// Task mit einem großzügigen Stack (hier 8192 Bytes) erstellen
+	xTaskCreate(listLogFilesTask, "listLogFilesTask", 8192, client, 1, NULL);
+}
+
+/**
+ * @brief FreeRTOS-Task zum Durchsuchen des Log-Verzeichnisses und Rückgabe als JSON.
+ *
+ * Durchsucht das Verzeichnis `/logs` im LittleFS-Dateisystem nach `.log`-Dateien,
+ * sammelt deren Namen und Größe und sendet diese Information als JSON-Array
+ * zurück an den WebSocket-Client.
+ *
+ * @param pvParameters Zeiger auf den WebSocket-Client.
+ */
+void listLogFilesTask(void *pvParameters) {
+	AsyncWebSocketClient *client = (AsyncWebSocketClient *)pvParameters;
+
+	// Erhöhe den Speicherpuffer, um Speicherüberläufe zu vermeiden
+	StaticJsonDocument<4096> doc;
 	JsonArray filesArray = doc.createNestedArray("files");
 
-	File dir = SD.open("/logs");
+	// Versuche, das Verzeichnis "/logs" über LittleFS im Lesemodus zu öffnen
+	File dir = LittleFS.open("/logs", "r");
 	if (!dir) {
 		sendResponse(client, "log", "files", "error", "Verzeichnis /logs nicht gefunden oder nicht lesbar", "");
+		vTaskDelete(NULL);  // Task löschen
 		return;
 	}
 
-	// Durch alle Einträge iterieren
+	// Sicherstellen, dass das geöffnete Objekt ein Verzeichnis ist
+	if (!dir.isDirectory()) {
+		sendResponse(client, "log", "files", "error", "/logs ist kein Verzeichnis", "");
+		dir.close();
+		vTaskDelete(NULL);
+		return;
+	}
+
+	// Durch alle Dateien im Verzeichnis iterieren
 	File entry;
 	while ((entry = dir.openNextFile())) {
 		if (!entry.isDirectory()) {
 			String fileName = entry.name();
-			// Wenn gewünscht, nur .log-Dateien erfassen:
+			// Nur Dateien mit der Endung ".log" berücksichtigen
 			if (fileName.endsWith(".log")) {
 				JsonObject fileObj = filesArray.createNestedObject();
 				fileObj["name"] = fileName;
@@ -390,10 +449,23 @@ void listLogFiles(AsyncWebSocketClient *client) {
 	}
 	dir.close();
 
-	// Sende das JSON
+	// Sende das JSON-Dokument mit der Liste der Log-Dateien
 	sendResponse(client, "log", "files", "success", filesArray, "");
+
+	// Task beenden
+	vTaskDelete(NULL);
 }
 
+/**
+ * @brief Benennt eine bestehende Log-Datei im `/logs`-Verzeichnis um.
+ * @deprecated
+ *
+ * Erwartet eine JSON-Struktur mit `fileName` (alt) und `newFileName` (neu),
+ * prüft die Existenz der alten Datei und führt die Umbenennung durch.
+ *
+ * @param client WebSocket-Client, der die Anfrage gesendet hat.
+ * @param jsonValue JSON-String mit den Feldern `fileName` und `newFileName`.
+ */
 void renameLogFile(AsyncWebSocketClient *client, const String &jsonValue) {
 	// JSON parsen
 	DynamicJsonDocument doc(256);
@@ -432,6 +504,16 @@ void renameLogFile(AsyncWebSocketClient *client, const String &jsonValue) {
 	sendResponse(client, "log", "files", "success", "Datei umbenannt von " + oldName + " zu " + newName, "");
 }
 
+/**
+ * @brief Löscht eine oder mehrere Log-Dateien basierend auf einem JSON-Request.
+ * @deprecated
+ *
+ * Das JSON-Objekt kann entweder einen String `fileName` oder ein Array `fileNames` enthalten.
+ * Jede Datei wird überprüft und bei Vorhandensein gelöscht.
+ *
+ * @param client WebSocket-Client, der die Anfrage gestellt hat.
+ * @param jsonValue JSON-String mit dem Dateinamen oder einem Array von Dateinamen.
+ */
 void deleteLogFiles(AsyncWebSocketClient *client, const String &jsonValue) {
 	DynamicJsonDocument doc(512);
 	DeserializationError err = deserializeJson(doc, jsonValue);
@@ -461,6 +543,16 @@ void deleteLogFiles(AsyncWebSocketClient *client, const String &jsonValue) {
 	}
 }
 
+/**
+ * @brief Löscht eine einzelne Log-Datei aus dem `/logs`-Verzeichnis.
+ * @deprecated
+ *
+ * Überprüft, ob die Datei existiert, und löscht sie gegebenenfalls. Gibt eine
+ * entsprechende WebSocket-Antwort zurück.
+ *
+ * @param client WebSocket-Client, der die Löschung angefordert hat.
+ * @param fileName Name der zu löschenden Datei (nur Dateiname, ohne Pfad).
+ */
 void deleteSingleLogFile(AsyncWebSocketClient *client, const String &fileName) {
 	if (fileName.isEmpty()) return;
 
@@ -477,42 +569,3 @@ void deleteSingleLogFile(AsyncWebSocketClient *client, const String &fileName) {
 		sendResponse(client, "log", "files", "error", "", "Datei: " + path + " konnte nicht gelöscht werden");
 	}
 }
-
-// // Handler für System-Events
-// void handleSystemEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
-// 	if (msg.command == "wifi") {
-// 		if (msg.key == "get") {
-// 			sendWebSocketResponse(client, "system", "wifi", "get", "{\"ssid\":\"MyWiFi\",\"password\":\"*****\"}");
-// 		} else if (msg.key == "set") {
-// 			Serial.printf("Speichere WiFi-Daten: %s\n", msg.value.c_str());
-// 			sendWebSocketResponse(client, "system", "wifi", "set", "{\"status\":\"OK\"}");
-// 		}
-// 	} else if (msg.command == "version" && msg.key == "get") {
-// 		sendWebSocketResponse(client, "system", "version", "get", "{\"version\":\"1.0.0\"}");
-// 	}
-// }
-
-// // Handler für Log-Events
-// void handleLogEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
-// 	if (msg.command == "debug") {
-// 		if (msg.key == "activate") {
-// 			Serial.println("Debug-Logging aktiviert.");
-// 		} else if (msg.key == "deactivate") {
-// 			Serial.println("Debug-Logging deaktiviert.");
-// 		}
-// 	} else if (msg.command == "files" && msg.key == "list") {
-// 		sendWebSocketResponse(client, "log", "files", "list", "[\"log1.txt\",\"log2.txt\"]");
-// 	}
-// }
-
-// // Handler für Serial-Events
-// void handleSerialEvent(AsyncWebSocketClient *client, ParsedMessage msg) {
-// 	if (msg.key == "connect") {
-// 		int baudRate = msg.value.toInt();
-// 		Serial.printf("Verbinde Serial mit Baudrate: %d\n", baudRate);
-// 	} else if (msg.key == "disconnect") {
-// 		Serial.println("Serial-Verbindung getrennt.");
-// 	} else if (msg.key == "send") {
-// 		Serial.printf("Sende über Serial: %s\n", msg.value.c_str());
-// 	}
-// }

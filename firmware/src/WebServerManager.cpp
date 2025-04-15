@@ -3,14 +3,11 @@
  * @brief Modul zur Verwaltung des Async-Webservers und WebSocket-Servers.
  *
  * Dieses Modul initialisiert und verwaltet einen Async-Webserver, der eine Single-Page-Applikation (SPA)
- * von einer SD-Karte bereitstellt. Zudem wird ein WebSocket-Server integriert, der Echtzeit-Kommunikation
- * ermöglicht. Eingehende WebSocket-Nachrichten werden geparst und an entsprechende Event-Handler weitergeleitet,
- * die basierend auf dem Ereignistyp (System, Log, Serial) weitere Aktionen ausführen können.
+ * über LittleFS bereitstellt. Zusätzlich wird ein WebSocket-Server für Echtzeit-Kommunikation integriert.
+ * JSON-basierte WebSocket-Nachrichten werden an registrierte Event-Handler weitergeleitet.
  *
- * Die WebSocket-Kommunikation nutzt JSON-formatierte Nachrichten, wobei Antworten an den Client ebenfalls
- * JSON-basiert zurückgesendet werden.
- *
- * Zusätzlich bietet das Modul eine Methode zur regelmäßigen Bereinigung inaktiver WebSocket-Clients.
+ * Unterstützt außerdem REST-Endpunkte für den Zugriff auf Logdateien sowie regelmäßige Aufräumarbeiten
+ * bei inaktiven WebSocket-Clients.
  *
  * @author Simon Marcel Linden
  * @since 1.0.0
@@ -21,36 +18,42 @@
 #include <LittleFS.h>
 
 /**
- * @brief Konstruktor für WebServerManager.
+ * @brief Konstruktor für den WebServerManager.
  *
- * Initialisiert Webserver und WebSocket-Server auf einem angegebenen Port.
+ * Initialisiert den Webserver und WebSocket auf dem angegebenen Port.
  *
- * @param port Der Port, auf dem der Webserver läuft.
+ * @param port Der Port, auf dem der Webserver gestartet wird.
  */
 WebServerManager::WebServerManager(uint16_t port) : server(port), ws("/ws") {
 }
 
+/**
+ * @brief Initialisiert den Webserver, WebSocket und registriert die HTTP-Endpunkte.
+ *
+ * Diese Methode mountet das Dateisystem, registriert statische Inhalte, definiert REST-Endpunkte
+ * und startet den Webserver. Auch der WebSocket-Handler wird initialisiert.
+ */
 void WebServerManager::init() {
-	// FFat mounten
 	if (!LittleFS.begin()) {
 		logger.error("[HTTP] LittleFS konnte nicht gemountet werden!");
 		return;
 	}
 	logger.info("[HTTP] LittleFS erfolgreich gemountet.");
-	// WebSocket-Event-Handler registrieren
+
+	// WebSocket-Event-Handler
 	ws.onEvent(onEvent);
 	server.addHandler(&ws);
 
-	// Statische Dateien bereitstellen (SPA)
+	// SPA-Serving mit Fallback
 	server.serveStatic("/", LittleFS, "/www/html").setDefaultFile("index.html");
 
-	// REST-Endpunkt Beispiel: Logdateien abrufen
+	// REST-Endpunkt: einzelne Logdatei abrufen
 	server.on("/logfile", HTTP_GET, [this](AsyncWebServerRequest *request) {
 		logger.info("[HTTP] HTTP-Anfrage erhalten: /logfile");
-		// serveLogFile(request);
 		request->send(LittleFS, "/log.txt", "text/plain");
 	});
 
+	// REST-Endpunkt: Alle Logdateien auflisten
 	server.on("/logs", HTTP_GET, [](AsyncWebServerRequest *request) {
 		String output = "<ul>";
 		File root = LittleFS.open("/logs");
@@ -58,34 +61,40 @@ void WebServerManager::init() {
 			request->send(500, "text/html", "Log-Verzeichnis nicht gefunden!");
 			return;
 		}
-
 		File file = root.openNextFile();
 		while (file) {
 			output += "<li>" + String(file.name()) + " (" + String(file.size()) + " Bytes)</li>";
 			file = root.openNextFile();
 		}
 		output += "</ul>";
-
 		request->send(200, "text/html", output);
 	});
 
-	// Fallback (SPA Routing-Unterstützung)
+	// Fallback für SPA (Client-Side Routing)
 	server.onNotFound([](AsyncWebServerRequest *request) { request->send(LittleFS, "/www/html/index.html", "text/html"); });
 
-	// Webserver starten
 	server.begin();
 	logger.info("[HTTP] Webserver und WebSocket-Server gestartet.");
-	// Beispiel: Adresse des WebSocket-Servers ausgeben
 	logger.info("[HTTP] WebSocket erreichbar unter: ws://" + WiFi.softAPIP().toString() + "/ws");
 }
 
 /**
- * @brief Bereinigt regelmäßig inaktive WebSocket-Clients.
+ * @brief Entfernt inaktive WebSocket-Clients aus dem Speicher.
+ *
+ * Diese Methode sollte regelmäßig (z. B. im loop oder Task) aufgerufen werden,
+ * um nicht mehr aktive Clients zu entfernen.
  */
 void WebServerManager::cleanupWebSocketClients() {
 	ws.cleanupClients();
 }
 
+/**
+ * @brief Sendet eine Logdatei über HTTP zurück.
+ *
+ * Erwartet einen GET-Parameter `file`, welcher den Namen der Logdatei angibt.
+ *
+ * @param request Zeiger auf das eingehende Webserver-Request-Objekt.
+ */
 void WebServerManager::serveLogFile(AsyncWebServerRequest *request) {
 	if (!request->hasParam("file")) {
 		request->send(400, "text/plain", "Missing file parameter");

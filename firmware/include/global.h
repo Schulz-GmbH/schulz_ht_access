@@ -15,13 +15,10 @@
 #define RXD2 16
 #define TXD2 17
 
-// SD-Karten-Pin
-#define SD_CS_PIN 5
-
 // LED-Pins
 #define RED_LED 33
-#define GREEN_LED 32
-#define YELLOW_LED 25
+#define GREEN_LED 26
+#define YELLOW_LED 27
 
 extern Preferences preferences;
 

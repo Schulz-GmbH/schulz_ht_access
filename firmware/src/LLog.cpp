@@ -15,7 +15,7 @@
  *
  * Das Modul unterstützt zudem das dynamische Aktivieren und Deaktivieren des Loggings. Beim Aktivieren
  * des Loggings wird eine neue Logdatei mit Zeitstempel erstellt. Ist keine gültige Uhrzeit vorhanden
- * (z.B. RTC nicht verfügbar), wird stattdessen eine eindeutige ID als Dateiname verwendet.
+ * (z. B. RTC nicht verfügbar), wird stattdessen eine eindeutige ID als Dateiname verwendet.
  *
  * Durch Nutzung des Singleton-Patterns ist eine systemweite, konsistente Nutzung gewährleistet.
  *
@@ -30,20 +30,15 @@
 #include <Arduino.h>
 #include <LittleFS.h>  // Statt SD verwenden wir jetzt LittleFS
 
-// Globale Singleton-Instanz
-LLog &logger = LLog::getInstance();
+LLog &logger = LLog::getInstance();  ///< Globale Logger-Instanz
 
-// Statische Variablen initialisieren
-bool LLog::m_active = false;  // Default (kann aber auch true sein)
+bool LLog::m_active = false;
 File LLog::m_logFile;
 String LLog::m_logFileName = "";
 
 /**
  * @brief Liefert die Singleton-Instanz des Loggers.
- *
- * Stellt sicher, dass während der Laufzeit nur eine einzige Instanz existiert.
- *
- * @return Referenz auf die LLog Singleton-Instanz.
+ * @return Referenz auf die LLog-Instanz.
  */
 LLog &LLog::getInstance() {
 	static LLog instance;
@@ -53,9 +48,10 @@ LLog &LLog::getInstance() {
 /**
  * @brief Aktiviert oder deaktiviert das Logging.
  *
- * Beim Aktivieren wird eine Logdatei erstellt und geöffnet. Beim Deaktivieren wird die Datei geschlossen.
+ * Beim Aktivieren wird ggf. eine neue Logdatei erzeugt und geöffnet.
+ * Beim Deaktivieren wird die Datei sauber geschlossen.
  *
- * @param state true aktiviert Logging, false deaktiviert es.
+ * @param state true = Logging aktivieren, false = deaktivieren.
  */
 void LLog::setActive(bool state) {
 	if (state && !m_active) {
@@ -100,18 +96,16 @@ void LLog::setActive(bool state) {
 }
 
 /**
- * @brief Prüft, ob das Logging aktuell aktiv ist.
- *
- * @return true, wenn Logging aktiv; andernfalls false.
+ * @brief Prüft, ob Logging aktiv ist.
+ * @return true, wenn Logging aktiv ist, sonst false.
  */
 bool LLog::isActive() {
 	return m_active;
 }
 
 /**
- * @brief Erstellt einen aktuellen Zeitstempel.
- *
- * @return Zeitstempel als String im Format "YYYY-MM-DD hh:mm:ss".
+ * @brief Erstellt einen formatierten Zeitstempel.
+ * @return String im Format "YYYY-MM-DD hh:mm:ss"
  */
 String LLog::getTimestamp() {
 	time_t now = time(nullptr);
@@ -125,13 +119,10 @@ String LLog::getTimestamp() {
 }
 
 /**
- * @brief Generelle Methode zum Loggen einer Nachricht.
- *
- * Kann optional Zeilenumbrüche und Zeitstempel hinzufügen.
- *
- * @param message Nachricht, die geloggt wird.
- * @param newLine true für Zeilenumbruch, false ohne Zeilenumbruch.
- * @param timestamp true für Zeitstempel, false ohne Zeitstempel.
+ * @brief Interne Logik zum Loggen einer Nachricht.
+ * @param message Der zu loggende Text.
+ * @param newLine true = Zeilenumbruch hinzufügen.
+ * @param timestamp true = Zeitstempel voranstellen.
  */
 void LLog::logMessage(const String &message, bool newLine, bool timestamp) {
 	if (m_active) {
@@ -163,51 +154,37 @@ void LLog::logMessage(const String &message, bool newLine, bool timestamp) {
 	}
 }
 
-/**
- * @brief Loggt eine DEBUG-Nachricht.
- */
+/// @copydoc LLog::debug
 void LLog::debug(const String &message, bool newLine) {
 	logMessage("[DEBUG]" + message, newLine, true);
 }
 
-/**
- * @brief Loggt eine INFO-Nachricht.
- */
+/// @copydoc LLog::info
 void LLog::info(const String &message, bool newLine) {
-	logMessage("[INFO]" + message, newLine, true);
+	logMessage("[INFO] " + message, newLine, true);
 }
 
-/**
- * @brief Loggt eine SYSTEM-Nachricht.
- */
+/// @copydoc LLog::system
 void LLog::system(const String &message, bool newLine) {
-	logMessage("[SYSTEM]" + message, newLine, true);
+	logMessage("[SYSTEM] " + message, newLine, true);
 }
 
-/**
- * @brief Loggt eine WARNING-Nachricht.
- */
+/// @copydoc LLog::warn
 void LLog::warn(const String &message, bool newLine) {
-	logMessage("[WARNING]" + message, newLine, true);
+	logMessage("[WARNING] " + message, newLine, true);
 }
 
-/**
- * @brief Loggt eine ERROR-Nachricht.
- */
+/// @copydoc LLog::error
 void LLog::error(const String &message, bool newLine) {
-	logMessage("[ERROR]" + message, newLine, true);
+	logMessage("[ERROR] " + message, newLine, true);
 }
 
-/**
- * @brief Loggt eine Nachricht ohne Zeilenumbruch und optional ohne Zeitstempel.
- */
+/// @copydoc LLog::print
 void LLog::print(const String &message, bool timestamp) {
 	logMessage(message, false, timestamp);
 }
 
-/**
- * @brief Loggt eine Nachricht mit Zeilenumbruch und optional ohne Zeitstempel.
- */
+/// @copydoc LLog::println
 void LLog::println(const String &message, bool timestamp) {
 	logMessage(message, true, timestamp);
 }

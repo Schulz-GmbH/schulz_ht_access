@@ -48,15 +48,14 @@ static bool checkDirectories() {
 }
 
 /**
- * @brief Initialisiert das LittleFS-Dateisystem und überprüft die erforderlichen Verzeichnisse.
+ * @brief Initialisiert das LittleFS-Dateisystem.
  *
- * Diese Funktion versucht, das LittleFS-Dateisystem zu initialisieren. Wird es nicht
- * erkannt, wird der Fehlerstatus STATUS_NO_SD_CARD gesetzt und die Status für fehlende
- * Verzeichnisse (WEBSERVER_NO_HTML_DIR, LOG_NO_DIR) entfernt. Ist die Initialisierung
- * erfolgreich, wird geprüft, ob die Verzeichnisse vorhanden sind.
+ * Diese Funktion wird einmalig beim Systemstart aufgerufen. Sie mountet das Dateisystem,
+ * erstellt ggf. die erforderlichen Verzeichnisse (z. B. `/www/html`, `/logs`)
+ * und aktualisiert die entsprechenden Statusflags.
  *
- * Fehlt eines der Verzeichnisse, wird der entsprechende Fehlerstatus gesetzt.
- * Sind beide Verzeichnisse vorhanden, so wird SYSTEM_READY aktiviert.
+ * Bei erfolgreicher Initialisierung und Verzeichnisprüfung wird `SYSTEM_READY` gesetzt.
+ * Im Fehlerfall werden `FS_NOT_AVAILABLE`, `WEBSERVER_NO_HTML_DIR` oder `LOG_NO_DIR` gesetzt.
  */
 void initFS() {
 	bool fsOk = LittleFS.begin();
@@ -91,12 +90,13 @@ void initFS() {
 }
 
 /**
- * @brief Überprüft regelmäßig den Zustand des Dateisystems und der erforderlichen Verzeichnisse.
+ * @brief Führt eine zyklische Prüfung des Dateisystems durch.
  *
- * Diese Funktion wird z. B. in der loop()-Funktion aufgerufen, um den aktuellen
- * Zustand des Dateisystems zu überwachen. Dabei wird erneut versucht,
- * LittleFS zu initialisieren. Ist es nicht mehr verfügbar, wird STATUS_NO_SD_CARD
- * gesetzt und die anderen Verzeichnis-Status entfernt.
+ * Diese Funktion sollte regelmäßig (z. B. in der `loop()`-Funktion oder einem FreeRTOS-Task)
+ * aufgerufen werden, um sicherzustellen, dass das Dateisystem weiterhin verfügbar ist
+ * und alle erforderlichen Verzeichnisse existieren.
+ *
+ * Erkennt Änderungen und aktualisiert die Statusflags entsprechend.
  */
 void checkFS() {
 	bool fsOk = LittleFS.begin();
