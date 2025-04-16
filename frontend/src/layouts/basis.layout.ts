@@ -1,9 +1,9 @@
-import { defineComponent, defineAsyncComponent } from 'vue'
+import { defineComponent, defineAsyncComponent } from "vue";
 
 // Stores
 
 // composables
-import { useResize } from '@/layouts/composables/useResize'
+import { useResize } from "@/layouts/composables/useResize";
 
 // Types
 
@@ -12,19 +12,20 @@ import { useResize } from '@/layouts/composables/useResize'
 // Templates
 
 export default defineComponent({
-	name: 'BasisLayout',
+	name: "BasisLayout",
 	components: {
-		AppLayout: defineAsyncComponent(() => import('@/layouts/app.layout.vue')),
+		OfflineComponent: defineAsyncComponent(() => import("@/components/offline/offline.component.vue")),
+		AppLayout: defineAsyncComponent(() => import("@/layouts/app.layout.vue")),
 	},
 	data() {
 		return {
 			// data
-		}
+		};
 	},
 	setup() {
 		// Layout responsiv machen
-		useResize()
+		useResize();
 		// setup
 	},
 	// computed
-})
+});

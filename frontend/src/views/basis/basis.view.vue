@@ -1,5 +1,5 @@
 <template>
-	<h1>Basis View</h1>
+	<h1 class="text-red-700">Basis View</h1>
 </template>
 
 <script lang="ts">

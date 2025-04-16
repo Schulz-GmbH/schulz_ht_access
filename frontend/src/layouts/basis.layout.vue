@@ -1,4 +1,5 @@
 <template>
+	<OfflineComponent />
 	<AppLayout />
 </template>
 

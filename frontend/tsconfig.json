@@ -2,11 +2,15 @@
 	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/_types"],
 	"exclude": ["node_modules"],
 	"compilerOptions": {
+		"noEmit": true, // verhindert .js-Ausgaben
+		"declaration": true, // falls Du nur .d.ts haben willst
+		"emitDeclarationOnly": false, // nur .d.ts ausgeben
 		"target": "ESNext",
 		"module": "ESNext",
 		"moduleResolution": "Node",
 		"strict": true,
-		"skipLibCheck": true,
+		"skipLibCheck": true, // → überspringt Typ‑Checks in node_modules
+		"allowJs": true, // → erlaubt JS‑Dateien mit require()
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
@@ -15,6 +19,6 @@
 			"@/*": ["src/*"]
 		},
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
-		"types": ["vite/client"]
+		"types": ["vite/client", "vite-plugin-pwa/client", "node"]
 	}
 }

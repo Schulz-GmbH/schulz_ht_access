@@ -12,6 +12,7 @@ import "./assets/main.css";
 
 import { createApp } from "vue";
 import { pinia } from "@/store/index";
+import { usePWA } from "./registerSW";
 
 import App from "./app.main.vue";
 import { router } from "./router";
@@ -57,6 +58,7 @@ app.use(router);
  */
 router.isReady().then(() => {
 	app.mount("#app");
+	usePWA();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
