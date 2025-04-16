@@ -1,14 +1,25 @@
-console.log('📦 MAIN LOADED')
+/**
+ * Main entry point of the Vue application.
+ *
+ * Responsible for bootstrapping the Vue application, setting up the router and store,
+ * applying global styles, logging build info and establishing the WebSocket connection.
+ *
+ * The WebSocket connection is used to retrieve various pieces of system state,
+ * such as logging status, WLAN status, system version and available log files.
+ */
 
-import './assets/main.css'
+import "./assets/main.css";
 
-import { createApp } from 'vue'
-import { pinia } from '@/store/index'
+import { createApp } from "vue";
+import { pinia } from "@/store/index";
 
-import App from './app.main.vue'
-import { router } from './router'
+import App from "./app.main.vue";
+import { router } from "./router";
 
-import '@/assets/main.css'
+// Helpers and services
+import { hookConsole } from "@/_utils/hooks/console-hock";
+
+import "@/assets/main.css";
 
 /**
  * Main entry point of the Vue application.
@@ -18,6 +29,8 @@ import '@/assets/main.css'
  * and then creates and mounts the Vue application.
  */
 
+hookConsole();
+
 /**
  * Import and initialize the Vue application.
  *
@@ -26,15 +39,15 @@ import '@/assets/main.css'
  * - `router` is the Vue Router instance for handling navigation.
  * - `store` is the Vuex store instance for state management.
  */
-const app = createApp(App)
+const app = createApp(App);
 
 /**
  * Configure the application with plugins and global components.
  *
  * - `use` function is used to install plugins (router and store) into the Vue application.
  */
-app.use(pinia)
-app.use(router)
+app.use(pinia);
+app.use(router);
 
 /**
  * Mount the Vue application to a DOM element.
@@ -43,9 +56,9 @@ app.use(router)
  * - Here, the application is mounted to the 'body' element.
  */
 router.isReady().then(() => {
-	app.mount('#app')
-})
+	app.mount("#app");
+});
 
-document.addEventListener('DOMContentLoaded', () => {
-	console.log('✅ DOM ready')
-})
+document.addEventListener("DOMContentLoaded", () => {
+	console.log("✅ Ready to take off 🚀");
+});
