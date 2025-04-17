@@ -14,7 +14,7 @@ import { useResize } from "@/layouts/composables/useResize";
 export default defineComponent({
 	name: "BasisLayout",
 	components: {
-		OfflineComponent: defineAsyncComponent(() => import("@/components/offline/offline.component.vue")),
+		NetworkStatusBanner: defineAsyncComponent(() => import("@/components/NetworkStatusBanner/NetworkStatusBanner.component.vue")),
 		AppLayout: defineAsyncComponent(() => import("@/layouts/app.layout.vue")),
 	},
 	data() {

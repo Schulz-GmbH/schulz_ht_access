@@ -1,6 +1,8 @@
 <template>
-	<OfflineComponent />
-	<AppLayout />
+	<div id="basis-layout">
+		<NetworkStatusBanner />
+		<AppLayout />
+	</div>
 </template>
 
 <script lang="ts">
