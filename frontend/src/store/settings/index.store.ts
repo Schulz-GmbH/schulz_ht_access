@@ -1,9 +1,9 @@
 // src/store/settings/index.store.ts
-import type { LayoutsConfig } from "@/layouts/_config";
-import { layoutsConfig } from "@/layouts/_config";
 import { defineStore } from "pinia";
 import { reactive, toRefs, watch } from "vue";
-import { setLayoutsConfig } from "@/_utils/cache/local-storage";
+import { systemConfig } from "@/_utils/config/settings.config";
+import { setSystemConfig } from "@/_utils/cache/settings.storage.cache";
+import { SettingsConfig } from "@/_utils/config/settings.config";
 
 /**
  * Pinia-Store für Layout-Einstellungen.
@@ -11,15 +11,15 @@ import { setLayoutsConfig } from "@/_utils/cache/local-storage";
  */
 export const useSettingsStore = defineStore("settings", () => {
 	// Reaktiver State basierend auf der aktuellen Layout-Konfiguration
-	const state = reactive<LayoutsConfig>({
-		...layoutsConfig,
+	const state = reactive<SettingsConfig>({
+		...systemConfig,
 	});
 
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
 		state,
 		(newVal) => {
-			setLayoutsConfig({ ...newVal });
+			setSystemConfig({ ...newVal });
 		},
 		{ deep: true },
 	);
@@ -30,7 +30,7 @@ export const useSettingsStore = defineStore("settings", () => {
 	/**
 	 * Getter: Gibt ein flaches Objekt aller aktuellen Settings zurück.
 	 */
-	function getCacheData(): LayoutsConfig {
+	function getCacheData(): SettingsConfig {
 		return { ...state };
 	}
 

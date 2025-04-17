@@ -1,19 +1,18 @@
-import type { LayoutsConfig } from '@/layouts/_config'
-import type { ThemeName } from 'utils/composables/useTheme'
-import type { NavbarClosed, NavbarOpened } from 'utils/constants/app-key'
-import { CacheKey } from '@/_utils/constants/cache-key'
+import type { LayoutsConfig } from "@/layouts/_config";
+import type { NavbarClosed, NavbarOpened } from "utils/constants/app-key";
+import { CacheKey } from "@/_utils/constants/cache-key";
 
 /**
  * Holt die gespeicherte Layout-Konfiguration aus dem `localStorage`.
  * @returns {LayoutsConfig | null} Die gespeicherte Konfiguration oder `null`, falls nicht vorhanden.
  */
 export function getLayoutsConfig(): LayoutsConfig | null {
-	const json = localStorage.getItem(CacheKey.CONFIG_LAYOUT)
+	const json = localStorage.getItem(CacheKey.LAYOUT_CONFIG);
 	try {
-		return json ? (JSON.parse(json) as LayoutsConfig) : null
+		return json ? (JSON.parse(json) as LayoutsConfig) : null;
 	} catch (error) {
-		console.error('Fehler beim Parsen von LayoutsConfig:', error)
-		return null
+		console.error("Fehler beim Parsen von LayoutsConfig:", error);
+		return null;
 	}
 }
 
@@ -22,14 +21,14 @@ export function getLayoutsConfig(): LayoutsConfig | null {
  * @param {LayoutsConfig} settings - Die zu speichernde Layout-Konfiguration.
  */
 export function setLayoutsConfig(settings: LayoutsConfig): void {
-	localStorage.setItem(CacheKey.CONFIG_LAYOUT, JSON.stringify(settings))
+	localStorage.setItem(CacheKey.LAYOUT_CONFIG, JSON.stringify(settings));
 }
 
 /**
  * Entfernt die gespeicherte Layout-Konfiguration aus dem `localStorage`.
  */
 export function removeLayoutsConfig(): void {
-	localStorage.removeItem(CacheKey.CONFIG_LAYOUT)
+	localStorage.removeItem(CacheKey.LAYOUT_CONFIG);
 }
 
 /**
@@ -37,7 +36,7 @@ export function removeLayoutsConfig(): void {
  * @returns {NavbarOpened | NavbarClosed | null} Der gespeicherte Status oder `null`, falls nicht vorhanden.
  */
 export function getNavbarStatus(): NavbarOpened | NavbarClosed | null {
-	return localStorage.getItem(CacheKey.NAVBAR_STATUS) as NavbarOpened | NavbarClosed | null
+	return localStorage.getItem(CacheKey.NAVBAR_STATUS) as NavbarOpened | NavbarClosed | null;
 }
 
 /**
@@ -45,43 +44,5 @@ export function getNavbarStatus(): NavbarOpened | NavbarClosed | null {
  * @param {NavbarOpened | NavbarClosed} navbarStatus - Der zu speichernde Status.
  */
 export function setNavbarStatus(navbarStatus: NavbarOpened | NavbarClosed): void {
-	localStorage.setItem(CacheKey.NAVBAR_STATUS, navbarStatus)
-}
-
-/**
- * Holt den aktuell aktiven Theme-Namen aus dem `localStorage`.
- * @returns {ThemeName | null} Der gespeicherte Theme-Name oder `null`, falls nicht vorhanden.
- */
-export function getActiveThemeName(): ThemeName | null {
-	return localStorage.getItem(CacheKey.ACTIVE_THEME_NAME) as ThemeName | null
-}
-
-/**
- * Speichert den aktuell aktiven Theme-Namen im `localStorage`.
- * @param {ThemeName} themeName - Der zu speichernde Theme-Name.
- */
-export function setActiveThemeName(themeName: ThemeName): void {
-	localStorage.setItem(CacheKey.ACTIVE_THEME_NAME, themeName)
-}
-
-/**
- * Holt die zwischengespeicherten Seiten (`cached views`) aus dem `localStorage`.
- * @returns {string[]} Die gespeicherten Seiten oder ein leeres Array.
- */
-export function getCachedViews(): string[] {
-	const json = localStorage.getItem(CacheKey.CACHED_VIEWS)
-	try {
-		return json ? (JSON.parse(json) as string[]) : []
-	} catch (error) {
-		console.error('Fehler beim Parsen von CachedViews:', error)
-		return []
-	}
-}
-
-/**
- * Speichert die zwischengespeicherten Seiten (`cached views`) im `localStorage`.
- * @param {string[]} views - Die zu speichernden Seiten.
- */
-export function setCachedViews(views: string[]): void {
-	localStorage.setItem(CacheKey.CACHED_VIEWS, JSON.stringify(views))
+	localStorage.setItem(CacheKey.NAVBAR_STATUS, navbarStatus);
 }
