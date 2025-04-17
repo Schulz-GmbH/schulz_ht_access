@@ -7,6 +7,7 @@ import { routerConfig } from "@/router/config";
 import BasisLayout from "@/layouts/basis.layout.vue";
 
 import BasisView from "@/views/basis/basis.view.vue";
+import { group } from "console";
 
 /**
  * Route configurations for the Vue application.
@@ -16,7 +17,7 @@ import BasisView from "@/views/basis/basis.view.vue";
  * are defined within the meta property of each route.
  */
 
-const errorRoutes: Array<RouteRecordRaw> = [
+export const errorRoutes: Array<RouteRecordRaw> = [
 	{
 		path: "/403",
 		component: BasisView,
@@ -36,24 +37,40 @@ const errorRoutes: Array<RouteRecordRaw> = [
 	},
 ];
 
-const constantRoutes: Array<RouteRecordRaw> = [
+export const constantRoutes: Array<RouteRecordRaw> = [
 	{
 		path: "/",
 		name: "Home",
 		component: BasisView,
 		meta: {
+			title: "Dashboard",
+			group: "General",
 			hidden: false,
+			dev: false,
+			tags: [
+				{ name: "author", value: "Simon Marcel Linden" },
+				{
+					name: "description",
+					value: "Willkommen auf der Startseite der Anwendung.",
+				},
+				{
+					name: "og:description",
+					value: "Willkommen auf der Startseite der Anwendung.",
+				},
+			],
 		},
 	},
 ];
 
-const developmentRoutes: Array<RouteRecordRaw> = [
+export const developmentRoutes: Array<RouteRecordRaw> = [
 	{
 		path: "routes",
 		name: "RoutesPage",
 		component: () => import("@/pages/routes/routes.page.vue"),
 		meta: {
 			title: "Application Routes",
+			hidden: true,
+			dev: true,
 			tags: [
 				{ name: "author", value: "Simon Marcel Linden" },
 				{
