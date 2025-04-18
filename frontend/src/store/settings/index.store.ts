@@ -1,5 +1,5 @@
 // src/store/settings/index.store.ts
-import { defineStore, type StoreDefinition } from "pinia";
+import { defineStore } from "pinia";
 import { reactive, toRefs, watch } from "vue";
 import { constantRoutes, developmentRoutes } from "@/router";
 import { systemConfig } from "@/_utils/config/settings.config";
@@ -26,18 +26,16 @@ type Actions = {
  * Pinia-Store für Layout-Einstellungen.
  * Nutzt ein `reactive` Objekt und `toRefs`, um Typensicherheit und Reaktivität zu gewährleisten.
  */
-export const useSettingsStore: StoreDefinition<"settings", State, {}, Actions> = defineStore("settings", () => {
+export const useSettingsStore = defineStore("settings", () => {
 	// Reaktiver State basierend auf der aktuellen Layout-Konfiguration
 	const state = reactive<State>({
 		...systemConfig,
 		routes: [],
 	});
 
-	const routes = constantRoutes;
-
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
-		state,
+		() => ({ version: state.version, logging: state.logging }),
 		(newVal) => {
 			setSystemConfig({ ...newVal });
 		},
@@ -51,7 +49,10 @@ export const useSettingsStore: StoreDefinition<"settings", State, {}, Actions> =
 	 * Getter: Gibt ein flaches Objekt aller aktuellen Settings zurück.
 	 */
 	function getCacheData(): SettingsConfig {
-		return { ...state };
+		return {
+			version: state.version,
+			logging: state.logging,
+		};
 	}
 
 	function setRoutes() {
@@ -66,9 +67,15 @@ export const useSettingsStore: StoreDefinition<"settings", State, {}, Actions> =
 		state.routes = flatten(all);
 	}
 
+	// Statt `...toRefs(state)` explizit zurückgeben:
+	const { version, logging } = toRefs(state);
+
 	// Exportiere jede Property als Ref plus den Getter
 	return {
-		...refs,
+		version,
+		logging,
+		routes: toRefs(state).routes,
+		showLogo: toRefs(state as any).showLogo, // oder sicherer: vorher casten
 		getCacheData,
 		setRoutes,
 	};

@@ -5,7 +5,7 @@ import { getLayoutsConfig } from "@/_utils/cache/local-storage";
  * Definition der Layout-Konfigurationsoptionen
  */
 export interface LayoutsConfig {
-	layoutMode: LayoutModeEnum;
+	layout: LayoutModeEnum;
 	showLogo: boolean;
 	fixedHeader: boolean;
 	showFooter: boolean;
@@ -17,7 +17,7 @@ export interface LayoutsConfig {
  * Standardkonfiguration für das Layout
  */
 const DEFAULT_CONFIG: Readonly<LayoutsConfig> = {
-	layoutMode: LayoutModeEnum.Top,
+	layout: LayoutModeEnum.Top,
 	fixedHeader: true,
 	showFooter: true,
 	showLogo: true,

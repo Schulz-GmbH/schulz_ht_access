@@ -1,4 +1,5 @@
 import type { LayoutsConfig } from "@/layouts/_config";
+import type { ThemeName } from "utils/composables/useTheme";
 import type { NavbarClosed, NavbarOpened } from "utils/constants/app-key";
 import { CacheKey } from "@/_utils/constants/cache-key";
 
@@ -45,4 +46,20 @@ export function getNavbarStatus(): NavbarOpened | NavbarClosed | null {
  */
 export function setNavbarStatus(navbarStatus: NavbarOpened | NavbarClosed): void {
 	localStorage.setItem(CacheKey.NAVBAR_STATUS, navbarStatus);
+}
+
+/**
+ * Holt den aktuell aktiven Theme-Namen aus dem `localStorage`.
+ * @returns {ThemeName | null} Der gespeicherte Theme-Name oder `null`, falls nicht vorhanden.
+ */
+export function getActiveThemeName(): ThemeName | null {
+	return localStorage.getItem(CacheKey.ACTIVE_THEME) as ThemeName | null;
+}
+
+/**
+ * Speichert den aktuell aktiven Theme-Namen im `localStorage`.
+ * @param {ThemeName} themeName - Der zu speichernde Theme-Name.
+ */
+export function setActiveThemeName(themeName: ThemeName): void {
+	localStorage.setItem(CacheKey.ACTIVE_THEME, themeName);
 }

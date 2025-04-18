@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, reactive, watch } from "vue";
 import { pinia } from "@/store/index";
 
-import { DeviceEnum, NAVBAR_CLOSED, NAVBAR_OPENED } from "@/_utils/constants/app-key";
+import { DeviceEnum, LayoutModeEnum, NAVBAR_CLOSED, NAVBAR_OPENED } from "@/_utils/constants/app-key";
 
 import { getNavbarStatus, setNavbarStatus } from "@/_utils/cache/local-storage";
 
@@ -22,6 +22,7 @@ export const useAppStore = defineStore("app", () => {
 	});
 
 	const device = ref<DeviceEnum>(DeviceEnum.Desktop);
+	const layout = ref<LayoutModeEnum>(LayoutModeEnum.Top);
 
 	watch(
 		() => navbar.opened,
@@ -44,7 +45,7 @@ export const useAppStore = defineStore("app", () => {
 		device.value = value;
 	};
 
-	return { device, navbar, toggleNavbar, closeNavbar, toggleDevice };
+	return { device, navbar, layout, toggleNavbar, closeNavbar, toggleDevice };
 });
 
 /**

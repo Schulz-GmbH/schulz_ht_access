@@ -1,34 +1,35 @@
-import { ref, watchEffect } from 'vue'
-import { getActiveThemeName, setActiveThemeName } from '@/_utils/cache/local-storage'
+import { ref, watchEffect } from "vue";
+import { getActiveThemeName, setActiveThemeName } from "@/_utils/cache/local-storage";
 
 /** Standard-Themenname */
-const DEFAULT_THEME_NAME = 'normal' as const
+const DEFAULT_THEME_NAME = "normal" as const;
 
 /** Definiert die verfügbaren Theme-Namen */
-export type ThemeName = typeof DEFAULT_THEME_NAME | 'dark' | 'dark-blue'
+export type ThemeName = typeof DEFAULT_THEME_NAME | "dark" | "dark-blue";
 
 /** Struktur für die Themenliste */
 interface ThemeList {
-	title: string
-	name: ThemeName
+	title: string;
+	name: ThemeName;
 }
 
 /** Liste der verfügbaren Themes */
 const themeList: ThemeList[] = [
-	{ title: 'Standard', name: DEFAULT_THEME_NAME },
-	{ title: 'Dunkel', name: 'dark' },
-	{ title: 'Dunkelblau', name: 'dark-blue' },
-]
+	{ title: "Standard", name: DEFAULT_THEME_NAME },
+	{ title: "Dunkel", name: "dark" },
+	{ title: "Dunkelblau", name: "dark-blue" },
+];
 
 /** Aktuell angewendetes Theme */
-const activeThemeName = ref<ThemeName>(getActiveThemeName() || DEFAULT_THEME_NAME)
+/** FTodo: getActiveThemeName im localStorage abrufen */
+const activeThemeName = ref<ThemeName>(getActiveThemeName() || DEFAULT_THEME_NAME);
 
 /**
  * Setzt das aktive Theme
  * @param {ThemeName} value - Der neue Themenname
  */
 function setTheme(value: ThemeName): void {
-	activeThemeName.value = value
+	activeThemeName.value = value;
 }
 
 /**
@@ -36,7 +37,7 @@ function setTheme(value: ThemeName): void {
  * @param {ThemeName} value - Der Name des Themes, das hinzugefügt werden soll.
  */
 function addHtmlClass(value: ThemeName): void {
-	document.documentElement.classList.add(value)
+	document.documentElement.classList.add(value);
 }
 
 /**
@@ -44,8 +45,8 @@ function addHtmlClass(value: ThemeName): void {
  * @param {ThemeName} value - Das aktuell ausgewählte Theme.
  */
 function removeHtmlClass(value: ThemeName): void {
-	const otherThemeNames = themeList.map((item) => item.name).filter((name) => name !== value)
-	document.documentElement.classList.remove(...otherThemeNames)
+	const otherThemeNames = themeList.map((item) => item.name).filter((name) => name !== value);
+	document.documentElement.classList.remove(...otherThemeNames);
 }
 
 /**
@@ -54,11 +55,11 @@ function removeHtmlClass(value: ThemeName): void {
  */
 function initTheme(): void {
 	watchEffect(() => {
-		const value = activeThemeName.value
-		removeHtmlClass(value)
-		addHtmlClass(value)
-		setActiveThemeName(value)
-	})
+		const value = activeThemeName.value;
+		removeHtmlClass(value);
+		addHtmlClass(value);
+		setActiveThemeName(value);
+	});
 }
 
 /**
@@ -66,5 +67,5 @@ function initTheme(): void {
  * @returns {object} Enthält `themeList`, `activeThemeName`, `initTheme` und `setTheme`.
  */
 export function useTheme() {
-	return { themeList, activeThemeName, initTheme, setTheme }
+	return { themeList, activeThemeName, initTheme, setTheme };
 }

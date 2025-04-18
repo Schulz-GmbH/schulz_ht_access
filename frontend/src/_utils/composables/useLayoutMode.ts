@@ -1,21 +1,21 @@
-import { computed } from 'vue'
-import { useSettingsStore } from '@/store/settings/index.store'
-import { LayoutModeEnum } from '@/_utils/constants/app-key'
+import { computed } from "vue";
+import { useAppStore } from "@/store/app.store";
+import { LayoutModeEnum } from "@/_utils/constants/app-key";
 
 /**
  * Layout-Modus (links / oben / kombiniert)
  */
 export function useLayoutMode() {
-	const settingsStore = useSettingsStore()
+	const appStore = useAppStore();
 
-	const isTop = computed(() => settingsStore.layoutMode === LayoutModeEnum.Top)
+	const isTop = computed(() => appStore.layout === LayoutModeEnum.Top);
 
 	function setLayoutMode(mode: LayoutModeEnum) {
-		settingsStore.layoutMode = mode
+		appStore.layout = mode;
 	}
 
 	return {
 		isTop,
 		setLayoutMode,
-	}
+	};
 }
