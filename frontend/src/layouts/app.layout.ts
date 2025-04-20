@@ -1,4 +1,4 @@
-import { defineComponent, computed } from "vue";
+import { defineComponent, computed, onMounted } from "vue";
 
 // Stores
 import { useAppStore } from "@/store/app.store";
@@ -9,10 +9,18 @@ import { useDevice } from "@/_utils/composables/useDevice";
 // Types
 
 // Components
+import NavigationBar from "@/components/NavigationBar/NavigationBar.vue";
+import Sidebar from "@/components/Sidebar/Sidebar.vue";
 
 export default defineComponent({
 	name: "AppLayout",
-	components: {},
+	components: {
+		NavigationBar,
+		Sidebar,
+	},
+	props: {
+		Sidebar,
+	},
 	setup() {
 		const { isMobile } = useDevice();
 
@@ -25,8 +33,10 @@ export default defineComponent({
 			mobile: isMobile.value,
 		}));
 
+		console.log(layoutClasses.value);
+
 		function handleClickOutside() {
-			appStore.closeNavbar(false);
+			appStore.closeNavbar(true);
 		}
 
 		return {

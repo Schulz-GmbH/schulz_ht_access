@@ -1,32 +1,95 @@
-@import './base.css';
-@import './variables.css';
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
 
-@import 'tailwindcss';
+@import "./base.css";
+@import "./variables.css";
 
-@import '../components/navbar/navbar.components.css';
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "tailwindcss";
+
+@import "../components/navbar/navbar.components.css";
+
+@theme {
+	--breakpoint-sm: 567px;
+	--breakpoint-md: 768px;
+	--breakpoint-lg: 992px;
+	--breakpoint-xl: 1200px;
+
+	--spacing-2\.7: 0.675rem;
+	--spacing-5\.5: 1.375rem;
+	--space-7: 1.75rem;
+	--space-68.5: 17.125rem;
+
+	--space--34: -8.5rem;
+
+	--boxShadow-soft-xl: 0 20px 27px rgba(0, 0, 0, 0.05);
+	--boxShadow-soft-2xl: 0 0.3125rem 0.625rem rgba(0, 0, 0, 0.12);
+	--boxShadow-soft-3xl: 0 8px 26px -4px hsla(0, 0%, 8%, 0.15), 0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
+
+	--ease-soft-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+@layer base {
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		margin-bottom: 0.5rem;
+		color: #344767;
+	}
+	h6 {
+		font-size: 1rem;
+		line-height: 1.625;
+	}
+	h4,
+	h5,
+	h6 {
+		font-weight: 600;
+	}
+	p {
+		line-height: 1.625;
+		font-weight: 400;
+		margin-bottom: 1rem;
+	}
+
+	a {
+		margin-bottom: 0.5rem;
+		color: #344767;
+	}
+}
+
+/* 1) Custom‑Utility in der Tailwind‑Utilities‑Layer */
+@layer utilities {
+	.shadow-soft-xl {
+		/* exakt dein gewünschter Schatten */
+		box-shadow: 0 20px 27px rgba(0, 0, 0, 0.05);
+	}
+	.shadow-soft-2xl {
+		box-shadow: 0 0.3125rem 0.625rem rgba(0, 0, 0, 0.12);
+	}
+	.shadow-soft-3xl {
+		box-shadow:
+			0 8px 26px -4px hsla(0, 0%, 8%, 0.15),
+			0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
+	}
+}
+
+@media (max-width: 768px) {
+	.md-max\:w-full {
+		width: 100%;
+	}
+}
 
 body {
 	padding: 0;
 	margin: 0;
-}
 
-body {
-	color: var(--color-black);
+	font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	color: var(--color-white);
 	line-height: 1.6;
 	font-size: 16px;
-}
-
-/* For debug */
-div {
-	border-style: solid;
-	border-width: 2px;
-	border-color: red;
-
-	> div {
-		border-color: rgb(29, 192, 0);
-
-		> div {
-			border-color: rgb(38, 0, 255);
-		}
-	}
+	background-color: rgb(34, 197, 94) !important;
 }

@@ -1,4 +1,4 @@
-import { defineComponent, defineAsyncComponent } from "vue";
+import { defineComponent, defineAsyncComponent, ref, type Ref, type DefineComponent } from "vue";
 
 // Stores
 
@@ -10,22 +10,19 @@ import { useResize } from "@/layouts/composables/useResize";
 // Components
 
 // Templates
+type BasisLayoutType = DefineComponent<{}, { isOnline: Ref<boolean> }, {}>;
 
-export default defineComponent({
+const BasisLayout: BasisLayoutType = defineComponent({
 	name: "BasisLayout",
 	components: {
 		NetworkStatusBanner: defineAsyncComponent(() => import("@/components/NetworkStatusBanner/NetworkStatusBanner.component.vue")),
 		AppLayout: defineAsyncComponent(() => import("@/layouts/app.layout.vue")),
 	},
-	data() {
-		return {
-			// data
-		};
-	},
 	setup() {
-		// Layout responsiv machen
+		const isOnline = ref(navigator.onLine);
 		useResize();
-		// setup
+		return { isOnline };
 	},
-	// computed
 });
+
+export default BasisLayout;

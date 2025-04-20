@@ -40,11 +40,12 @@ export const errorRoutes: Array<RouteRecordRaw> = [
 export const constantRoutes: Array<RouteRecordRaw> = [
 	{
 		path: "/",
-		name: "Home",
+		name: "Dashboard",
 		component: BasisView,
 		meta: {
-			title: "Dashboard",
-			group: "General",
+			title: "IoT Dashboard",
+			icon: "fas fa-home",
+			group: "",
 			hidden: false,
 			dev: false,
 			tags: [

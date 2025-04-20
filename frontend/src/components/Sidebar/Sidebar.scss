@@ -1,0 +1,19 @@
+aside hr {
+	--tw-gradient-from-position: 50%;
+	--tw-gradient-to: transparent;
+	--tw-gradient-stops: var(--tw-gradient-from), rgb(0 0 0 / 0.4) var(--tw-gradient-via-position), var(--tw-gradient-to);
+	--tw-gradient-from: transparent;
+	// background-image: linear-gradient(to right, var(--tw-gradient-stops));
+	opacity: 0.25;
+}
+
+.test {
+	--tw-scale-x: 0;
+	--tw-scale-y: 0;
+	--tw-translate-x: 0px;
+	--tw-translate-y: 0px;
+	--tw-rotate: 0deg;
+	--tw-skew-x: 0deg;
+	transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+		scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}

@@ -17,9 +17,7 @@
 	--font-size-base: 14px;
 	--font-size-small: 13px;
 	--font-size-extra-small: 12px;
-	--font-family:
-		'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial,
-		sans-serif;
+	--font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
 	--font-weight-primary: 500;
 	--font-line-height-primary: 24px;
 	--index-normal: 1;
@@ -39,12 +37,9 @@
 		transform var(--transition-duration) var(--transition-function-fast-bezier),
 		opacity var(--transition-duration) var(--transition-function-fast-bezier);
 	--transition-fade-linear: opacity var(--transition-duration-fast) linear;
-	--transition-border: border-color var(--transition-duration-fast)
-		var(--transition-function-ease-in-out-bezier);
-	--transition-box-shadow: box-shadow var(--transition-duration-fast)
-		var(--transition-function-ease-in-out-bezier);
-	--transition-color: color var(--transition-duration-fast)
-		var(--transition-function-ease-in-out-bezier);
+	--transition-border: border-color var(--transition-duration-fast) var(--transition-function-ease-in-out-bezier);
+	--transition-box-shadow: box-shadow var(--transition-duration-fast) var(--transition-function-ease-in-out-bezier);
+	--transition-color: color var(--transition-duration-fast) var(--transition-function-ease-in-out-bezier);
 	--component-size-large: 40px;
 	--component-size: 32px;
 	--component-size-small: 24px;
@@ -115,9 +110,7 @@
 	--box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
 	--box-shadow-light: 0px 0px 12px rgba(0, 0, 0, 0.12);
 	--box-shadow-lighter: 0px 0px 6px rgba(0, 0, 0, 0.12);
-	--box-shadow-dark:
-		0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12),
-		0px 8px 16px -8px rgba(0, 0, 0, 0.16);
+	--box-shadow-dark: 0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12), 0px 8px 16px -8px rgba(0, 0, 0, 0.16);
 	--disabled-bg-color: var(--fill-color-light);
 	--disabled-text-color: var(--text-color-placeholder);
 	--disabled-border-color: var(--border-color-light);
@@ -141,9 +134,7 @@
 	--body-bg-color: var(--bg-color-page);
 
 	--content-width: min(100%, var(--container-max-width, 1140px));
-	--header-height: calc(
-		var(--navigationbar-height) + var(--tagsview-height) + var(--header-border-bottom-width)
-	);
+	--header-height: calc(var(--navigationbar-height) + var(--tagsview-height) + var(--header-border-bottom-width));
 	--header-bg-color: var(--bg-color);
 	--header-box-shadow: var(--box-shadow-lighter);
 	--header-border-bottom-width: 1px;
@@ -236,15 +227,18 @@
 	--form-validate-error-color: var(--color-danger);
 	--select-option-hover-background-color: var(--bg-color-overlay);
 	--select-panel-background-color: var(--bg-color);
+	--tw-scroll-snap-strictness: proximity;
+	--tw-gradient-from-position: ;
+	--tw-gradient-via-position: ;
+	--tw-gradient-to-position: ;
 }
 
-[data-theme='light'] {
+[data-theme="light"] {
 	---ui-font-color: #606266;
 	---ui-font-primary-color: #409eff;
 	---font-family:
-		-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Hiragino Sans GB, Microsoft YaHei,
-		Helvetica Neue, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-		Segoe UI Symbol;
+		-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif,
+		Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
 	---font-size: 14px;
 	---font-size-medium: 14px;
 	---font-size-small: 13px;

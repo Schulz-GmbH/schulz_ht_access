@@ -1,6 +1,8 @@
 <template>
-	<div id="basis-layout">
+	<div id="network-status">
 		<NetworkStatusBanner />
+	</div>
+	<div id="basis-layout" class="relative h-full">
 		<AppLayout />
 	</div>
 </template>
