@@ -1,5 +1,5 @@
 <template>
-	<section class="app-wrapper relative h-full" :class="layoutClasses">
+	<section class="app-wrapper relative h-[calc(100%-93px)]" :class="layoutClasses">
 		<div v-if="layoutClasses.mobile && layoutClasses.openNavbar"
 			class="drawer-bg absolute inset-0 w-full h-full bg-transparent z-[999]" @click="handleClickOutside" />
 		<Sidebar />
@@ -8,6 +8,7 @@
 			<NavigationBar />
 			<router-view />
 		</main>
+		<Footer />
 	</section>
 </template>
 

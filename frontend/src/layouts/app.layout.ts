@@ -1,5 +1,4 @@
-import { defineComponent, computed, onMounted } from "vue";
-
+import { defineComponent, defineAsyncComponent, computed, reactive, ref, type Ref, type DefineComponent } from "vue";
 // Stores
 import { useAppStore } from "@/store/app.store";
 
@@ -11,15 +10,16 @@ import { useDevice } from "@/_utils/composables/useDevice";
 // Components
 import NavigationBar from "@/components/NavigationBar/NavigationBar.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import Footer from "@/components/Footer/Footer.vue";
 
-export default defineComponent({
+type AppLayoutType = DefineComponent<{}, {}, {}>;
+
+const AppLayout: AppLayoutType = defineComponent({
 	name: "AppLayout",
 	components: {
 		NavigationBar,
 		Sidebar,
-	},
-	props: {
-		Sidebar,
+		Footer,
 	},
 	setup() {
 		const { isMobile } = useDevice();
@@ -33,8 +33,6 @@ export default defineComponent({
 			mobile: isMobile.value,
 		}));
 
-		console.log(layoutClasses.value);
-
 		function handleClickOutside() {
 			appStore.closeNavbar(true);
 		}
@@ -45,3 +43,5 @@ export default defineComponent({
 		};
 	},
 });
+
+export default AppLayout;
