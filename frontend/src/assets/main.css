@@ -16,6 +16,10 @@
 	--breakpoint-lg: 992px;
 	--breakpoint-xl: 1200px;
 
+	--text-xxs: 0.65rem;
+
+	--tracking-none: 0;
+	--spacing-4: 1rem;
 	--spacing-2\.7: 0.675rem;
 	--spacing-5\.5: 1.375rem;
 	--space-7: 1.75rem;
@@ -28,6 +32,8 @@
 	--boxShadow-soft-3xl: 0 8px 26px -4px hsla(0, 0%, 8%, 0.15), 0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
 
 	--ease-soft-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+
+	--color-gray-200: rgb(233 236 239);
 }
 
 @layer base {
@@ -63,6 +69,12 @@
 
 /* 1) Custom‑Utility in der Tailwind‑Utilities‑Layer */
 @layer utilities {
+	/* füge die Utility-Klasse um line-height hinzu */
+	.text-xxs {
+		font-size: var(--text-xxs);
+		line-height: 1rem;
+	}
+
 	.shadow-soft-xl {
 		/* exakt dein gewünschter Schatten */
 		box-shadow: 0 20px 27px rgba(0, 0, 0, 0.05);
@@ -83,12 +95,15 @@
 	}
 }
 
+html,
+body {
+	height: 100%;
+	min-height: 100vh;
+}
 body {
 	padding: 0;
 	margin: 0;
-
 	font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	color: var(--color-white);
 	line-height: 1.6;
 	font-size: 16px;
 	background-color: rgb(34, 197, 94) !important;
