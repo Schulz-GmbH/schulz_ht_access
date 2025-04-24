@@ -26,7 +26,7 @@ type Actions = {
  * Pinia-Store für Layout-Einstellungen.
  * Nutzt ein `reactive` Objekt und `toRefs`, um Typensicherheit und Reaktivität zu gewährleisten.
  */
-export const useSettingsStore = defineStore("settings", () => {
+export const useSettingsStore = defineStore("system", () => {
 	// Reaktiver State basierend auf der aktuellen Layout-Konfiguration
 	const state = reactive<State>({
 		...systemConfig,
@@ -35,7 +35,7 @@ export const useSettingsStore = defineStore("settings", () => {
 
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
-		() => ({ version: state.version, logging: state.logging }),
+		() => ({ version: state.version, logging: state.logging, wlan: state.wlan }),
 		(newVal) => {
 			setSystemConfig({ ...newVal });
 		},
@@ -52,6 +52,7 @@ export const useSettingsStore = defineStore("settings", () => {
 		return {
 			version: state.version,
 			logging: state.logging,
+			wlan: state.wlan,
 		};
 	}
 
@@ -68,12 +69,13 @@ export const useSettingsStore = defineStore("settings", () => {
 	}
 
 	// Statt `...toRefs(state)` explizit zurückgeben:
-	const { version, logging } = toRefs(state);
+	const { version, logging, wlan } = toRefs(state);
 
 	// Exportiere jede Property als Ref plus den Getter
 	return {
 		version,
 		logging,
+		wlan,
 		routes: toRefs(state).routes,
 		showLogo: toRefs(state as any).showLogo, // oder sicherer: vorher casten
 		getCacheData,
