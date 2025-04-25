@@ -28,6 +28,7 @@ export default defineComponent({
 		loading: { type: Boolean },
 		headerControl: { type: Boolean, required: false, default: true },
 		footerControl: { type: Boolean, required: false, default: false },
+		shadow: { type: Boolean, required: false, default: true },
 	},
 	emits: {
 		onColumnClicked: (_payload: any) => true,
