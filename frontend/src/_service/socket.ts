@@ -88,15 +88,17 @@ function processQueue(): void {
  * @param {string} url Die WebSocket-Server-URL.
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn die Verbindung geöffnet ist.
  */
-function connect(url: string): Promise<void> {
-	console.debug("Versuche, WebSocket-Verbindung aufzubauen zu:", url);
+function connect(url?: string): Promise<void> {
+	const targetUrl = url ?? getWebSocketUrl();
+	console.debug("Versuche, WebSocket-Verbindung aufzubauen zu:", targetUrl);
+
 	return new Promise((resolve, reject) => {
 		if (!socket || socket.readyState !== WebSocket.OPEN) {
 			isConnecting = true;
-			socket = new WebSocket(url);
+			socket = new WebSocket(targetUrl);
 
 			socket.addEventListener("open", () => {
-				console.debug("WebSocket verbunden:", url);
+				console.debug("WebSocket verbunden:", targetUrl);
 				isConnecting = false;
 				processQueue();
 				resolve();
@@ -157,6 +159,7 @@ async function sendMessage(data: string | object): Promise<void> {
 	await ensureConnection();
 
 	const message = typeof data === "string" ? data : JSON.stringify(data);
+	console.log(data);
 	if (socket?.readyState === WebSocket.OPEN) {
 		console.debug("Sende Nachricht:", message);
 		socket.send(message);

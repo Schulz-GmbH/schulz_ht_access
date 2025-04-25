@@ -12,6 +12,8 @@
  * @since 1.0.0
  */
 
+const timeoutTime = 5000; // Timeout in Millisekunden
+
 import { SocketService } from "@/_service/socket";
 import { useSettingsStore } from "@/store/settings/index.store";
 
@@ -39,7 +41,7 @@ function createTimeout(ms: number, message: string): Promise<never> {
 async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
 	settingsStore.wlan.loading = true;
 	try {
-		const listener = new Promise<void>((resolve) => {
+		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
 				if (data.status === "success") {
 					settingsStore.wlan.status = data.details !== "disabled";
@@ -48,7 +50,7 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore
 				SocketService.removeListener("system", "wifi", handler);
 				resolve();
 			};
-			SocketService.onMessage("system", "wifi", handler);
+			await SocketService.onMessage("system", "wifi", handler);
 		});
 
 		await SocketService.sendMessage({
@@ -57,7 +59,7 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore
 			key: "status",
 		});
 
-		await Promise.race([listener, createTimeout(3000, "Timeout beim Abrufen des WLAN-Status")]);
+		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des WLAN-Status")]);
 	} catch (err) {
 		console.warn("WLAN-Status konnte nicht abgerufen werden:", err);
 		settingsStore.wlan.status = false;
@@ -80,13 +82,13 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore
 async function fetchLogStatus(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
 	settingsStore.logging.loading = true;
 	try {
-		const listener = new Promise<void>((resolve) => {
+		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
 				settingsStore.logging.state = data.status === "success" && data.details === "true";
 				SocketService.removeListener("log", "debug", handler);
 				resolve();
 			};
-			SocketService.onMessage("log", "debug", handler);
+			await SocketService.onMessage("log", "debug", handler); // <== entscheidend
 		});
 
 		await SocketService.sendMessage({
@@ -95,7 +97,7 @@ async function fetchLogStatus(settingsStore: ReturnType<typeof useSettingsStore>
 			key: "status",
 		});
 
-		await Promise.race([listener, createTimeout(3000, "Timeout beim Abrufen des Log-Status")]);
+		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des Log-Status")]);
 	} catch (err) {
 		console.warn("Log-Status konnte nicht abgerufen werden:", err);
 		settingsStore.logging.state = false;
@@ -117,7 +119,7 @@ async function fetchLogStatus(settingsStore: ReturnType<typeof useSettingsStore>
 async function fetchVersion(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
 	settingsStore.version.loading = true;
 	try {
-		const listener = new Promise<void>((resolve) => {
+		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
 				if (data.status === "success") {
 					settingsStore.version.value = data.details;
@@ -125,7 +127,7 @@ async function fetchVersion(settingsStore: ReturnType<typeof useSettingsStore>):
 				SocketService.removeListener("system", "version", handler);
 				resolve();
 			};
-			SocketService.onMessage("system", "version", handler);
+			await SocketService.onMessage("system", "version", handler);
 		});
 
 		await SocketService.sendMessage({
@@ -134,7 +136,7 @@ async function fetchVersion(settingsStore: ReturnType<typeof useSettingsStore>):
 			key: "get",
 		});
 
-		await Promise.race([listener, createTimeout(3000, "Timeout beim Abrufen der App-Version")]);
+		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen der App-Version")]);
 	} catch (err) {
 		console.warn("App-Version konnte nicht abgerufen werden:", err);
 		settingsStore.version.value = "unbekannt";
@@ -156,6 +158,8 @@ export async function systemStatusService(): Promise<void> {
 		console.warn("PWA ist offline – Systemstatus kann nicht geladen werden.");
 		return;
 	}
+
+	await SocketService.connect();
 
 	const settingsStore = useSettingsStore();
 	await Promise.allSettled([fetchWifiStatus(settingsStore), fetchLogStatus(settingsStore), fetchVersion(settingsStore)]);
