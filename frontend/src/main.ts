@@ -18,7 +18,7 @@ import App from "./app.main.vue";
 import { router } from "./router";
 
 // Stores
-import { useSettingsStore } from "@/store/settings/index.store";
+import { useSystemStore } from "@/store/system/index.store";
 
 // Helpers and services
 import { hookConsole } from "@/_utils/hooks/console-hock";
@@ -62,8 +62,8 @@ app.use(router);
 router.isReady().then(() => {
 	app.mount("#app");
 
-	const settingsStore = useSettingsStore();
-	settingsStore.setRoutes();
+	const systemStore = useSystemStore();
+	systemStore.setRoutes();
 
 	usePWA();
 });

@@ -15,7 +15,7 @@
 const timeoutTime = 5000; // Timeout in Millisekunden
 
 import { SocketService } from "@/_service/socket";
-import { useSettingsStore } from "@/store/settings/index.store";
+import { useSystemStore } from "@/store/system/index.store";
 
 /**
  * @brief Erzeugt ein Timeout-Promise, das nach `ms` Millisekunden mit einem Fehler abbricht.
@@ -35,10 +35,10 @@ function createTimeout(ms: number, message: string): Promise<never> {
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * die Felder `wlan.status`, `wlan.connected` und `wlan.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSettingsStore()).
+ * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
+async function fetchWifiStatus(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
 	settingsStore.wlan.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
@@ -76,10 +76,10 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSettingsStore
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * die Felder `logging.state` und `logging.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSettingsStore()).
+ * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchLogStatus(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
+async function fetchLogStatus(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
 	settingsStore.logging.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
@@ -113,10 +113,10 @@ async function fetchLogStatus(settingsStore: ReturnType<typeof useSettingsStore>
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * das Feld `version.value` und `version.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSettingsStore()).
+ * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchVersion(settingsStore: ReturnType<typeof useSettingsStore>): Promise<void> {
+async function fetchVersion(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
 	settingsStore.version.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
@@ -161,6 +161,6 @@ export async function systemStatusService(): Promise<void> {
 
 	await SocketService.connect();
 
-	const settingsStore = useSettingsStore();
+	const settingsStore = useSystemStore();
 	await Promise.allSettled([fetchWifiStatus(settingsStore), fetchLogStatus(settingsStore), fetchVersion(settingsStore)]);
 }

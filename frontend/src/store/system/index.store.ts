@@ -1,24 +1,24 @@
-// src/store/settings/index.store.ts
+// src/store/system/index.store.ts
 import { defineStore } from "pinia";
 import { reactive, toRefs, watch } from "vue";
 import { constantRoutes, developmentRoutes } from "@/router";
-import { systemConfig } from "@/_utils/config/settings.config";
-import { setSystemConfig } from "@/_utils/cache/settings.storage.cache";
-import { SettingsConfig } from "@/_utils/config/settings.config";
+import { systemConfig } from "@/_utils/config/system.config";
+import { setSystemConfig } from "@/_utils/cache/system.storage.cache";
+import { SystemConfig } from "@/_utils/config/system.config";
 import type { RouteRecordRaw } from "vue-router";
 
 /**
- * Erweiterung des SettingsConfig um dynamische Routenlisten
+ * Erweiterung des SystemConfig um dynamische Routenlisten
  */
-type State = SettingsConfig & {
+type State = SystemConfig & {
 	routes: RouteRecordRaw[];
 };
 
 /**
- * Methoden des Settings-Stores
+ * Methoden des System-Stores
  */
 type Actions = {
-	getCacheData: () => SettingsConfig;
+	getCacheData: () => SystemConfig;
 	setRoutes: () => void;
 };
 
@@ -26,7 +26,7 @@ type Actions = {
  * Pinia-Store für Layout-Einstellungen.
  * Nutzt ein `reactive` Objekt und `toRefs`, um Typensicherheit und Reaktivität zu gewährleisten.
  */
-export const useSettingsStore = defineStore("system", () => {
+export const useSystemStore = defineStore("system", () => {
 	// Reaktiver State basierend auf der aktuellen Layout-Konfiguration
 	const state = reactive<State>({
 		...systemConfig,
@@ -35,7 +35,7 @@ export const useSettingsStore = defineStore("system", () => {
 
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
-		() => ({ version: state.version, logging: state.logging, wlan: state.wlan }),
+		() => ({ version: state.version, logging: state.logging, wlan: state.wlan, serial: state.serial }),
 		(newVal) => {
 			setSystemConfig({ ...newVal });
 		},
@@ -46,13 +46,14 @@ export const useSettingsStore = defineStore("system", () => {
 	const refs = toRefs(state);
 
 	/**
-	 * Getter: Gibt ein flaches Objekt aller aktuellen Settings zurück.
+	 * Getter: Gibt ein flaches Objekt aller aktuellen Systems zurück.
 	 */
-	function getCacheData(): SettingsConfig {
+	function getCacheData(): SystemConfig {
 		return {
 			version: state.version,
 			logging: state.logging,
 			wlan: state.wlan,
+			serial: state.serial,
 		};
 	}
 
@@ -76,6 +77,7 @@ export const useSettingsStore = defineStore("system", () => {
 		version,
 		logging,
 		wlan,
+		serial: toRefs(state).serial,
 		routes: toRefs(state).routes,
 		showLogo: toRefs(state as any).showLogo, // oder sicherer: vorher casten
 		getCacheData,

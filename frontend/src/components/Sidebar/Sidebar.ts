@@ -4,7 +4,7 @@ import type { RouteRecordRaw } from "vue-router";
 
 // Stores
 import { useAppStore } from "@/store/app.store";
-import { useSettingsStore } from "@/store/settings/index.store";
+import { useSystemStore } from "@/store/system/index.store";
 
 // composables
 
@@ -26,7 +26,7 @@ export default defineComponent({
 	},
 	setup() {
 		const appStore = useAppStore();
-		const settingsStore = useSettingsStore();
+		const settingsStore = useSystemStore();
 
 		const route = useRoute();
 		const noHiddenRoutes = computed(() => settingsStore.routes.filter((item) => !item.meta?.hidden && item.meta?.dev !== true));
