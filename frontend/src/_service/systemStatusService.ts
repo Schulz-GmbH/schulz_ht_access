@@ -35,17 +35,17 @@ function createTimeout(ms: number, message: string): Promise<never> {
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * die Felder `wlan.status`, `wlan.connected` und `wlan.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
+ * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchWifiStatus(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	settingsStore.wlan.loading = true;
+async function fetchWifiStatus(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
+	systemStore.wlan.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
 				if (data.status === "success") {
-					settingsStore.wlan.status = data.details !== "disabled";
-					settingsStore.wlan.connected = data.details === "connected";
+					systemStore.wlan.status = data.details !== "disabled";
+					systemStore.wlan.connected = data.details === "connected";
 				}
 				SocketService.removeListener("system", "wifi", handler);
 				resolve();
@@ -62,10 +62,10 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSystemStore>)
 		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des WLAN-Status")]);
 	} catch (err) {
 		console.warn("WLAN-Status konnte nicht abgerufen werden:", err);
-		settingsStore.wlan.status = false;
-		settingsStore.wlan.connected = false;
+		systemStore.wlan.status = false;
+		systemStore.wlan.connected = false;
 	} finally {
-		settingsStore.wlan.loading = false;
+		systemStore.wlan.loading = false;
 	}
 }
 
@@ -76,15 +76,15 @@ async function fetchWifiStatus(settingsStore: ReturnType<typeof useSystemStore>)
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * die Felder `logging.state` und `logging.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
+ * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchLogStatus(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	settingsStore.logging.loading = true;
+async function fetchLogStatus(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
+	systemStore.logging.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
-				settingsStore.logging.state = data.status === "success" && data.details === "true";
+				systemStore.logging.state = data.status === "success" && data.details === "true";
 				SocketService.removeListener("log", "debug", handler);
 				resolve();
 			};
@@ -100,9 +100,9 @@ async function fetchLogStatus(settingsStore: ReturnType<typeof useSystemStore>):
 		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des Log-Status")]);
 	} catch (err) {
 		console.warn("Log-Status konnte nicht abgerufen werden:", err);
-		settingsStore.logging.state = false;
+		systemStore.logging.state = false;
 	} finally {
-		settingsStore.logging.loading = false;
+		systemStore.logging.loading = false;
 	}
 }
 
@@ -113,16 +113,16 @@ async function fetchLogStatus(settingsStore: ReturnType<typeof useSystemStore>):
  * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
  * das Feld `version.value` und `version.loading`.
  *
- * @param[in] settingsStore Instanz des Settings-Stores (useSystemStore()).
+ * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
  * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
  */
-async function fetchVersion(settingsStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	settingsStore.version.loading = true;
+async function fetchVersion(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
+	systemStore.version.loading = true;
 	try {
 		const listener = new Promise<void>(async (resolve) => {
 			const handler = (data: { status: string; details: string }) => {
 				if (data.status === "success") {
-					settingsStore.version.value = data.details;
+					systemStore.version.value = data.details;
 				}
 				SocketService.removeListener("system", "version", handler);
 				resolve();
@@ -139,9 +139,43 @@ async function fetchVersion(settingsStore: ReturnType<typeof useSystemStore>): P
 		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen der App-Version")]);
 	} catch (err) {
 		console.warn("App-Version konnte nicht abgerufen werden:", err);
-		settingsStore.version.value = "unbekannt";
+		systemStore.version.value = "unbekannt";
 	} finally {
-		settingsStore.version.loading = false;
+		systemStore.version.loading = false;
+	}
+}
+
+/**
+ * @brief Fragt den aktuellen Status der Serial-Schnittstelle vom Server ab und speichert sie im System-Store.
+ *
+ * Registriert einen temporären Listener für das Event "serial","status",
+ * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
+ * das Feld `available` und `baudRate`.
+ *
+ * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
+ * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
+ */
+async function fetchSerial(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
+	systemStore.serial.loading = true;
+	try {
+		const listener = new Promise<void>(async (resolve) => {
+			const handler = (data: { details: { available: boolean; baudRate: number } }) => {
+				console.log("Serial-Status erhalten:", data);
+				systemStore.serial.available = data.details.available;
+				systemStore.serial.baudRate = data.details.baudRate;
+				// SocketService.removeListener("serial", "status", handler);
+				resolve();
+			};
+			await SocketService.onMessage("serial", "status", handler);
+		});
+
+		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Warten auf Serial-Status")]);
+	} catch (err) {
+		console.warn("Serial-Status konnte nicht empfangen werden:", err);
+		systemStore.serial.available = false;
+		systemStore.serial.baudRate = 0;
+	} finally {
+		systemStore.serial.loading = false;
 	}
 }
 
@@ -161,6 +195,6 @@ export async function systemStatusService(): Promise<void> {
 
 	await SocketService.connect();
 
-	const settingsStore = useSystemStore();
-	await Promise.allSettled([fetchWifiStatus(settingsStore), fetchLogStatus(settingsStore), fetchVersion(settingsStore)]);
+	const systemStore = useSystemStore();
+	await Promise.allSettled([fetchWifiStatus(systemStore), fetchLogStatus(systemStore), fetchVersion(systemStore), fetchSerial(systemStore)]);
 }

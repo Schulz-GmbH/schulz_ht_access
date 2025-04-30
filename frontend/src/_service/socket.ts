@@ -116,7 +116,7 @@ function connect(url?: string): Promise<void> {
 			});
 
 			socket.addEventListener("message", (event) => {
-				console.debug("WebSocket Nachricht empfangen:", event.data);
+				// console.debug("WebSocket Nachricht empfangen:", event.data);
 				try {
 					const message = JSON.parse(event.data);
 					const { event: evt, action, ...data } = message;
