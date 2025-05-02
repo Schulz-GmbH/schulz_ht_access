@@ -9,6 +9,12 @@ import BasisLayout from "@/layouts/basis.layout.vue";
 import BasisView from "@/views/basis/basis.view.vue";
 import { group } from "console";
 
+// Pages
+import Dashboard from "@/pages/dashboard/dashboard.vue";
+import Settings from "@/pages/Settings/settings.vue";
+import Terminal from "@/pages/Terminal/terminal.vue";
+import LogFiles from "@/pages/LogFiles/log-files.vue";
+
 /**
  * Route configurations for the Vue application.
  *
@@ -41,7 +47,7 @@ export const constantRoutes: Array<RouteRecordRaw> = [
 	{
 		path: "/",
 		name: "Dashboard",
-		component: BasisView,
+		component: Dashboard,
 		meta: {
 			title: "IoT Dashboard",
 			icon: "fas fa-home",
@@ -57,6 +63,29 @@ export const constantRoutes: Array<RouteRecordRaw> = [
 				{
 					name: "og:description",
 					value: "Willkommen auf der Startseite der Anwendung.",
+				},
+			],
+		},
+	},
+	{
+		path: "/terminal",
+		name: "Terminal",
+		component: Terminal,
+		meta: {
+			title: "Terminal",
+			icon: "fas fa-terminal",
+			group: "",
+			hidden: false,
+			dev: false,
+			tags: [
+				{ name: "author", value: "Simon Marcel Linden" },
+				{
+					name: "description",
+					value: "HS - Wireless Access - Terminal",
+				},
+				{
+					name: "og:description",
+					value: "HS - Wireless Access - Terminal",
 				},
 			],
 		},
