@@ -27,6 +27,7 @@
 #include <LittleFS.h>
 
 #include <ctime>
+#include <vector>
 
 /**
  * @brief Singleton-Klasse zur Verwaltung von systemweitem Logging.
@@ -42,6 +43,7 @@ class LLog {
 	 */
 	static LLog &getInstance();
 
+	static const std::vector<String> Events;
 	/**
 	 * @brief Gibt eine Lognachricht ohne Zeilenumbruch aus.
 	 *
@@ -85,6 +87,22 @@ class LLog {
 	void error(const String &message, bool newLine = true);
 
 	/**
+	 * @brief Loggt eine Socket-Nachricht.
+	 */
+	void socket(const String &message, bool newLine = true);
+
+	/**
+	 * @brief Loggt eine HTTP-Nachricht.
+	 */
+	void http(const String &message, bool newLine = true);
+
+	/**
+	 * @brief Loggt eine Nachricht in mehrere Events/Level gleichzeitig.
+	 * @param events Vektor der Event-Namen ohne ".log" (z.B. {"warning","socket"}).
+	 */
+	void log(const std::vector<String> &events, const String &message, bool newLine = true);
+
+	/**
 	 * @brief Aktiviert oder deaktiviert das Schreiben in Dateien.
 	 *        Serielle Ausgabe bleibt immer aktiv.
 	 */
@@ -108,6 +126,7 @@ class LLog {
 	 * @param timestamp true = Zeitstempel voranstellen.
 	 */
 	void logMessage(const char *level, const String &message, bool newLine = true, bool timestamp = true);
+	void logMessage(const std::vector<String> &levels, const String &message, bool newLine = true, bool timestamp = true);
 
 	/**
 	 * @brief Erzeugt einen Zeitstempel im Format YYYY-MM-DD hh:mm:ss.

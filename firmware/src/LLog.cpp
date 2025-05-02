@@ -30,7 +30,7 @@
 #include "global.h"
 
 bool LLog::m_fileLogging = true;
-
+const std::vector<String> LLog::Events = {"debug", "info", "system", "warning", "error", "socket", "http", "general"};
 /**
  * @brief Konstruktor des LLog-Singletons.
  *
@@ -103,21 +103,60 @@ void LLog::logMessage(const char *level, const String &message, bool newLine, bo
 	}
 
 	// 3) In Datei speichern
-	String fname;
-	if (strcmp(level, "[DEBUG]") == 0)
-		fname = "debug.log";
-	else if (strcmp(level, "[INFO]") == 0)
-		fname = "info.log";
-	else if (strcmp(level, "[SYSTEM]") == 0)
-		fname = "system.log";
-	else if (strcmp(level, "[WARNING]") == 0)
-		fname = "warning.log";
-	else if (strcmp(level, "[ERROR]") == 0)
-		fname = "error.log";
-	else
-		fname = "general.log";
+	String fname = "general.log";
+	// Level-String ohne [] und lowercase
+	String lvl = String(level);
+	lvl.replace("[", "");
+	lvl.replace("]", "");
+	lvl.toLowerCase();
+	auto it = std::find(Events.begin(), Events.end(), lvl);
+	if (it != Events.end()) {
+		fname = *it + ".log";
+	}
 
 	logToFile(fname, entry);
+}
+
+void LLog::logMessage(const std::vector<String> &levels, const String &message, bool newLine, bool timestamp) {
+	String prefix;
+	for (const auto &evt : levels) {
+		String cap = evt;
+		for (size_t i = 0; i < cap.length(); ++i) {
+			cap[i] = toupper(cap[i]);
+		}
+		prefix += "[" + cap + "]";
+	}
+
+	// 1) Baue Logzeile mit optionalem Zeitstempel
+	String entry;
+	if (timestamp) {
+		entry = prefix + "[" + getTimestamp() + "] " + message;
+	} else {
+		entry = prefix + " " + message;
+	}
+
+	// 2) Auf Serial ausgeben
+	if (newLine) {
+		Serial.println(entry);
+	} else {
+		Serial.print(entry);
+	}
+
+	for (const auto &evt : levels) {
+		// 3) In Datei speichern
+		String fname = "general.log";
+		// Level-String ohne [] und lowercase
+		String lvl = String(evt);
+		lvl.replace("[", "");
+		lvl.replace("]", "");
+		lvl.toLowerCase();
+		auto it = std::find(Events.begin(), Events.end(), lvl);
+		if (it != Events.end()) {
+			fname = *it + ".log";
+		}
+
+		logToFile(fname, entry);
+	}
 }
 
 /**
@@ -191,6 +230,44 @@ void LLog::warn(const String &message, bool newLine) {
  */
 void LLog::error(const String &message, bool newLine) {
 	logMessage("[ERROR]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein Socket Event.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::socket(const String &message, bool newLine) {
+	logMessage("[Socket]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein HTTP Event.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::http(const String &message, bool newLine) {
+	logMessage("[HTTP]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein Fehler aus mehreren Events.
+ *
+ * @param events z.B. {"warning","socket"}
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::log(const std::vector<String> &events, const String &message, bool newLine) {
+	// Kombiniertes Loggen in einer einzigen Zeile
+	// String prefix;
+	// for (const auto &evt : events) {
+	// 	prefix += "[" + evt + "]";
+	// }
+	// Einmaliges Loggen mit gesamtem Prefix
+	// logMessage(prefix.c_str(), message, newLine, true);
+	logMessage(events, message, newLine, true);
 }
 
 /**
