@@ -31,23 +31,32 @@
 
 bool LLog::m_fileLogging = true;
 const std::vector<String> LLog::Events = {"debug", "info", "system", "warning", "error", "socket", "http", "general"};
+
 /**
  * @brief Konstruktor des LLog-Singletons.
  *
  * Initialisiert das Logging-System, mountet LittleFS und erstellt ggf. die notwendigen
- * Verzeichnisse zur Speicherung der Log-Dateien.
+ * Verzeichnisse zur Speicherung der Log-Dateien. Räum beim Intitialiseren automatisch alte Logdateien auf.
+ * Liest den Status des File-Loggings aus den Preferences.
+ * Wenn LittleFS nicht gemountet werden kann, wird eine Fehlermeldung ausgegeben.
+ * Wenn das Verzeichnis /logs nicht existiert, wird es erstellt.
+ * Wenn das Verzeichnis /logs/system nicht existiert, wird es erstellt.
+ * Wenn das Verzeichnis /logs/device nicht existiert, wird es erstellt.
  */
 LLog::LLog() {
 	if (!LittleFS.begin()) {
-		Serial.println("[LLog] Fehler: LittleFS konnte nicht gemountet werden.");
+		logger.log({"system", "error", "filesystem"}, "LittleFS konnte nicht gemountet werden!");
 	}
-	// Verzeichnisse anlegen
-	if (!LittleFS.exists("/logs")) {
-		LittleFS.mkdir("/logs");
+	if (!LittleFS.exists("/logs")) LittleFS.mkdir("/logs");
+	if (!LittleFS.exists("/logs/system")) LittleFS.mkdir("/logs/system");
+	// File-Logging-Status aus Preferences laden
+	Preferences pref;
+	if (pref.begin("debug", true)) {
+		m_fileLogging = pref.getBool("fileLogging", false);
+		pref.end();
 	}
-	if (!LittleFS.exists("/logs/system")) {
-		LittleFS.mkdir("/logs/system");
-	}
+	// Automatisches Aufräumen beim Start
+	clearLargeLogs();
 }
 
 /**
@@ -117,6 +126,17 @@ void LLog::logMessage(const char *level, const String &message, bool newLine, bo
 	logToFile(fname, entry);
 }
 
+/**
+ * @brief Gibt eine Log-Nachricht mit mehreren Events aus.
+ *
+ * Die Nachricht wird auf der seriellen Schnittstelle und – je nach Konfiguration – auch
+ * in mehrere Logdateien geschrieben (eine pro Event-Kategorie).
+ *
+ * @param levels Liste von Event-Kategorien wie "info", "system", "socket".
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um Zeilenumbruch anzuhängen.
+ * @param timestamp true, um Zeitstempel voranzustellen.
+ */
 void LLog::logMessage(const std::vector<String> &levels, const String &message, bool newLine, bool timestamp) {
 	String prefix;
 	for (const auto &evt : levels) {
@@ -178,7 +198,7 @@ void LLog::logToFile(const String &filename, const String &entry) {
 		f.println(entry);
 		f.close();
 	} else {
-		Serial.printf("[LLog] Fehler beim Öffnen von %s\n", path.c_str());
+		logger.log({"system", "error", "filsystem", "llog"}, "Fehler beim Öffnen von " + path);
 	}
 }
 
@@ -260,13 +280,6 @@ void LLog::http(const String &message, bool newLine) {
  * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
  */
 void LLog::log(const std::vector<String> &events, const String &message, bool newLine) {
-	// Kombiniertes Loggen in einer einzigen Zeile
-	// String prefix;
-	// for (const auto &evt : events) {
-	// 	prefix += "[" + evt + "]";
-	// }
-	// Einmaliges Loggen mit gesamtem Prefix
-	// logMessage(prefix.c_str(), message, newLine, true);
 	logMessage(events, message, newLine, true);
 }
 
@@ -295,6 +308,86 @@ void LLog::println(const String &message, bool timestamp) {
 }
 
 /**
+ * @brief Leert die Log-Datei für ein bestimmtes Event.
+ *
+ * Öffnet die Datei im Schreibmodus, wodurch ihr Inhalt überschrieben wird.
+ *
+ * @param event Name des Events (z. B. "info", "debug").
+ */
+void LLog::clearLog(const String &event) {
+	String path = "/logs/system/" + event + ".log";
+	// Öffnen im WRITE-Modus leert die Datei
+	File f = LittleFS.open(path, FILE_WRITE);
+	if (f) f.close();
+}
+
+/**
+ * @brief Leert mehrere Log-Dateien.
+ *
+ * Diese Methode ruft `clearLog()` für jedes übergebene Event auf.
+ *
+ * @param events Liste von Event-Namen, deren Logs geleert werden sollen.
+ */
+void LLog::clearLogs(const std::vector<String> &events) {
+	for (const auto &evt : events) {
+		clearLog(evt);
+	}
+}
+
+/**
+ * @brief Löscht Logdateien, deren Größe das Limit überschreitet.
+ *
+ * Diese Methode prüft die Größe aller bekannten Event-Logdateien im Verzeichnis
+ * `/logs/system/` und leert jene, die größer als `maxSize` sind.
+ *
+ * @param maxSize Maximale erlaubte Dateigröße in Bytes (Standard: 32.000).
+ */
+void LLog::clearLargeLogs(size_t maxSize) {
+	for (const auto &evt : Events) {
+		String fname = evt + ".log";
+		String path = "/logs/system/" + fname;
+		if (LittleFS.exists(path)) {
+			File f = LittleFS.open(path, "r");
+			if (f) {
+				if (f.size() > maxSize) {
+					f.close();
+					// Leeren
+					File t = LittleFS.open(path, FILE_WRITE);
+					if (t) t.close();
+				} else {
+					f.close();
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @brief Erstellt oder überschreibt eine Log-Datei im Verzeichnis `/logs/device`.
+ *
+ * Diese Funktion kann genutzt werden, um gerätespezifische Logs zu erstellen,
+ * z. B. für empfangene Nachrichten oder Konfigurationen.
+ *
+ * @param filename Dateiname der zu erstellenden Logdatei (ohne Pfad).
+ * @param content Inhalt, der in die Datei geschrieben wird.
+ */
+
+void LLog::createDeviceLog(const String &filename, const String &content) {
+	const char *dirPath = "/logs/device";
+	if (!LittleFS.exists(dirPath)) {
+		LittleFS.mkdir(dirPath);
+	}
+	String fullPath = String(dirPath) + "/" + filename;
+	File f = LittleFS.open(fullPath, FILE_WRITE);
+	if (!f) {
+		logger.log({"system", "error", "filesystem", "llog"}, "Kann Datei nicht erstellen: " + fullPath);
+		return;
+	}
+	f.print(content);
+	f.close();
+}
+
+/**
  * @brief Aktiviert oder deaktiviert das Schreiben in Log-Dateien.
  *
  * Der Zustand wird persistent in den Preferences unter `debug/fileLogging` gespeichert.
@@ -307,6 +400,8 @@ void LLog::setFileLogging(bool enabled) {
 	if (preferences.begin("debug", false)) {
 		preferences.putBool("fileLogging", enabled);
 		preferences.end();
+		String message = "File-Logging " + String(enabled ? "aktiviert" : "deaktiviert");
+		LLog::getInstance().logMessage({"system", "llog"}, message, true, true);
 	}
 }
 

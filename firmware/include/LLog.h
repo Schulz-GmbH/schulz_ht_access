@@ -103,6 +103,32 @@ class LLog {
 	void log(const std::vector<String> &events, const String &message, bool newLine = true);
 
 	/**
+	 * @brief Löscht den Inhalt einer einzelnen Log-Datei.
+	 * @param event Event-Name ohne ".log".
+	 */
+	void clearLog(const String &event);
+
+	/**
+	 * @brief Löscht mehrere Log-Dateien.
+	 * @param events Vektor der Event-Namen ohne ".log".
+	 */
+	void clearLogs(const std::vector<String> &events);
+
+	/**
+	 * @brief Automatisches Aufräumen: löscht Logdateien, die größer als maxSize sind.
+	 * @param maxSize Maximale Dateigröße in Bytes (Default: 1000 KB).
+	 */
+	void clearLargeLogs(size_t maxSize = 100 * 1024);
+
+	/**
+     * @brief Erstellt (oder überschreibt) eine Logdatei im Verzeichnis /logs/device.
+     * @param filename Dateiname (z.B. "device123.log").
+     * @param content Der vollständige Inhalt der Datei.
+     */
+    void createDeviceLog(const String &filename, const String &content);
+
+
+	/**
 	 * @brief Aktiviert oder deaktiviert das Schreiben in Dateien.
 	 *        Serielle Ausgabe bleibt immer aktiv.
 	 */
