@@ -29,7 +29,7 @@ static bool checkDirectories() {
 	bool missingAnything = false;
 
 	if (!LittleFS.exists("/www/html")) {
-		logger.error("[LittleFS] Verzeichnis /www/html fehlt im Dateisystem!");
+		logger.log({"system", "error", "filesystem"}, "Verzeichnis /www/html fehlt im Dateisystem!");
 		addStatus(WEBSERVER_NO_HTML_DIR);
 		missingAnything = true;
 	} else {
@@ -37,7 +37,7 @@ static bool checkDirectories() {
 	}
 
 	if (!LittleFS.exists("/logs")) {
-		logger.error("[LittleFS] Verzeichnis /logs fehlt im Dateisystem!");
+		logger.log({"system", "error", "filesystem"}, "Verzeichnis /logs fehlt im Dateisystem!");
 		addStatus(LOG_NO_DIR);
 		missingAnything = true;
 	} else {
@@ -61,7 +61,8 @@ void initFS() {
 	bool fsOk = LittleFS.begin();
 
 	if (!fsOk) {
-		logger.error("[LittleFS] Dateisystem konnte nicht initialisiert werden!");
+		logger.log({"system", "error", "filesystem"}, "Dateisystem konnte nicht initialisiert werden!");
+
 		addStatus(FS_NOT_AVAILABLE);
 		removeStatus(WEBSERVER_NO_HTML_DIR);
 		removeStatus(LOG_NO_DIR);
@@ -69,7 +70,7 @@ void initFS() {
 		return;
 	} else {
 		removeStatus(FS_NOT_AVAILABLE);
-		logger.info("[LittleFS] Dateisystem erfolgreich initialisiert.");
+		logger.log({"system", "info", "filesystem"}, "Dateisystem erfolgreich initialisiert.");
 	}
 
 	// Verzeichnisse anlegen, falls nicht vorhanden:
@@ -102,7 +103,7 @@ void checkFS() {
 	bool fsOk = LittleFS.begin();
 
 	if (!fsOk) {
-		logger.error("[LittleFS] Dateisystem nicht verfügbar!");
+		logger.log({"system", "error", "filesystem"}, "Dateisystem nicht verfügbar!");
 		addStatus(FS_NOT_AVAILABLE);
 		removeStatus(WEBSERVER_NO_HTML_DIR);
 		removeStatus(LOG_NO_DIR);

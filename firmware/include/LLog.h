@@ -24,27 +24,26 @@
 #define LLOG_H
 
 #include <Arduino.h>
-#include <SD.h>
-#include <esp_system.h>
+#include <LittleFS.h>
 
 #include <ctime>
+#include <vector>
 
 /**
  * @brief Singleton-Klasse zur Verwaltung von systemweitem Logging.
  *
- * Die `LLog`-Klasse bietet eine einheitliche Logging-Schnittstelle für verschiedene Log-Level.
- * Logeinträge können optional mit Zeitstempeln versehen und sowohl auf der seriellen Schnittstelle
- * als auch in eine Datei im LittleFS geschrieben werden.
+ * Erstellt und verwendet separate Logdateien für jedes Log-Level:
+ * debug.log, info.log, system.log, warning.log, error.log
+ * im Unterverzeichnis /logs/system. Logs werden zusätzlich auf der seriellen Konsole ausgegeben.
  */
 class LLog {
    public:
 	/**
-	 * @brief Gibt die Singleton-Instanz der LLog-Klasse zurück.
-	 *
-	 * @return Referenz auf die einzige LLog-Instanz.
+	 * @brief Gibt die Singleton-Instanz zurück.
 	 */
 	static LLog &getInstance();
 
+	static const std::vector<String> Events;
 	/**
 	 * @brief Gibt eine Lognachricht ohne Zeilenumbruch aus.
 	 *
@@ -62,81 +61,114 @@ class LLog {
 	void println(const String &message, bool timestamp = true);
 
 	/**
-	 * @brief Loggt eine Nachricht mit dem Log-Level DEBUG.
-	 *
-	 * @param message Die zu loggende Nachricht.
-	 * @param newLine true = mit Zeilenumbruch, false = ohne.
+	 * @brief Loggt eine DEBUG-Nachricht.
+	 * @param message Die Nachricht.
 	 */
 	void debug(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Loggt eine Nachricht mit dem Log-Level INFO.
+	 * @brief Loggt eine INFO-Nachricht.
 	 */
 	void info(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Loggt eine Nachricht mit dem Log-Level SYSTEM.
+	 * @brief Loggt eine SYSTEM-Nachricht.
 	 */
 	void system(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Loggt eine Nachricht mit dem Log-Level WARNING.
+	 * @brief Loggt eine WARNING-Nachricht.
 	 */
 	void warn(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Loggt eine Nachricht mit dem Log-Level ERROR.
+	 * @brief Loggt eine ERROR-Nachricht.
 	 */
 	void error(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Aktiviert oder deaktiviert das Logging-System.
-	 *
-	 * @param state true aktiviert Logging, false deaktiviert es.
+	 * @brief Loggt eine Socket-Nachricht.
 	 */
-	static void setActive(bool state);
+	void socket(const String &message, bool newLine = true);
 
 	/**
-	 * @brief Prüft, ob das Logging aktuell aktiv ist.
-	 *
-	 * @return true, wenn aktiv; sonst false.
+	 * @brief Loggt eine HTTP-Nachricht.
 	 */
-	static bool isActive();
+	void http(const String &message, bool newLine = true);
+
+	/**
+	 * @brief Loggt eine Nachricht in mehrere Events/Level gleichzeitig.
+	 * @param events Vektor der Event-Namen ohne ".log" (z.B. {"warning","socket"}).
+	 */
+	void log(const std::vector<String> &events, const String &message, bool newLine = true);
+
+	/**
+	 * @brief Löscht den Inhalt einer einzelnen Log-Datei.
+	 * @param event Event-Name ohne ".log".
+	 */
+	void clearLog(const String &event);
+
+	/**
+	 * @brief Löscht mehrere Log-Dateien.
+	 * @param events Vektor der Event-Namen ohne ".log".
+	 */
+	void clearLogs(const std::vector<String> &events);
+
+	/**
+	 * @brief Automatisches Aufräumen: löscht Logdateien, die größer als maxSize sind.
+	 * @param maxSize Maximale Dateigröße in Bytes (Default: 1000 KB).
+	 */
+	void clearLargeLogs(size_t maxSize = 100 * 1024);
+
+	/**
+     * @brief Erstellt (oder überschreibt) eine Logdatei im Verzeichnis /logs/device.
+     * @param filename Dateiname (z.B. "device123.log").
+     * @param content Der vollständige Inhalt der Datei.
+     */
+    void createDeviceLog(const String &filename, const String &content);
+
+
+	/**
+	 * @brief Aktiviert oder deaktiviert das Schreiben in Dateien.
+	 *        Serielle Ausgabe bleibt immer aktiv.
+	 */
+	static void setFileLogging(bool enabled);
+
+	/**
+	 * @brief Prüft, ob File-Logging aktiv ist.
+	 */
+	static bool isFileLogging();
 
    private:
-	/// Privater Konstruktor (Singleton)
-	LLog() {
-	}
-
-	// Kopierkonstruktor & Zuweisungsoperator deaktivieren
+	LLog();
 	LLog(const LLog &) = delete;
 	void operator=(const LLog &) = delete;
 
 	/**
 	 * @brief Interne Methode zur Ausgabe einer Lognachricht.
-	 *
-	 * @param message Nachricht, die ausgegeben werden soll.
+	 * @param level   Log-Level als Präfix (z.B. "[DEBUG]").
+	 * @param message Der Log-Text.
 	 * @param newLine true = mit Zeilenumbruch, false = ohne.
-	 * @param timestamp true = mit Zeitstempel, false = ohne.
+	 * @param timestamp true = Zeitstempel voranstellen.
 	 */
-	void logMessage(const String &message, bool newLine, bool timestamp = true);
+	void logMessage(const char *level, const String &message, bool newLine = true, bool timestamp = true);
+	void logMessage(const std::vector<String> &levels, const String &message, bool newLine = true, bool timestamp = true);
 
 	/**
-	 * @brief Erstellt einen Zeitstempel im Format YYYY-MM-DD hh:mm:ss.
-	 *
-	 * @return Zeitstempel als String.
+	 * @brief Erzeugt einen Zeitstempel im Format YYYY-MM-DD hh:mm:ss.
 	 */
 	String getTimestamp();
 
-	// Statusvariablen
-	static bool m_active;         ///< Gibt an, ob das Logging aktiv ist
-	static File m_logFile;        ///< Offene Logdatei
-	static String m_logFileName;  ///< Name der aktuellen Logdatei
+	static bool m_fileLogging;  ///< File-Logging an/aus
+
+	/**
+	 * @brief Schreibt eine bereits formatierte Zeile in die Logdatei.
+	 *        (Nur auf Dateisystem)
+	 */
+	void logToFile(const String &filename, const String &entry);
 };
 
-/**
- * @brief Globale Referenz auf die Singleton-Instanz des Loggers.
- */
-extern LLog &logger;
+// Convenience-Makro für globale Instanz
+#define logger LLog::getInstance()
 
 #endif  // LLOG_H

@@ -1,18 +1,8 @@
-/**
- * @file WiFiManager.h
- * @brief Header-Datei für das WLAN-Management-Modul.
- *
- * Diese Datei deklariert die `WiFiManager`-Klasse, die den AP- und STA-Betrieb des ESP32 verwaltet.
- * Zusätzlich bietet sie Methoden zur Konfiguration, Verbindung und Verwaltung gespeicherter Netzwerke.
- *
- * @author Simon Marcel Linden
- * @since 1.0.0
- */
-
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
 #include <Arduino.h>
+#include <ESPmDNS.h>
 #include <Preferences.h>
 #include <WiFi.h>
 
@@ -26,77 +16,102 @@
  * @brief Struktur zur Repräsentation eines gespeicherten WLAN-Netzwerks.
  */
 struct WiFiNetwork {
-	String ssid;      ///< SSID des Netzwerks
-	String password;  ///< Passwort des Netzwerks
+	String ssid;
+	String password;
 };
 
 /**
  * @brief Struktur zur Darstellung von Scan-Ergebnissen eines WLAN-Scans.
  */
 struct Network {
-	String ssid;             ///< SSID des Netzwerks
-	int32_t rssi;            ///< Signalstärke in dBm
-	uint8_t encryptionType;  ///< Verschlüsselungstyp
-	int32_t channel;         ///< Kanalnummer
+	String ssid;
+	int32_t rssi;
+	wifi_auth_mode_t encryptionType;
+	int32_t channel;
 };
 
 /**
  * @class WiFiManager
  * @brief Klasse zur Verwaltung von WLAN-Funktionen (Access Point + Station).
+ *
+ * Unterstützt AP + STA, verwaltet gespeicherte Netzwerke sowie manuelles Verbinden,
+ * Trennen, Aktivieren/Deaktivieren, Scannen und Abfragen des aktuellen Netzwerks.
  */
 class WiFiManager {
    public:
 	WiFiManager();
 
-	/// Initialisiert den WLAN-Modus (AP+STA) und stellt Verbindung zu Netzwerken her.
+	/**
+	 * @brief Initialisiert den Access Point und (optional) die Station.
+	 *
+	 * Startet AP per Konstante und verbindet STA automatisch, wenn aktiviert und
+	 * gespeicherte Netzwerke vorhanden.
+	 */
 	void init();
 
-	/// Liefert die aktuell gespeicherte SSID zurück.
-	void getNetwork(String &ssid);
+	/**
+	 * @brief Verbindet die STA mit einem gespeicherten Netzwerk.
+	 * @return true bei Erfolg, false sonst.
+	 */
+	bool connectSaved();
 
-	/// Verbindet automatisch mit bekannten WLANs.
-	wl_status_t connect();
+	/**
+	 * @brief Verbindet STA mit gegebenem SSID/Password und speichert es.
+	 * @param ssid SSID des Netzwerks.
+	 * @param password Passwort für SSID.
+	 * @return true bei Erfolg, false sonst.
+	 */
+	bool connect(const String &ssid, const String &password);
 
-	/// Verbindet explizit mit einem bestimmten Netzwerk.
-	wl_status_t connect(const String ssid, const String password);
-
-	/// Trennt die aktuelle Verbindung.
+	/**
+	 * @brief Trennt die Station-Verbindung.
+	 * @return true bei Erfolg, false sonst.
+	 */
 	bool disconnect();
 
-	/// Fügt ein neues WLAN zur gespeicherten Liste hinzu.
-	void addNetwork(const String ssid, const String password);
+	/**
+	 * @brief Aktiviert die Station-Funktion.
+	 */
+	void activate();
 
-	/// Entfernt ein WLAN anhand der SSID.
-	bool removeNetwork(const String ssid);
+	/**
+	 * @brief Deaktiviert die Station-Funktion.
+	 */
+	void deactivate();
 
-	/// Gibt alle gespeicherten Netzwerke zurück.
-	std::vector<WiFiNetwork> listNetwork();
+	bool addNetwork(const String &ssid, const String &password);
+	bool removeNetwork(const String &ssid);
 
-	/// Führt einen WLAN-Scan durch und liefert die Ergebnisse.
-	std::vector<Network> scan();
+	/**
+	 * @brief Scannt alle verfügbaren WLAN-Netzwerke.
+	 * @return Vektor von Network-Strukturen.
+	 */
+	std::vector<Network> scan() const;
+
+	/**
+	 * @brief Gibt alle gespeicherten Netzwerke zurück.
+	 * @return Vektor von WiFiNetwork.
+	 */
+	std::vector<WiFiNetwork> listNetworks() const;
+
+	/**
+	 * @brief Gibt das aktuell verbundene Netzwerk-SSID zurück.
+	 * @return SSID oder leerer String, wenn nicht verbunden.
+	 */
+	String currentNetwork() const;
 
    private:
-	Preferences config;  ///< Preferences-Instanz für Konfigurationsdaten
-	String ssid;         ///< Aktuelle SSID (STA-Modus)
-	String password;     ///< Passwort für STA-Netzwerk
-	bool enabled;        ///< WLAN aktiviert oder deaktiviert
+	Preferences config;                 ///< Preferences-Instanz
+	bool enabled;                       ///< STA aktiviert
+	std::vector<WiFiNetwork> networks;  ///< Gespeicherte Netzwerke
 
-	std::vector<WiFiNetwork> networks;  ///< Liste gespeicherter Netzwerke
+	void loadConfig();  ///< Lädt 'enabled'
+	void saveConfig();  ///< Speichert 'enabled'
 
-	/// Lädt STA-Konfiguration (SSID, Passwort, Status)
-	void loadConfig();
+	void loadNetworks();  ///< Lädt Netzwerkliste (JSON)
+	void saveNetworks();  ///< Speichert Netzwerkliste (JSON)
 
-	/// Speichert aktuelle STA-Konfiguration
-	void saveConfig();
-
-	/// Lädt gespeicherte Netzwerke aus Preferences
-	void loadNetworks();
-
-	/// Speichert gespeicherte Netzwerke in Preferences
-	void saveNetworks();
-
-	/// Prüft, ob ein Netzwerk mit gegebener SSID bereits existiert
-	bool existsNetwork(const String &ssid);
+	bool existsNetwork(const String &ssid) const;
 };
 
 /// Globale Instanz
