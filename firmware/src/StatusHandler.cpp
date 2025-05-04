@@ -79,6 +79,7 @@ void blinkedLED(int ledPin, int counter, int delayMs) {
 		vTaskDelay(pdMS_TO_TICKS(delayMs));
 	}
 }
+
 /********************************************************************/
 /**
  * @brief Schaltet in den READY-Zustand: Grüne LED an, rote und gelbe LED aus,
@@ -297,7 +298,7 @@ static void apStationMonitorTask(void *param) {
 				// Falls zuvor Geräte bekannt waren, dann leere die Liste und logge einmalig
 				if (!connectedMACs.empty()) {
 					connectedMACs.clear();
-					logger.info("[WiFi] Kein Gerät mit dem AP verbunden.");
+					logger.log({"system", "info", "wifi"}, "Kein Gerät mit dem AP verbunden.");
 				}
 			}
 		} else {
@@ -326,7 +327,7 @@ static void apStationMonitorTask(void *param) {
 					}
 					if (!found) {
 						// Neues Gerät gefunden – logge dessen MAC-Adresse
-						logger.info("[WiFi] Gerät mit dem AP verbunden. MAC: " + mac);
+						logger.log({"system", "info", "wifi"}, "Gerät mit dem AP verbunden. MAC: " + mac);
 					}
 				}
 				// Aktualisiere die Liste der bekannten Geräte
@@ -357,11 +358,11 @@ void startStatusSystem() {
 	addStatus(SYSTEM_INITIALIZING);
 
 	if (statusTaskHandle == NULL) {
-		xTaskCreate(statusTask, "StatusTask", 4096, NULL, 1, &statusTaskHandle);
+		xTaskCreatePinnedToCore(statusTask, "StatusTask", 4096, NULL, 1, &statusTaskHandle, 1);
 	}
 
 	if (apStationMonitorTaskHandle == NULL) {
-		xTaskCreate(apStationMonitorTask, "APStationMonitor", 4096, NULL, 1, &apStationMonitorTaskHandle);
+		xTaskCreatePinnedToCore(apStationMonitorTask, "APStationMonitor", 4096, NULL, 1, &apStationMonitorTaskHandle, 1);
 	}
 }
 

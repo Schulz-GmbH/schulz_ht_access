@@ -27,18 +27,42 @@
 
 #include "LLog.h"
 
-#include <Arduino.h>
-#include <LittleFS.h>  // Statt SD verwenden wir jetzt LittleFS
+#include "global.h"
 
-LLog &logger = LLog::getInstance();  ///< Globale Logger-Instanz
-
-bool LLog::m_active = false;
-File LLog::m_logFile;
-String LLog::m_logFileName = "";
+bool LLog::m_fileLogging = true;
+const std::vector<String> LLog::Events = {"debug", "info", "system", "warning", "error", "socket", "http", "general"};
 
 /**
- * @brief Liefert die Singleton-Instanz des Loggers.
- * @return Referenz auf die LLog-Instanz.
+ * @brief Konstruktor des LLog-Singletons.
+ *
+ * Initialisiert das Logging-System, mountet LittleFS und erstellt ggf. die notwendigen
+ * Verzeichnisse zur Speicherung der Log-Dateien. Räum beim Intitialiseren automatisch alte Logdateien auf.
+ * Liest den Status des File-Loggings aus den Preferences.
+ * Wenn LittleFS nicht gemountet werden kann, wird eine Fehlermeldung ausgegeben.
+ * Wenn das Verzeichnis /logs nicht existiert, wird es erstellt.
+ * Wenn das Verzeichnis /logs/system nicht existiert, wird es erstellt.
+ * Wenn das Verzeichnis /logs/device nicht existiert, wird es erstellt.
+ */
+LLog::LLog() {
+	if (!LittleFS.begin()) {
+		logger.log({"system", "error", "filesystem"}, "LittleFS konnte nicht gemountet werden!");
+	}
+	if (!LittleFS.exists("/logs")) LittleFS.mkdir("/logs");
+	if (!LittleFS.exists("/logs/system")) LittleFS.mkdir("/logs/system");
+	// File-Logging-Status aus Preferences laden
+	Preferences pref;
+	if (pref.begin("debug", true)) {
+		m_fileLogging = pref.getBool("fileLogging", false);
+		pref.end();
+	}
+	// Automatisches Aufräumen beim Start
+	clearLargeLogs();
+}
+
+/**
+ * @brief Gibt die Singleton-Instanz von LLog zurück.
+ *
+ * @return Referenz auf die einzige LLog-Instanz.
  */
 LLog &LLog::getInstance() {
 	static LLog instance;
@@ -46,145 +70,353 @@ LLog &LLog::getInstance() {
 }
 
 /**
- * @brief Aktiviert oder deaktiviert das Logging.
+ * @brief Erzeugt einen formatierten Zeitstempel im Format YYYY-MM-DD HH:MM:SS.
  *
- * Beim Aktivieren wird ggf. eine neue Logdatei erzeugt und geöffnet.
- * Beim Deaktivieren wird die Datei sauber geschlossen.
- *
- * @param state true = Logging aktivieren, false = deaktivieren.
- */
-void LLog::setActive(bool state) {
-	if (state && !m_active) {
-		// Aktuelle Zeit abfragen
-		time_t now = time(nullptr);
-		struct tm timeinfo;
-		localtime_r(&now, &timeinfo);
-
-		char filename[64];
-		if (timeinfo.tm_year + 1900 == 1970) {
-			uint32_t randomID = esp_random();
-			snprintf(filename, sizeof(filename), "/logs/SystemLog-1970-01-01-%u.log", (unsigned)randomID);
-			snprintf(filename, sizeof(filename), "/logs/log_1970-01-01-%u.log", (unsigned)randomID);
-		} else {
-			snprintf(filename, sizeof(filename), "/logs/log_%04d-%02d-%02d.log", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday);
-		}
-
-		m_logFileName = String(filename);
-		// Datei explizit anlegen, wenn sie noch nicht existiert
-		if (!LittleFS.exists(m_logFileName)) {
-			File tmp = LittleFS.open(m_logFileName, "w");
-			if (tmp) {
-				tmp.close();
-			}
-		}
-
-		m_logFile = LittleFS.open(m_logFileName, FILE_APPEND);
-
-		if (!m_logFile) {
-			Serial.println("[LLog] Fehler beim Öffnen der Logdatei!");
-		} else {
-			Serial.print("[LLog] Schreibe in Logdatei: ");
-			Serial.println(m_logFileName);
-		}
-	} else if (!state && m_active) {
-		if (m_logFile) {
-			m_logFile.close();
-		}
-	}
-
-	m_active = state;
-}
-
-/**
- * @brief Prüft, ob Logging aktiv ist.
- * @return true, wenn Logging aktiv ist, sonst false.
- */
-bool LLog::isActive() {
-	return m_active;
-}
-
-/**
- * @brief Erstellt einen formatierten Zeitstempel.
- * @return String im Format "YYYY-MM-DD hh:mm:ss"
+ * @return Zeitstempel als String.
  */
 String LLog::getTimestamp() {
 	time_t now = time(nullptr);
 	struct tm timeinfo;
 	localtime_r(&now, &timeinfo);
-
-	char buffer[20];
-	snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
-	         timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-	return String(buffer);
+	char buf[20];
+	snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour,
+	         timeinfo.tm_min, timeinfo.tm_sec);
+	return String(buf);
 }
 
 /**
- * @brief Interne Logik zum Loggen einer Nachricht.
- * @param message Der zu loggende Text.
- * @param newLine true = Zeilenumbruch hinzufügen.
- * @param timestamp true = Zeitstempel voranstellen.
+ * @brief Interne Methode zur Protokollierung einer Log-Nachricht.
+ *
+ * Diese Methode gibt eine Logzeile sowohl auf der seriellen Schnittstelle aus
+ * als auch in die entsprechende Datei im Dateisystem, abhängig vom Log-Level.
+ *
+ * @param level Der Log-Level als String (z. B. "[INFO]").
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch am Ende einzufügen.
+ * @param timestamp true, um einen Zeitstempel in die Logzeile einzufügen.
  */
-void LLog::logMessage(const String &message, bool newLine, bool timestamp) {
-	if (m_active) {
-		String logEntry;
-		if (timestamp) {
-			// Zeitstempel hinzufügen
-			logEntry = "[" + getTimestamp() + "] " + message;
-		} else {
-			logEntry = " " + message;
+void LLog::logMessage(const char *level, const String &message, bool newLine, bool timestamp) {
+	// 1) Baue Logzeile mit optionalem Zeitstempel
+	String entry;
+	if (timestamp) {
+		entry = String(level) + " [" + getTimestamp() + "] " + message;
+	} else {
+		entry = String(level) + " " + message;
+	}
+
+	// 2) Auf Serial ausgeben
+	if (newLine) {
+		Serial.println(entry);
+	} else {
+		Serial.print(entry);
+	}
+
+	// 3) In Datei speichern
+	String fname = "general.log";
+	// Level-String ohne [] und lowercase
+	String lvl = String(level);
+	lvl.replace("[", "");
+	lvl.replace("]", "");
+	lvl.toLowerCase();
+	auto it = std::find(Events.begin(), Events.end(), lvl);
+	if (it != Events.end()) {
+		fname = *it + ".log";
+	}
+
+	logToFile(fname, entry);
+}
+
+/**
+ * @brief Gibt eine Log-Nachricht mit mehreren Events aus.
+ *
+ * Die Nachricht wird auf der seriellen Schnittstelle und – je nach Konfiguration – auch
+ * in mehrere Logdateien geschrieben (eine pro Event-Kategorie).
+ *
+ * @param levels Liste von Event-Kategorien wie "info", "system", "socket".
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um Zeilenumbruch anzuhängen.
+ * @param timestamp true, um Zeitstempel voranzustellen.
+ */
+void LLog::logMessage(const std::vector<String> &levels, const String &message, bool newLine, bool timestamp) {
+	String prefix;
+	for (const auto &evt : levels) {
+		String cap = evt;
+		for (size_t i = 0; i < cap.length(); ++i) {
+			cap[i] = toupper(cap[i]);
+		}
+		prefix += "[" + cap + "]";
+	}
+
+	// 1) Baue Logzeile mit optionalem Zeitstempel
+	String entry;
+	if (timestamp) {
+		entry = prefix + "[" + getTimestamp() + "] " + message;
+	} else {
+		entry = prefix + " " + message;
+	}
+
+	// 2) Auf Serial ausgeben
+	if (newLine) {
+		Serial.println(entry);
+	} else {
+		Serial.print(entry);
+	}
+
+	for (const auto &evt : levels) {
+		// 3) In Datei speichern
+		String fname = "general.log";
+		// Level-String ohne [] und lowercase
+		String lvl = String(evt);
+		lvl.replace("[", "");
+		lvl.replace("]", "");
+		lvl.toLowerCase();
+		auto it = std::find(Events.begin(), Events.end(), lvl);
+		if (it != Events.end()) {
+			fname = *it + ".log";
 		}
 
-		// Seriell ausgeben
-		if (newLine) {
-			Serial.println(logEntry);
-		} else {
-			Serial.print(logEntry);
-		}
+		logToFile(fname, entry);
+	}
+}
 
-		// Gleichzeitig in die geöffnete Datei schreiben
-		if (m_logFile) {
-			if (newLine) {
-				m_logFile.println(logEntry);
-			} else {
-				m_logFile.print(logEntry);
+/**
+ * @brief Schreibt einen Log-Eintrag in die angegebene Datei im LittleFS-Dateisystem.
+ *
+ * @param filename Dateiname der Log-Datei (relativ zu /logs/system/).
+ * @param entry Der zu speichernde Log-Eintrag.
+ */
+void LLog::logToFile(const String &filename, const String &entry) {
+	if (!m_fileLogging) return;
+	String path = "/logs/system/" + filename;
+	File f = LittleFS.open(path, FILE_APPEND);
+	if (!f) {
+		File t = LittleFS.open(path, FILE_WRITE);
+		if (t) t.close();
+		f = LittleFS.open(path, FILE_APPEND);
+	}
+	if (f) {
+		f.println(entry);
+		f.close();
+	} else {
+		logger.log({"system", "error", "filsystem", "llog"}, "Fehler beim Öffnen von " + path);
+	}
+}
+
+/**
+ * @brief Loggt eine Debug-Nachricht.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::debug(const String &message, bool newLine) {
+	logMessage("[DEBUG]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine Info-Nachricht.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::info(const String &message, bool newLine) {
+	logMessage("[INFO]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine System-Nachricht.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::system(const String &message, bool newLine) {
+	logMessage("[SYSTEM]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt eine Warnung.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::warn(const String &message, bool newLine) {
+	logMessage("[WARNING]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt einen Fehler.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::error(const String &message, bool newLine) {
+	logMessage("[ERROR]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein Socket Event.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::socket(const String &message, bool newLine) {
+	logMessage("[Socket]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein HTTP Event.
+ *
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::http(const String &message, bool newLine) {
+	logMessage("[HTTP]", message, newLine, true);
+}
+
+/**
+ * @brief Loggt ein Fehler aus mehreren Events.
+ *
+ * @param events z.B. {"warning","socket"}
+ * @param message Die zu loggende Nachricht.
+ * @param newLine true, um einen Zeilenumbruch hinzuzufügen (Standard: true).
+ */
+void LLog::log(const std::vector<String> &events, const String &message, bool newLine) {
+	logMessage(events, message, newLine, true);
+}
+
+/**
+ * @brief Gibt eine Nachricht ohne Zeilenumbruch auf der seriellen Schnittstelle aus.
+ *
+ * Optional kann ein Zeitstempel mitgeliefert werden. Diese Nachricht wird nicht geloggt.
+ *
+ * @param message Die auszugebende Nachricht.
+ * @param timestamp true, um einen Zeitstempel voranzustellen.
+ */
+void LLog::print(const String &message, bool timestamp) {
+	logMessage("", message, false, timestamp);
+}
+
+/**
+ * @brief Gibt eine Nachricht mit Zeilenumbruch auf der seriellen Schnittstelle aus.
+ *
+ * Optional kann ein Zeitstempel mitgeliefert werden. Diese Nachricht wird nicht geloggt.
+ *
+ * @param message Die auszugebende Nachricht.
+ * @param timestamp true, um einen Zeitstempel voranzustellen.
+ */
+void LLog::println(const String &message, bool timestamp) {
+	logMessage("", message, true, timestamp);
+}
+
+/**
+ * @brief Leert die Log-Datei für ein bestimmtes Event.
+ *
+ * Öffnet die Datei im Schreibmodus, wodurch ihr Inhalt überschrieben wird.
+ *
+ * @param event Name des Events (z. B. "info", "debug").
+ */
+void LLog::clearLog(const String &event) {
+	String path = "/logs/system/" + event + ".log";
+	// Öffnen im WRITE-Modus leert die Datei
+	File f = LittleFS.open(path, FILE_WRITE);
+	if (f) f.close();
+}
+
+/**
+ * @brief Leert mehrere Log-Dateien.
+ *
+ * Diese Methode ruft `clearLog()` für jedes übergebene Event auf.
+ *
+ * @param events Liste von Event-Namen, deren Logs geleert werden sollen.
+ */
+void LLog::clearLogs(const std::vector<String> &events) {
+	for (const auto &evt : events) {
+		clearLog(evt);
+	}
+}
+
+/**
+ * @brief Löscht Logdateien, deren Größe das Limit überschreitet.
+ *
+ * Diese Methode prüft die Größe aller bekannten Event-Logdateien im Verzeichnis
+ * `/logs/system/` und leert jene, die größer als `maxSize` sind.
+ *
+ * @param maxSize Maximale erlaubte Dateigröße in Bytes (Standard: 32.000).
+ */
+void LLog::clearLargeLogs(size_t maxSize) {
+	for (const auto &evt : Events) {
+		String fname = evt + ".log";
+		String path = "/logs/system/" + fname;
+		if (LittleFS.exists(path)) {
+			File f = LittleFS.open(path, "r");
+			if (f) {
+				if (f.size() > maxSize) {
+					f.close();
+					// Leeren
+					File t = LittleFS.open(path, FILE_WRITE);
+					if (t) t.close();
+				} else {
+					f.close();
+				}
 			}
-			// Optional: sofort flushen
-			m_logFile.flush();
 		}
 	}
 }
 
-/// @copydoc LLog::debug
-void LLog::debug(const String &message, bool newLine) {
-	logMessage("[DEBUG]" + message, newLine, true);
+/**
+ * @brief Erstellt oder überschreibt eine Log-Datei im Verzeichnis `/logs/device`.
+ *
+ * Diese Funktion kann genutzt werden, um gerätespezifische Logs zu erstellen,
+ * z. B. für empfangene Nachrichten oder Konfigurationen.
+ *
+ * @param filename Dateiname der zu erstellenden Logdatei (ohne Pfad).
+ * @param content Inhalt, der in die Datei geschrieben wird.
+ */
+
+void LLog::createDeviceLog(const String &filename, const String &content) {
+	const char *dirPath = "/logs/device";
+	if (!LittleFS.exists(dirPath)) {
+		LittleFS.mkdir(dirPath);
+	}
+	String fullPath = String(dirPath) + "/" + filename;
+	File f = LittleFS.open(fullPath, FILE_WRITE);
+	if (!f) {
+		logger.log({"system", "error", "filesystem", "llog"}, "Kann Datei nicht erstellen: " + fullPath);
+		return;
+	}
+	f.print(content);
+	f.close();
 }
 
-/// @copydoc LLog::info
-void LLog::info(const String &message, bool newLine) {
-	logMessage("[INFO] " + message, newLine, true);
+/**
+ * @brief Aktiviert oder deaktiviert das Schreiben in Log-Dateien.
+ *
+ * Der Zustand wird persistent in den Preferences unter `debug/fileLogging` gespeichert.
+ *
+ * @param enabled true, um das Schreiben in Logdateien zu aktivieren; false, um es zu deaktivieren.
+ */
+void LLog::setFileLogging(bool enabled) {
+	m_fileLogging = enabled;
+	Preferences preferences;
+	if (preferences.begin("debug", false)) {
+		preferences.putBool("fileLogging", enabled);
+		preferences.end();
+		String message = "File-Logging " + String(enabled ? "aktiviert" : "deaktiviert");
+		LLog::getInstance().logMessage({"system", "llog", "info"}, message, true, true);
+	}
 }
 
-/// @copydoc LLog::system
-void LLog::system(const String &message, bool newLine) {
-	logMessage("[SYSTEM] " + message, newLine, true);
-}
-
-/// @copydoc LLog::warn
-void LLog::warn(const String &message, bool newLine) {
-	logMessage("[WARNING] " + message, newLine, true);
-}
-
-/// @copydoc LLog::error
-void LLog::error(const String &message, bool newLine) {
-	logMessage("[ERROR] " + message, newLine, true);
-}
-
-/// @copydoc LLog::print
-void LLog::print(const String &message, bool timestamp) {
-	logMessage(message, false, timestamp);
-}
-
-/// @copydoc LLog::println
-void LLog::println(const String &message, bool timestamp) {
-	logMessage(message, true, timestamp);
+/**
+ * @brief Gibt zurück, ob Dateilogging derzeit aktiviert ist.
+ *
+ * Der Wert wird bei Aufruf aus den Preferences geladen.
+ *
+ * @return true, wenn Dateilogging aktiv ist; sonst false.
+ */
+bool LLog::isFileLogging() {
+	Preferences pref;
+	if (pref.begin("debug", true)) {
+		m_fileLogging = preferences.getBool("fileLogging", m_fileLogging);
+		preferences.end();
+	}
+	return m_fileLogging;
 }
