@@ -1,62 +1,76 @@
+#ifndef WEBSERVERMANAGER_H
+#define WEBSERVERMANAGER_H
+
+#include <ESPAsyncWebServer.h>
+
 /**
  * @file WebServerManager.h
- * @brief Header-Datei für das Webserver- und WebSocket-Handling.
+ * @brief Header für den HTTP-Only Webserver, der statische Dateien und Log-Endpunkte bereitstellt.
  *
- * Deklariert die Klasse WebServerManager, welche einen AsyncWebServer
- * inklusive WebSocket-Funktionalität bereitstellt.
+ * Diese Klasse verwaltet ausschließlich HTTP-Endpunkte für eine Weboberfläche und zur
+ * Anzeige von Logdateien. WebSocket-Funktionalitäten werden hier nicht berücksichtigt.
  *
- * Statische Dateien werden über LittleFS ausgeliefert. REST-Endpunkte
- * ermöglichen den Zugriff auf Logdateien. Die Klasse unterstützt auch
- * regelmäßige Aufräumroutinen für WebSocket-Clients.
+ * Die bereitgestellten Endpunkte beinhalten:
+ * - Anzeige aller Systemlogdateien im HTML-Format
+ * - Einzelne Logdateien (z. B. `info.log`) direkt im Browser anzeigen
+ * - Gerätelogdateien (über `/logs/device`) abrufen
+ * - SPA-Frontend ausliefern
  *
  * @author Simon Marcel Linden
  * @since 1.0.0
  */
-
-#ifndef WEBSERVER_MANAGER_H
-#define WEBSERVER_MANAGER_H
-
-#include <ESPAsyncWebServer.h>
-#include <SD.h>
-
-#include "LLog.h"
-#include "WsEvents.h"
-#include "global.h"
-
-/**
- * @brief WebServerManager zur Verwaltung von HTTP- und WebSocket-Kommunikation.
- */
 class WebServerManager {
    public:
 	/**
-	 * @brief Konstruktor.
+	 * @brief Registriert alle relevanten HTTP-Routen am übergebenen Server.
 	 *
-	 * @param port Port, auf dem der Webserver starten soll (Standard: 80).
+	 * Dazu gehören:
+	 * - `/logs`: HTML-Liste aller Systemlogdateien
+	 * - `/logfile?level=...`: Einzelne Systemlogdatei
+	 * - `/logs/device?file=...`: Gerätespezifische Logdatei
+	 * - statische Ressourcen unter `/www/html/`
+	 * - Fallback-Routing für SPA
+	 *
+	 * @param server Referenz auf die `AsyncWebServer`-Instanz.
 	 */
-	WebServerManager(uint16_t port = 80);
+	void init(AsyncWebServer &server);
 
 	/**
-	 * @brief Initialisiert den Webserver, WebSocket und REST-Endpunkte.
+	 * @brief HTTP-Handler für GET /logs.
+	 *
+	 * Sendet eine HTML-Liste aller im Dateisystem gespeicherten System-Logdateien.
+	 *
+	 * @param request Eingehende HTTP-Anfrage.
 	 */
-	void init();
+	void serveSystemLogList(AsyncWebServerRequest *request);
 
 	/**
-	 * @brief Bereinigt regelmäßig inaktive WebSocket-Clients.
+	 * @brief HTTP-Handler für GET /logfile?level=…
+	 *
+	 * Sendet den Inhalt einer bestimmten Systemlogdatei im HTML-Format mit Hervorhebungen.
+	 *
+	 * @param request Eingehende HTTP-Anfrage.
 	 */
-	void cleanupWebSocketClients();
+	void serveSystemLog(AsyncWebServerRequest *request);
 
 	/**
-	 * @brief Beantwortet Anfragen zum Abruf von Logdateien.
+	 * @brief HTTP-Handler für GET /logs/device?file=…
 	 *
-	 * Diese Methode erwartet einen `file`-Parameter, der die Logdatei benennt.
+	 * Sendet den Inhalt einer Gerätelogdatei als `text/plain`.
 	 *
-	 * @param request Zeiger auf die Anfrage.
+	 * @param request Eingehende HTTP-Anfrage.
 	 */
-	void serveLogFile(AsyncWebServerRequest *request);
+	void serveDeviceLog(AsyncWebServerRequest *request);
 
    private:
-	AsyncWebServer server;  ///< Instanz des Webservers
-	AsyncWebSocket ws;      ///< Instanz des WebSocket-Servers
+	/**
+	 * @brief Erzeugt HTML-Code zur Anzeige der Systemlogdateien.
+	 *
+	 * Diese Methode wird intern von `serveSystemLogList` verwendet.
+	 *
+	 * @return HTML-Seite als String.
+	 */
+	String buildSystemLogListHtml();
 };
 
-#endif  // WEBSERVER_MANAGER_H
+#endif  // WEBSERVERMANAGER_H
