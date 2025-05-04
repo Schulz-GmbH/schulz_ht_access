@@ -401,7 +401,7 @@ void LLog::setFileLogging(bool enabled) {
 		preferences.putBool("fileLogging", enabled);
 		preferences.end();
 		String message = "File-Logging " + String(enabled ? "aktiviert" : "deaktiviert");
-		LLog::getInstance().logMessage({"system", "llog"}, message, true, true);
+		LLog::getInstance().logMessage({"system", "llog", "info"}, message, true, true);
 	}
 }
 
