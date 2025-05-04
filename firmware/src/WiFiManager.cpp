@@ -6,8 +6,6 @@
  * @brief Konstruktor – lädt gespeicherte Konfiguration und Netzwerke aus den Preferences.
  */
 WiFiManager::WiFiManager() {
-	loadConfig();
-	loadNetworks();
 }
 
 /**
@@ -18,6 +16,12 @@ WiFiManager::WiFiManager() {
  * Zusätzlich wird mDNS (Bonjour/ZeroConf) aktiviert.
  */
 void WiFiManager::init() {
+	// Zuerst Preferences neu laden
+	loadConfig();
+	loadNetworks();
+
+	logger.log({"system", enabled ? "info" : "error", "wifi"}, "STA enabled=" + String(enabled ? "true" : "false") + " networks=" + networks.size());
+
 	// Access Point
 	WiFi.mode(WIFI_AP_STA);
 	if (!WiFi.softAPConfig(AP_LOCAL_IP, AP_GATEWAY, AP_SUBNET)) {
@@ -33,6 +37,8 @@ void WiFiManager::init() {
 	// STA automatisch verbinden, falls aktiviert und Netzwerke vorhanden
 	if (enabled && !networks.empty()) {
 		connectSaved();
+	} else {
+		logger.log({"system", "info", "wifi"}, "STA nicht aktiviert oder keine gespeicherten Netzwerke");
 	}
 
 	WiFi.setHostname("hs-access");  // Groß-/Kleinschreibung unwichtig
@@ -88,16 +94,17 @@ bool WiFiManager::connect(const String &ssid, const String &password) {
 
 	if (WiFi.status() == WL_CONNECTED) {
 		logger.log({"system", "info", "wifi"}, "Verbunden: " + WiFi.localIP().toString());
+
 		if (!existsNetwork(ssid)) {
 			networks.push_back({ssid, password});
 			saveNetworks();
+		} else {
+			logger.log({"system", "info", "wifi"}, "Netzwerk exestiert");
 		}
-		config.begin("wifi_config", false);
-		config.putString("ssid", ssid);
-		config.putString("password", password);
-		config.end();
+
 		return true;
 	}
+
 	logger.log({"system", "error", "wifi"}, "Verbindung zu " + ssid + " fehlgeschlagen");
 	return false;
 }
@@ -117,19 +124,23 @@ bool WiFiManager::disconnect() {
  * @brief Aktiviert den STA-Modus (Station) und speichert dies persistent.
  */
 void WiFiManager::activate() {
-	enabled = true;
-	saveConfig();
-	logger.log({"system", "info", "wifi"}, "STA aktiviert");
+	if (!enabled) {
+		enabled = true;
+		saveConfig();
+		logger.log({"system", "info", "wifi"}, "STA aktiviert");
+	}
 }
 
 /**
  * @brief Deaktiviert den STA-Modus (Station) und speichert dies persistent.
  */
 void WiFiManager::deactivate() {
-	disconnect();
-	enabled = false;
-	saveConfig();
-	logger.log({"system", "info", "wifi"}, "STA deaktiviert");
+	if (enabled) {
+		disconnect();
+		enabled = false;
+		saveConfig();
+		logger.log({"system", "info", "wifi"}, "STA deaktiviert");
+	}
 }
 
 /**
@@ -210,7 +221,6 @@ void WiFiManager::loadConfig() {
 	config.begin("wifi_config", true);
 	enabled = config.getBool("enabled", true);
 	config.end();
-	logger.log({"system", "info", "wifi"}, String("STA ") + (enabled ? "aktiv" : "deaktiviert"));
 }
 
 /**
@@ -236,7 +246,6 @@ void WiFiManager::loadNetworks() {
 			for (JsonVariant v : doc.as<JsonArray>()) {
 				networks.push_back({v["ssid"].as<String>(), v["password"].as<String>()});
 			}
-			logger.log({"system", "info", "wifi"}, "Netzwerke geladen: " + String(networks.size()));
 			return;
 		}
 		logger.log({"system", "error", "wifi"}, "Fehler beim Parsen der Netzwerke");
@@ -260,7 +269,7 @@ void WiFiManager::saveNetworks() {
 	config.begin("wifi_config", false);
 	config.putString("networks", json);
 	config.end();
-	logger.log({"system", "info", "wifi"}, String("Netzwerke gespeichert: ") + String(networks.size()));
+	logger.log({"system", "info", "wifi"}, "Netzwerke gespeichert: " + String(networks.size()));
 }
 
 /**
