@@ -5,24 +5,32 @@ import { connect } from "http2";
  * Definition der System-Konfigurationsoptionen
  */
 export interface SystemConfig {
-	version: { loading: boolean; value: string };
-	logging: { loading: boolean; state: boolean };
-	wlan: { loading: boolean; status: boolean; connected: boolean };
-	serial: { loading: boolean; available: boolean; baudRate: number; connected: boolean };
+	loading: boolean;
+	version: { firmware: string; web: string };
+	logging: { state: boolean };
+	wlan: {
+		connection: { status: boolean; connected: boolean; ssid: string; ip: string; gateway: string; subnet: string };
+		networks: Array<{ ssid: string; security: string }>;
+	};
+	serial: { available: boolean; baudRate: number; connected: boolean };
 }
 
 /**
  * Standardkonfiguration für das System
  */
 const DEFAULT_SETTINGS_CONFIG: Readonly<SystemConfig> = {
-	version: { loading: false, value: "1.0.0" },
-	logging: { loading: false, state: false },
-	wlan: { loading: false, status: false, connected: false },
-	serial: { loading: false, available: false, baudRate: 9600, connected: false },
+	loading: false,
+	version: { firmware: "0.0.0", web: "0.0.0" },
+	logging: { state: false },
+	wlan: { connection: { status: false, connected: false, ssid: "", ip: "", gateway: "", subnet: "" }, networks: [] },
+	serial: { available: false, baudRate: 9600, connected: false },
 };
 
+// const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
+// const { serial: _ignoreSerial, ...persisted } = storageData;
+
 const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
-const { serial: _ignoreSerial, ...persisted } = storageData;
+const { serial: _ignoreSerial, wlan: persistedWlan, ...persisted } = storageData;
 
 /**
  * Aktuelle System-Konfiguration (Zusammenführung aus Standard- und gespeicherten Einstellungen)
@@ -30,4 +38,8 @@ const { serial: _ignoreSerial, ...persisted } = storageData;
 export const systemConfig: SystemConfig = {
 	...DEFAULT_SETTINGS_CONFIG,
 	...persisted,
+	wlan: {
+		...DEFAULT_SETTINGS_CONFIG.wlan,
+		...(persistedWlan ?? {}),
+	},
 };

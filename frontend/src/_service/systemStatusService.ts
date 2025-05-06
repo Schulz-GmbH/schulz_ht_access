@@ -17,6 +17,24 @@ const timeoutTime = 5000; // Timeout in Millisekunden
 import { SocketService } from "@/_service/socket";
 import { useSystemStore } from "@/store/system/index.store";
 
+interface InitDetails {
+	logging: { fileLogging: boolean };
+	routes: string[];
+	serial: { available: boolean; baudRate: number };
+	version: { firmware: string; web: string };
+	wlan: {
+		connection: { status: boolean; connected: boolean; ssid: string; ip: string; gateway: string; subnet: string };
+		networks: Array<{ ssid: string; security: string }>;
+	};
+}
+
+interface InitMessage {
+	event: "system";
+	action: "init";
+	status: "success" | "error";
+	details: InitDetails;
+}
+
 /**
  * @brief Erzeugt ein Timeout-Promise, das nach `ms` Millisekunden mit einem Fehler abbricht.
  *
@@ -28,154 +46,53 @@ function createTimeout(ms: number, message: string): Promise<never> {
 	return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
 }
 
-/**
- * @brief Fragt den WLAN-Status vom Server ab und speichert ihn im Settings-Store.
- *
- * Registriert einen temporären Listener für das Event "system","wifi", sendet den Befehl
- * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
- * die Felder `wlan.status`, `wlan.connected` und `wlan.loading`.
- *
- * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
- * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
- */
-async function fetchWifiStatus(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	systemStore.wlan.loading = true;
+async function fetchInitial(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
+	systemStore.loading = true;
+
+	// {"event":"system","action":"init","status":"success","details":{"logging":{"fileLogging":true},"routes":["/logfile","/logs/device","/logs","/ws"],"serial":{"available":true,"baudRate":9600},"version":{"firmware":"1.0.0","web":"1.0.0"},"wlan":{"mode":3,"currentSSID":"BND Ueberwachungseinheit 45","savedNetworks":[{"ssid":"BND Ueberwachungseinheit 45"}]}}}
+
 	try {
 		const listener = new Promise<void>(async (resolve) => {
-			const handler = (data: { status: string; details: string }) => {
-				if (data.status === "success") {
-					systemStore.wlan.status = data.details !== "disabled";
-					systemStore.wlan.connected = data.details === "connected";
+			const handler = (msg: InitMessage) => {
+				if (msg.status === "success") {
+					const { logging, routes, serial, version, wlan } = msg.details;
+
+					// 1) Logging
+					systemStore.logging.state = logging.fileLogging;
+
+					// 3) Serial
+					systemStore.serial.available = serial.available;
+					systemStore.serial.baudRate = serial.baudRate;
+
+					// 4) Version
+					systemStore.version.firmware = version.firmware;
+					systemStore.version.web = version.web;
+
+					// 5) WLAN
+					systemStore.wlan.connection.status = wlan.connection.status;
+					systemStore.wlan.connection.connected = wlan.connection.connected;
+					systemStore.wlan.connection.ssid = wlan.connection.ssid;
+					systemStore.wlan.connection.ip = wlan.connection.ip;
+					systemStore.wlan.connection.gateway = wlan.connection.gateway;
+					systemStore.wlan.connection.subnet = wlan.connection.subnet;
+					systemStore.wlan.networks = wlan.networks.map((n) => ({ ssid: n.ssid, security: "" }));
 				}
-				SocketService.removeListener("system", "wifi", handler);
+				SocketService.removeListener("system", "init", handler);
 				resolve();
 			};
-			await SocketService.onMessage("system", "wifi", handler);
+			await SocketService.onMessage("system", "init", handler);
 		});
 
 		await SocketService.sendMessage({
 			type: "system",
-			command: "wifi",
-			key: "status",
+			command: "init",
 		});
 
-		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des WLAN-Status")]);
+		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des Inintial-Status")]);
 	} catch (err) {
-		console.warn("WLAN-Status konnte nicht abgerufen werden:", err);
-		systemStore.wlan.status = false;
-		systemStore.wlan.connected = false;
+		console.warn("Initial-Status konnte nicht abgerufen werden:", err);
 	} finally {
-		systemStore.wlan.loading = false;
-	}
-}
-
-/**
- * @brief Fragt den Log-Status vom Server ab und speichert ihn im Settings-Store.
- *
- * Registriert einen temporären Listener für das Event "log","debug", sendet den Befehl
- * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
- * die Felder `logging.state` und `logging.loading`.
- *
- * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
- * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
- */
-async function fetchLogStatus(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	systemStore.logging.loading = true;
-	try {
-		const listener = new Promise<void>(async (resolve) => {
-			const handler = (data: { status: string; details: string }) => {
-				systemStore.logging.state = data.status === "success" && data.details === "true";
-				SocketService.removeListener("log", "debug", handler);
-				resolve();
-			};
-			await SocketService.onMessage("log", "debug", handler); // <== entscheidend
-		});
-
-		await SocketService.sendMessage({
-			type: "log",
-			command: "debug",
-			key: "status",
-		});
-
-		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen des Log-Status")]);
-	} catch (err) {
-		console.warn("Log-Status konnte nicht abgerufen werden:", err);
-		systemStore.logging.state = false;
-	} finally {
-		systemStore.logging.loading = false;
-	}
-}
-
-/**
- * @brief Fragt die aktuelle App-Version vom Server ab und speichert sie im Settings-Store.
- *
- * Registriert einen temporären Listener für das Event "system","version", sendet den Befehl
- * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
- * das Feld `version.value` und `version.loading`.
- *
- * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
- * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
- */
-async function fetchVersion(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	systemStore.version.loading = true;
-	try {
-		const listener = new Promise<void>(async (resolve) => {
-			const handler = (data: { status: string; details: string }) => {
-				if (data.status === "success") {
-					systemStore.version.value = data.details;
-				}
-				SocketService.removeListener("system", "version", handler);
-				resolve();
-			};
-			await SocketService.onMessage("system", "version", handler);
-		});
-
-		await SocketService.sendMessage({
-			type: "system",
-			command: "version",
-			key: "get",
-		});
-
-		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Abrufen der App-Version")]);
-	} catch (err) {
-		console.warn("App-Version konnte nicht abgerufen werden:", err);
-		systemStore.version.value = "unbekannt";
-	} finally {
-		systemStore.version.loading = false;
-	}
-}
-
-/**
- * @brief Fragt den aktuellen Status der Serial-Schnittstelle vom Server ab und speichert sie im System-Store.
- *
- * Registriert einen temporären Listener für das Event "serial","status",
- * und wartet bis zum Timeout oder bis eine Antwort eintrifft. Aktualisiert anschließend
- * das Feld `available` und `baudRate`.
- *
- * @param[in] systemStore Instanz des Settings-Stores (useSystemStore()).
- * @return {Promise<void>} Promise, das aufgelöst wird, wenn der Vorgang abgeschlossen ist.
- */
-async function fetchSerial(systemStore: ReturnType<typeof useSystemStore>): Promise<void> {
-	systemStore.serial.loading = true;
-	try {
-		const listener = new Promise<void>(async (resolve) => {
-			const handler = (data: { details: { available: boolean; baudRate: number } }) => {
-				console.log("Serial-Status erhalten:", data);
-				systemStore.serial.available = data.details.available;
-				systemStore.serial.baudRate = data.details.baudRate;
-				// SocketService.removeListener("serial", "status", handler);
-				resolve();
-			};
-			await SocketService.onMessage("serial", "status", handler);
-		});
-
-		await Promise.race([listener, createTimeout(timeoutTime, "Timeout beim Warten auf Serial-Status")]);
-	} catch (err) {
-		console.warn("Serial-Status konnte nicht empfangen werden:", err);
-		systemStore.serial.available = false;
-		systemStore.serial.baudRate = 0;
-	} finally {
-		systemStore.serial.loading = false;
+		systemStore.loading = false;
 	}
 }
 
@@ -196,5 +113,5 @@ export async function systemStatusService(): Promise<void> {
 	await SocketService.connect();
 
 	const systemStore = useSystemStore();
-	await Promise.allSettled([fetchWifiStatus(systemStore), fetchLogStatus(systemStore), fetchVersion(systemStore), fetchSerial(systemStore)]);
+	await Promise.allSettled([fetchInitial(systemStore)]);
 }

@@ -31,11 +31,12 @@ export const useSystemStore = defineStore("system", () => {
 	const state = reactive<State>({
 		...systemConfig,
 		routes: [],
+		loading: false,
 	});
 
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
-		() => ({ version: state.version, logging: state.logging, wlan: state.wlan, serial: state.serial }),
+		() => ({ loading: state.loading, version: state.version, logging: state.logging, wlan: state.wlan, serial: state.serial }),
 		(newVal) => {
 			setSystemConfig({ ...newVal });
 		},
@@ -50,6 +51,7 @@ export const useSystemStore = defineStore("system", () => {
 	 */
 	function getCacheData(): SystemConfig {
 		return {
+			loading: state.loading,
 			version: state.version,
 			logging: state.logging,
 			wlan: state.wlan,
@@ -70,10 +72,11 @@ export const useSystemStore = defineStore("system", () => {
 	}
 
 	// Statt `...toRefs(state)` explizit zurückgeben:
-	const { version, logging, wlan } = toRefs(state);
+	const { loading, version, logging, wlan } = toRefs(state);
 
 	// Exportiere jede Property als Ref plus den Getter
 	return {
+		loading,
 		version,
 		logging,
 		wlan,
