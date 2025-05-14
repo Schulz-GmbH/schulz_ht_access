@@ -9,7 +9,7 @@ import { useDevice } from "@/_utils/composables/useDevice";
 
 // Components
 import NavigationBar from "@/components/NavigationBar/NavigationBar.vue";
-import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import Sidebar from "@/components/Sidebar/sidebar.vue";
 import Footer from "@/components/Footer/Footer.vue";
 
 type AppLayoutType = DefineComponent<{}, {}, {}>;

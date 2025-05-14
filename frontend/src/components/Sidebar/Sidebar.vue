@@ -1,11 +1,10 @@
 <template>
-
 	<transition enter-active-class="transition-transform duration-300 ease-out" enter-from-class="-translate-x-full"
 		enter-to-class="translate-x-0" leave-active-class="transition-transform duration-300 ease-in"
 		leave-from-class="translate-x-0" leave-to-class="-translate-x-full">
-		<aside v-show="!isCollapse" class="max-w-62.5 ease-nav-brand fixed inset-y-0 my-4 ml-4 block w-full flex-wrap items-center justify-between
-		 overflow-y-auto rounded-2xl border-0 bg-white p-0 antialiased transition-transform
-		 duration-200 xl:left-0 xl:translate-x-0 xl:bg-transparent z-[999]">
+		<aside v-show="!isCollapse" @click="onDevClick" class="max-w-62.5 ease-nav-brand fixed inset-y-0 my-4 ml-4 block w-full flex-wrap items-center justify-between
+			overflow-y-auto rounded-2xl border-0 bg-white p-0 antialiased transition-transform
+			duration-200 xl:left-0 xl:translate-x-0 xl:bg-transparent z-[999]">
 			<div class="h-auto">
 				<i class="absolute top-0 right-0 p-4 opacity-50 cursor-pointer text-slate-400 xl:hidden"></i>
 				<router-link :to="{ name: 'Dashboard' }"
@@ -24,13 +23,15 @@
 						</li>
 
 						<li v-for="routeObj in block.items" :key="routeObj.path" class="mt-0.5 w-full">
-							<router-link :to="routeObj.path || '#'" :class="linkClasses(routeObj)">
+							<router-link :to="routeObj.path" :class="linkClasses(routeObj)">
 								<div :class="iconWrapperClasses(routeObj)"
 									class="shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white">
 									<i :class="routeObj.meta!.icon"></i>
 								</div>
 								<span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">
 									{{ routeObj.meta!.title }}
+									<small v-if="routeObj.meta?.dev || routeObj.meta?.hidden"
+										class="text-xs text-red-500 ml-1">DEV</small>
 								</span>
 							</router-link>
 						</li>
@@ -43,8 +44,8 @@
 
 <script lang="ts">
 
-export { default } from './Sidebar'
+export { default } from './sidebar'
 
 </script>
 
-<style src="./Sidebar.scss"></style>
+<style src="./sidebar.scss"></style>
