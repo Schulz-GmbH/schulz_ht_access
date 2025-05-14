@@ -24,8 +24,8 @@
 </template>
 
 <script lang="ts">
-export { default } from './Breadcrumb'
+export { default } from './breadcrumb'
 
 </script>
 
-<style src="./Breadcrumb.scss"></style>
+<style src="./breadcrumb.scss"></style>

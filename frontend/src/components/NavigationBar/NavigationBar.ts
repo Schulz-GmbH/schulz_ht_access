@@ -9,7 +9,7 @@ import { useDevice } from "@/_utils/composables/useDevice";
 // Types
 
 // Components
-import Breadcrumb from "../Breadcrumb/Breadcrumb.vue";
+import Breadcrumb from "../Breadcrumb/breadcrumb.vue";
 import Hamburger from "../Hamburger/Hamburger.vue";
 
 export default defineComponent({

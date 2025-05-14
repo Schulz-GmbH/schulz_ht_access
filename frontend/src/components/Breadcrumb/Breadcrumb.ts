@@ -1,34 +1,69 @@
-import { defineComponent, computed, onMounted, ref } from "vue";
+/**
+ * @module Breadcrumb
+ * @component
+ * @file Breadcrumb.vue
+ * @brief Dynamische Brotkrumen-Navigation basierend auf der aktuellen Route.
+ *
+ * Die Komponente erzeugt eine Breadcrumb-Leiste aus der aktiven Route und deren Elternrouten.
+ * Sie unterstützt benutzerdefinierte Titel (`meta.title`) und erlaubt über `meta.breadcrumb.parent`
+ * eine rekursive Navigation über die Routen-Hierarchie.
+ *
+ * Zusätzlich wird bei bestimmten Routen (z. B. "SingleFile") der Breadcrumb-Text dynamisch
+ * aus Routenparametern (z. B. `filename`) generiert.
+ *
+ * Die Breadcrumbs werden sowohl beim Mounten als auch nach jedem Routenwechsel aktualisiert.
+ *
+ * @example
+ * ```vue
+ * <Breadcrumb />
+ * ```
+ *
+ * @author Simon Marcel Linden
+ * @since 1.0.0
+ */
 
-import { useRoute, useRouter, type RouteLocationMatched } from "vue-router";
+import { defineComponent, ref, onMounted } from "vue";
+import type { RouteRecordRaw } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useRouteListener } from "@/_utils/composables/useRouteListener";
 import { compile } from "path-to-regexp";
 
-// Stores
-
-// composables
-
-// Types
-
-// Components
-
+/**
+ * Ein einzelner Breadcrumb-Eintrag.
+ * @property text Anzeigename
+ * @property to Pfad (z. B. `/projekt/abc`)
+ */
 type Crumb = { text: string; to: string };
 
 export default defineComponent({
 	name: "Breadcrumb",
 	setup() {
+		/// Aktuelle Route (reagiert auf Änderungen)
 		const route = useRoute();
+
+		/// Router-Instanz für Navigation und Routensuche
 		const router = useRouter();
+
+		/// Liste aller Breadcrumb-Einträge
 		const breadcrumbs = ref<Crumb[]>([]);
 
-		// Helper: finde RouteRecordRaw nach Name
+		/**
+		 * @brief Sucht eine Route anhand ihres Namens.
+		 * @param name Routenname
+		 * @returns RouteRecordRaw oder undefined
+		 */
 		function findRoute(name: string): RouteRecordRaw | undefined {
-			return (router.getRoutes() as any[]).find((r) => r.name === name);
+			return router.getRoutes().find((r) => r.name === name) as RouteRecordRaw | undefined;
 		}
 
-		// Baue die Crumb-Liste durch Parent-Kette
+		/**
+		 * @brief Baut die Breadcrumb-Liste basierend auf den Eltern-Routen.
+		 *
+		 * Nutzt die `meta.breadcrumb.parent`-Eigenschaft, um rekursiv die Routenstruktur
+		 * aufzubauen. Dabei wird `meta.title` als Text verwendet und bei dynamischen Pfaden
+		 * (`:param`) automatisch substituiert.
+		 */
 		function buildCrumbs() {
-			// 1) Sammle die Kette von aktueller Route → Eltern → …
 			const chain: Crumb[] = [];
 			let currentName = route.name as string | undefined;
 
@@ -44,75 +79,35 @@ export default defineComponent({
 
 				// 1b) Link mit Params substituieren
 				let to = rr.path;
-				Object.entries(route.params).forEach(([k, v]) => {
-					to = to.replace(`:${k}`, String(v));
+				Object.entries(route.params).forEach(([key, val]) => {
+					to = to.replace(`:${key}`, String(val));
 				});
 
 				chain.push({ text, to });
+
+				// Nächste Elternebene
 				currentName = (rr.meta as any).breadcrumb?.parent;
 			}
-
 			// 2) Umkehren, damit der allererste Eintrag oben steht
 			breadcrumbs.value = chain.reverse();
 		}
 
-		onMounted(buildCrumbs);
-		// und bei jedem Routenwechsel
-		router.afterEach(buildCrumbs);
-
-		// Klick auf Crumb
-		function handleLink(to: string) {
-			router.push(to);
+		/**
+		 * @brief Navigiert zu einem bestimmten Pfad beim Klick auf ein Breadcrumb-Element.
+		 * @param path Zielpfad
+		 */
+		function handleLink(path: string) {
+			router.push(path);
 		}
+
+		// Lifecycle & Hooks
+
+		/// Erster Aufbau beim Mounten der Komponente
+		onMounted(buildCrumbs);
+
+		/// Listener bei jedem Routenwechsel
+		router.afterEach(buildCrumbs);
 
 		return { breadcrumbs, handleLink };
 	},
 });
-
-// export default defineComponent({
-// 	name: "Breadcrump",
-// 	components: {},
-// 	setup() {
-// 		const route = useRoute();
-// 		const router = useRouter();
-// 		const { listenerRouteChange } = useRouteListener();
-
-// 		// Reaktive Breadcrumb‑Liste
-// 		const breadcrumbs = ref<RouteLocationMatched[]>([]);
-
-// 		// Breadcrumbs basierend auf route.matched befüllen
-// 		function getBreadcrumb() {
-// 			breadcrumbs.value = route.matched.filter((item) => item.meta?.title !== undefined && item.meta?.breadcrumb !== false);
-// 		}
-
-// 		// Dynamische Routen‐Parameter in den Pfad injizieren
-// 		function pathCompile(path: string) {
-// 			const toPath = compile(path);
-// 			return toPath(route.params);
-// 		}
-
-// 		// Klick‐Handler für klickbare Breadcrumbs
-// 		function handleLink(item: RouteLocationMatched) {
-// 			if (item.redirect) {
-// 				router.push(item.redirect as string);
-// 			} else {
-// 				router.push(pathCompile(item.path));
-// 			}
-// 		}
-
-// 		// Bei jedem Routenwechsel neu befüllen (außer bei redirect‐Routes)
-// 		listenerRouteChange((r) => {
-// 			if (!r.path.startsWith("/redirect/")) {
-// 				getBreadcrumb();
-// 			}
-// 		}, true);
-
-// 		// Einmal initial befüllen
-// 		onMounted(getBreadcrumb);
-
-// 		return {
-// 			breadcrumbs,
-// 			handleLink,
-// 		};
-// 	},
-// });
