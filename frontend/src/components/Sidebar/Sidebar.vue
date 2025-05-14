@@ -6,20 +6,20 @@
 		<aside v-show="!isCollapse" class="max-w-62.5 ease-nav-brand fixed inset-y-0 my-4 ml-4 block w-full flex-wrap items-center justify-between
 		 overflow-y-auto rounded-2xl border-0 bg-white p-0 antialiased transition-transform
 		 duration-200 xl:left-0 xl:translate-x-0 xl:bg-transparent z-[999]">
-			<div class="h-19.5">
+			<div class="h-auto">
 				<i class="absolute top-0 right-0 p-4 opacity-50 cursor-pointer text-slate-400 xl:hidden"></i>
-				<a class="flex justify-center m-0 px-8 py-6 text-lg text-slate-700 whitespace-nowrap"
-					href="javascript:;" target="_blank">
+				<router-link :to="{ name: 'Dashboard' }"
+					class="flex justify-center m-0 px-8 py-4 text-lg text-slate-700 whitespace-nowrap">
 					<span class="ml-1 font-semibold transition-all duration-200 ease-nav-brand">
 						{{ appTitle }}
 					</span>
-				</a>
+				</router-link>
 			</div>
 			<hr class="h-px mt-0 mb-4 bg-transparent bg-gradient-to-r ">
 			<div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full">
 				<ul class="flex flex-col pl-0 mb-0">
 					<template v-for="block in sortedRoutes" :key="block.group || 'ungrouped'">
-						<li v-if="block.group" class="px-4 py-2 font-semibold text-slate-500">
+						<li v-if="block.group" class="px-4 py-1 font-semibold text-slate-500">
 							{{ block.group }}
 						</li>
 

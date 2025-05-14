@@ -1,6 +1,8 @@
 import { createRouter, type RouteRecordRaw, NavigationGuard } from "vue-router";
 import { routerConfig } from "@/router/config";
 
+import { setRouteChange } from "@/_utils/composables/useRouteListener";
+
 // Components
 
 // Layouts
@@ -14,6 +16,30 @@ import Dashboard from "@/pages/dashboard/dashboard.vue";
 
 import AboutUs from "@/pages/AboutUs/about-us.vue";
 import License from "@/pages/License/license.vue";
+
+import { terminalDefs } from "./terminal.routes";
+
+const terminalRoutes: RouteRecordRaw[] = terminalDefs.map((def) => ({
+	path: `/terminal/type-${def.suffix}`,
+	name: def.name,
+	component: () =>
+		import(
+			/* webpackChunkName: "terminal-type-${def.suffix}" */
+			`@/pages/Terminal/type-${def.suffix}/terminal-type-${def.suffix}.vue`
+		),
+	meta: {
+		title: def.title,
+		icon: "fas fa-terminal",
+		group: "Devices",
+		hidden: false,
+		dev: false,
+		tags: [
+			{ name: "author", value: "Simon Marcel Linden" },
+			{ name: "description", value: `HS - Wireless Access - Terminal ${def.title}` },
+			{ name: "og:description", value: `HS - Wireless Access - Terminal ${def.title}` },
+		],
+	},
+}));
 
 /**
  * Route configurations for the Vue application.
@@ -67,6 +93,7 @@ export const constantRoutes: Array<RouteRecordRaw> = [
 			],
 		},
 	},
+	...terminalRoutes,
 	{
 		path: "/about-us",
 		name: "AboutUs",
@@ -182,6 +209,10 @@ router.beforeEach((to, from, next) => {
 	for (const middleware of globalMiddlewares) {
 		middleware(to, from, next);
 	}
+});
+
+router.afterEach((to) => {
+	setRouteChange(to);
 });
 
 export function resetRouter() {

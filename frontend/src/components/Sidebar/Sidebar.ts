@@ -61,17 +61,17 @@ export default defineComponent({
 		const isCollapse = computed(() => !appStore.navbar.opened);
 
 		function linkClasses(r: RouteRecordRaw) {
-			const base = "py-2.7 text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 transition-colors";
-			const active = "shadow-soft-xl rounded-lg bg-white font-semibold text-slate-700";
+			const base = "bg-white ease-soft-in-out flex items-center mx-4 my-0 px-4 py-2  text-sm transition-all whitespace-nowrap";
+			const active = "active xl:shadow-soft-xl rounded-lg font-semibold text-slate-700";
 			return route.path === r.path ? `${base} ${active}` : base;
 		}
 
 		function iconWrapperClasses(r: RouteRecordRaw) {
-			const activeBg = "bg-gradient-to-tl from-blue-700 to-blue-500 text-white";
-			return route.path === r.path ? activeBg : "";
+			const base = "shadow-soft-2xl  mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white";
+			const active = "stroke-none shadow-soft-sm bg-gradient-to-tl from-blue-700 to-blue-500 bg-center p-2.5 text-center text-white";
+			return route.path === r.path ? `${base} ${active}` : base;
 		}
 
-		console.log({ appTitle, isCollapse, route, noHiddenRoutes, sortedRoutes, linkClasses, iconWrapperClasses });
 		return { appTitle, isCollapse, route, noHiddenRoutes, sortedRoutes, linkClasses, iconWrapperClasses };
 	},
 });
