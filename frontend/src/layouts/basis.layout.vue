@@ -1,4 +1,5 @@
 <template>
+	<Notifications />
 	<div id="network-status">
 		<NetworkStatusBanner />
 	</div>
