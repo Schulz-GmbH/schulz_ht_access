@@ -11,9 +11,9 @@ import { group } from "console";
 
 // Pages
 import Dashboard from "@/pages/dashboard/dashboard.vue";
-import Settings from "@/pages/Settings/settings.vue";
-import Terminal from "@/pages/Terminal/terminal.vue";
-import LogFiles from "@/pages/LogFiles/log-files.vue";
+
+import AboutUs from "@/pages/AboutUs/about-us.vue";
+import License from "@/pages/License/license.vue";
 
 /**
  * Route configurations for the Vue application.
@@ -68,24 +68,47 @@ export const constantRoutes: Array<RouteRecordRaw> = [
 		},
 	},
 	{
-		path: "/terminal",
-		name: "Terminal",
-		component: Terminal,
+		path: "/about-us",
+		name: "AboutUs",
+		component: AboutUs,
 		meta: {
-			title: "Terminal",
-			icon: "fas fa-terminal",
-			group: "",
-			hidden: false,
+			title: "About Us",
+			icon: "fa-solid fa-users",
+			group: "Footer",
+			hidden: true,
 			dev: false,
 			tags: [
 				{ name: "author", value: "Simon Marcel Linden" },
 				{
 					name: "description",
-					value: "HS - Wireless Access - Terminal",
+					value: "HS - Wireless Access - About Us",
 				},
 				{
 					name: "og:description",
-					value: "HS - Wireless Access - Terminal",
+					value: "HS - Wireless Access - About Us",
+				},
+			],
+		},
+	},
+	{
+		path: "/license",
+		name: "License",
+		component: License,
+		meta: {
+			title: "License",
+			icon: "fa-solid fa-file",
+			group: "Footer",
+			hidden: true,
+			dev: false,
+			tags: [
+				{ name: "author", value: "Simon Marcel Linden" },
+				{
+					name: "description",
+					value: "HS - Wireless Access - License",
+				},
+				{
+					name: "og:description",
+					value: "HS - Wireless Access - License",
 				},
 			],
 		},

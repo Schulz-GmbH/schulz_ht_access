@@ -10,19 +10,24 @@
 				<div class="w-full max-w-full px-3 mt-0 shrink-0 lg:w-1/2 lg:flex-none">
 					<ul class="flex flex-wrap justify-center pl-0 mb-0 list-none lg:justify-end">
 						<li class="nav-item">
-							<a href="#"
+							<router-link :to="{ name: 'AboutUs' }"
 								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
-								target="_blank">About Us</a>
+								target="_blank">About Us
+							</router-link>
+
 						</li>
 						<li class="nav-item">
-							<a href="#"
+							<a href="https://www.schulz-hygiene.de"
 								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
-								target="_blank">Webseite</a>
+								target="_blank" rel="noopener noreferrer">
+								Webseite
+							</a>
 						</li>
 						<li class="nav-item">
-							<a href="#"
-								class="block px-4 pt-0 pb-1 pr-0 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
-								target="_blank">License</a>
+							<router-link :to="{ name: 'License' }"
+								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
+								target="_blank">License
+							</router-link>
 						</li>
 					</ul>
 				</div>
