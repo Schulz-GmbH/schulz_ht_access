@@ -1,4 +1,5 @@
 import { defineComponent, onMounted, computed, ref } from "vue";
+import { useRouter } from "vue-router";
 
 import type { TableColumn } from "@/components/Table/_types/column";
 import type { TableMeta } from "@/components/Table/_types/meta";
@@ -22,6 +23,8 @@ export default defineComponent({
 	components: { Widget, Table },
 	setup() {
 		const systemStore = useSystemStore();
+
+		const router = useRouter();
 
 		const rawLogs = ref<LogRecord[]>([]);
 		const logs = ref<any[]>([]);
