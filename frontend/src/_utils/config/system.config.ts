@@ -1,5 +1,6 @@
+// src/_utils/config/system.config.ts
 import { getSystemConfig } from "@/_utils/cache/system.storage.cache";
-import { connect } from "http2";
+import type { PersistSystemConfig } from "@/_utils/cache/system.storage.cache";
 
 /**
  * Definition der System-Konfigurationsoptionen
@@ -10,7 +11,8 @@ export interface SystemConfig {
 	logging: { state: boolean };
 	wlan: {
 		connection: { status: boolean; connected: boolean; ssid: string; ip: string; gateway: string; subnet: string };
-		networks: Array<{ ssid: string; security: string }>;
+		savedNetworks: Array<{ ssid: string; security: string; signal?: string }>;
+		scannedNetworks: Array<{ ssid: string; security: string; signal?: string }>;
 	};
 	serial: { available: boolean; baudRate: number; connected: boolean };
 }
@@ -22,14 +24,14 @@ const DEFAULT_SETTINGS_CONFIG: Readonly<SystemConfig> = {
 	loading: false,
 	version: { firmware: "0.0.0", web: "0.0.0" },
 	logging: { state: false },
-	wlan: { connection: { status: false, connected: false, ssid: "", ip: "", gateway: "", subnet: "" }, networks: [] },
+	wlan: { connection: { status: false, connected: false, ssid: "", ip: "", gateway: "", subnet: "" }, savedNetworks: [], scannedNetworks: [] },
 	serial: { available: false, baudRate: 9600, connected: false },
 };
 
 // const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
 // const { serial: _ignoreSerial, ...persisted } = storageData;
 
-const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
+const storageData: PersistSystemConfig = getSystemConfig() ?? {};
 const { serial: _ignoreSerial, wlan: persistedWlan, ...persisted } = storageData;
 
 /**

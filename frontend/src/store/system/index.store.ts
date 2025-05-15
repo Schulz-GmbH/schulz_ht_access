@@ -36,7 +36,14 @@ export const useSystemStore = defineStore("system", () => {
 
 	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
 	watch(
-		() => ({ loading: state.loading, version: state.version, logging: state.logging, wlan: state.wlan, serial: state.serial }),
+		() => ({
+			loading: state.loading,
+			version: state.version,
+			logging: state.logging,
+			// nur die gespeicherten Netze, nicht connection/scannedNetworks
+			wlan: { savedNetworks: state.wlan.savedNetworks },
+			serial: state.serial,
+		}),
 		(newVal) => {
 			setSystemConfig({ ...newVal });
 		},
