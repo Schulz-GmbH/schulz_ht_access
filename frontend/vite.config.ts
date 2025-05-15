@@ -120,4 +120,16 @@ export default defineConfig(({ mode }) => ({
 		host: true,
 		port: 5173,
 	},
+	build: {
+		outDir: "../firmware/data/www/html",
+		assetsDir: "assets",
+		sourcemap: false,
+		rollupOptions: {
+			output: {
+				entryFileNames: `[name].js`, // statt index-B94evXZl.js → index.js
+				chunkFileNames: `[name].js`, // statt routes.page-Dxep2V_q.js → routes.page.js
+				assetFileNames: `[name][extname]`, // statt fa-solid-900-CTAAxXor.woff2 → fa-solid-900.woff2
+			},
+		},
+	},
 }));
