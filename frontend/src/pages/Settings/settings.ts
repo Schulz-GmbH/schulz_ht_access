@@ -1,124 +1,147 @@
-import { defineComponent, reactive, computed } from "vue";
-import Table from "@/components/Table/table.vue";
-import TableHeader from "@/components/Table/Header/tableHeader.vue";
-import TableBody from "@/components/Table/Body/tableBody.vue";
-import type { TableColumn } from "@/components/Table/_types/column";
-import type { TableParams } from "@/components/Table/_types/params";
-import type { TableMeta } from "@/components/Table/_types/meta";
+// src/pages/Settings/settings.ts
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useSystemStore } from "@/store/system/index.store";
+import { loadSavedNetworks, scanNetworks, connectToNetwork } from "@/_service/systemWifiService";
+import Modal from "@/components/Modal/modal.vue";
 
-// Components
+interface WifiNetwork {
+	ssid: string;
+	security: string;
+	rssi: number;
+	channel: string;
+}
 
 export default defineComponent({
 	name: "Settings",
-	components: { Table, TableHeader, TableBody },
+	components: { Modal },
 	setup() {
 		const systemStore = useSystemStore();
 
-		const columns: TableColumn[] = [
-			{ key: "activity", label: "Activity", slot: "activity" },
-			{ key: "state", label: "Status", slot: "state", sortable: false },
-		];
-		const rows = computed(() => [
-			{
-				id: 1,
-				activity: {
-					title: "Wlan",
-					subtitle: "Activate or Deactivate Wlan on IOT-Access",
-				},
-				state: systemStore.wlan.status,
-				networks: [
-					{ ssid: "Test WLan 1", signal: -50 },
-					{ ssid: "Test WLan 2", signal: -60 },
-					{ ssid: "Test WLan 3", signal: -70 },
-					{ ssid: "Test WLan 4", signal: -80 },
-					{ ssid: "Test WLan 5", signal: -90 },
-				], // Array<{ ssid: string; signal: number }>
-			},
-			{
-				id: 2,
-				activity: {
-					title: "Logging",
-					subtitle: "Erweitere Logs beinhalten Systemausgaben zur Fehleridentifizierung.",
-				},
-				state: systemStore.logging.state,
-			},
-		]);
-		const tableParams = reactive<TableParams>({ page: 1, size: rows.value.length });
+		const loadingScannedNetworks = ref(false);
 
-		// 4) Table-Meta
-		const tableMeta = computed<TableMeta>(() => {
-			const total = rows.value.length;
-			return {
-				totalElements: total,
-				totalPages: Math.ceil(total / tableParams.size!),
-				from: 1,
-				to: total,
-			};
-		});
+		// Aktuell verbundenes SSID
+		const currentSSID = computed(() => systemStore.wlan.connection.ssid);
 
-		// Network
-		const networkColumns: TableColumn[] = [
-			{ key: "ssid", label: "SSID", slot: "ssid", sortable: true },
-			{ key: "signal", label: "Signal", slot: "signal", sortable: true },
-		];
-		const networkRows = computed(() => {
-			return Array.from({ length: 55 }, (_, i) => ({
-				id: i + 1,
-				ssid: `Wlan ${i + 1}`,
-				signal: `${-50 - i * 10} dBm`,
+		// Alle gespeicherten Netzwerke aus dem Store, ohne das aktuell Verbundene
+		const savedNetworks = computed(() => systemStore.wlan.savedNetworks.filter((n) => n.ssid !== currentSSID.value));
+
+		// Ref für die gescannten Netzwerke
+		const scannedNetworks = ref<WifiNetwork[]>([]);
+
+		// Andere Netzwerke = gescannte minus gespeicherte minus aktuelles
+		const otherNetworks = computed(() =>
+			scannedNetworks.value.filter((n) => n.ssid !== currentSSID.value && !systemStore.wlan.savedNetworks.some((s) => s.ssid === n.ssid)),
+		);
+
+		let scanInterval: number | undefined;
+
+		async function getSaved() {
+			await loadSavedNetworks();
+		}
+
+		async function getScanned() {
+			loadingScannedNetworks.value = true;
+			const arr = await scanNetworks();
+			scannedNetworks.value = arr.map((n) => ({
+				ssid: n.ssid,
+				security: n.security,
+				rssi: n.rssi ?? 0,
+				channel: n.channel ?? "",
 			}));
-		});
-		const networkParams = computed<TableParams>(() => ({
-			page: 2,
-			size: networkRows.value.length,
-		}));
-		const networkMeta = computed<TableMeta>(() => {
-			const total = networkRows.value.length;
-			const { page: p, size: s } = networkParams.value;
-			const totalPages = Math.ceil(total / s);
-			const from = (p - 1) * s + 1;
-			const to = Math.min(p * s, total);
-			return {
-				totalElements: total,
-				totalPages,
-				from,
-				to,
-			};
-		});
+			loadingScannedNetworks.value = false;
+		}
 
-		const tableLoading = computed(() => systemStore.wlan.loading || systemStore.logging.loading);
+		function startAutoScan() {
+			getScanned();
+			scanInterval = window.setInterval(getScanned, 30_000);
+		}
 
-		function onToggleCheckbox(row: any, key: "state", event: Event) {
-			const input = event.target as HTMLInputElement;
-			row[key] = input.checked;
-			if (row.id === 1) {
-				systemStore.wlan.status = input.checked;
-			} else {
-				systemStore.logging.state = input.checked;
+		function stopAutoScan() {
+			if (scanInterval) clearInterval(scanInterval);
+			scanInterval = undefined;
+			scannedNetworks.value = [];
+		}
+
+		// Direkt verbinden für gespeicherte Netze
+		async function onClickSaved(ssid: string) {
+			try {
+				await connectToNetwork(ssid);
+			} catch {
+				// Fehlerbehandlung hier
 			}
 		}
 
-		// 7) Paging-Event
-		function onTableParamsChanged(newParams: TableParams) {
-			Object.assign(tableParams, newParams);
+		// Modal‐Flow für neue Netze
+		const passwordModalVisible = ref(false);
+		const selectedSSID = ref("");
+		const password = ref("");
+
+		function openPasswordModal(ssid: string) {
+			selectedSSID.value = ssid;
+			password.value = "";
+			passwordModalVisible.value = true;
 		}
+
+		async function confirmPassword() {
+			try {
+				await connectToNetwork(selectedSSID.value, password.value);
+			} catch {
+				// Fehlerbehandlung hier
+			} finally {
+				passwordModalVisible.value = false;
+			}
+		}
+
+		// Toggle WLAN / Logging
+		async function onToggleCheckbox(field: "logging" | "wlan", ev: Event) {
+			const checked = (ev.target as HTMLInputElement).checked;
+			if (field === "wlan") {
+				systemStore.wlan.connection.status = checked;
+				if (checked) {
+					await getSaved();
+					startAutoScan();
+				} else {
+					stopAutoScan();
+				}
+			} else {
+				systemStore.logging.state = checked;
+			}
+		}
+
+		onMounted(() => {
+			if (systemStore.wlan.connection.status) {
+				getSaved();
+				startAutoScan();
+			}
+		});
+
+		onUnmounted(stopAutoScan);
+
+		watch(
+			() => systemStore.wlan.connection.status,
+			async (isOn) => {
+				if (isOn) {
+					await getSaved();
+					startAutoScan();
+				} else {
+					stopAutoScan();
+				}
+			},
+		);
 
 		return {
 			systemStore,
-			columns,
-			rows,
-			tableParams,
-			tableMeta,
-
-			networkColumns,
-			networkRows,
-			networkParams,
-			networkMeta,
-
-			tableLoading,
+			loadingScannedNetworks,
+			currentSSID,
+			savedNetworks,
+			otherNetworks,
 			onToggleCheckbox,
-			onTableParamsChanged,
+			onClickSaved,
+			openPasswordModal,
+			passwordModalVisible,
+			selectedSSID,
+			password,
+			confirmPassword,
 		};
 	},
 });

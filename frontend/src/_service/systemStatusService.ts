@@ -24,7 +24,7 @@ interface InitDetails {
 	version: { firmware: string; web: string };
 	wlan: {
 		connection: { status: boolean; connected: boolean; ssid: string; ip: string; gateway: string; subnet: string };
-		networks: Array<{ ssid: string; security: string }>;
+		savedNetworks: Array<{ ssid: string; security: string; channel?: string; rssi?: number }>;
 	};
 }
 
@@ -75,7 +75,6 @@ async function fetchInitial(systemStore: ReturnType<typeof useSystemStore>): Pro
 					systemStore.wlan.connection.ip = wlan.connection.ip;
 					systemStore.wlan.connection.gateway = wlan.connection.gateway;
 					systemStore.wlan.connection.subnet = wlan.connection.subnet;
-					systemStore.wlan.networks = wlan.networks.map((n) => ({ ssid: n.ssid, security: "" }));
 				}
 				SocketService.removeListener("system", "init", handler);
 				resolve();
@@ -109,8 +108,6 @@ export async function systemStatusService(): Promise<void> {
 		console.warn("PWA ist offline – Systemstatus kann nicht geladen werden.");
 		return;
 	}
-
-	await SocketService.connect();
 
 	const systemStore = useSystemStore();
 	await Promise.allSettled([fetchInitial(systemStore)]);

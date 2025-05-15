@@ -17,6 +17,8 @@ import Dashboard from "@/pages/dashboard/dashboard.vue";
 import LogFiles from "@/pages/LogFiles/log-files.vue";
 import SingleFile from "@/pages/LogFiles/single-file.vue";
 
+import Settings from "@/pages/Settings/settings.vue";
+
 import AboutUs from "@/pages/AboutUs/about-us.vue";
 import License from "@/pages/License/license.vue";
 
@@ -98,6 +100,16 @@ export const constantRoutes: RouteRecordRaw[] = [
 		meta: {
 			title: "Log Files",
 			icon: "fas fa-file-alt",
+			group: "Settings",
+		},
+	},
+	{
+		path: "settings",
+		name: "Settings",
+		component: Settings,
+		meta: {
+			title: "Settings",
+			icon: "fas fa-cog",
 			group: "Settings",
 		},
 	},

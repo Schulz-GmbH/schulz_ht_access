@@ -11,8 +11,7 @@ export interface SystemConfig {
 	logging: { state: boolean };
 	wlan: {
 		connection: { status: boolean; connected: boolean; ssid: string; ip: string; gateway: string; subnet: string };
-		savedNetworks: Array<{ ssid: string; security: string; signal?: string }>;
-		scannedNetworks: Array<{ ssid: string; security: string; signal?: string }>;
+		savedNetworks: Array<{ ssid: string; security: string; channel?: string; rssi?: number }>;
 	};
 	serial: { available: boolean; baudRate: number; connected: boolean };
 }
@@ -24,14 +23,14 @@ const DEFAULT_SETTINGS_CONFIG: Readonly<SystemConfig> = {
 	loading: false,
 	version: { firmware: "0.0.0", web: "0.0.0" },
 	logging: { state: false },
-	wlan: { connection: { status: false, connected: false, ssid: "", ip: "", gateway: "", subnet: "" }, savedNetworks: [], scannedNetworks: [] },
+	wlan: { connection: { status: false, connected: false, ssid: "", ip: "", gateway: "", subnet: "" }, savedNetworks: [] },
 	serial: { available: false, baudRate: 9600, connected: false },
 };
 
 // const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
 // const { serial: _ignoreSerial, ...persisted } = storageData;
 
-const storageData: PersistSystemConfig = getSystemConfig() ?? {};
+const storageData = (getSystemConfig() ?? {}) as Partial<SystemConfig>;
 const { serial: _ignoreSerial, wlan: persistedWlan, ...persisted } = storageData;
 
 /**

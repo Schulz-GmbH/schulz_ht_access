@@ -40,7 +40,6 @@ export const useSystemStore = defineStore("system", () => {
 			loading: state.loading,
 			version: state.version,
 			logging: state.logging,
-			// nur die gespeicherten Netze, nicht connection/scannedNetworks
 			wlan: { savedNetworks: state.wlan.savedNetworks },
 			serial: state.serial,
 		}),
