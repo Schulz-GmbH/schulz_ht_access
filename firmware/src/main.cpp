@@ -161,6 +161,17 @@ static void dumpNamespace(const char* ns) {
 	nvs_close(h);
 }
 
+void printBoardInfos() {
+	Serial.println();
+	Serial.println("=== ESP32-S3 Testprogramm ===");
+	Serial.printf("Chip Revision: %d\n", ESP.getChipRevision());
+	Serial.printf("CPU Frequency: %d MHz\n", ESP.getCpuFreqMHz());
+	Serial.printf("Flash Size: %d MB\n", ESP.getFlashChipSize() / (1024 * 1024));
+	Serial.printf("PSRAM Found: %s\n", (psramFound() ? "JA" : "NEIN"));
+	Serial.printf("Heap Size: %u bytes\n", ESP.getHeapSize());
+	Serial.printf("Free Heap: %u bytes\n", ESP.getFreeHeap());
+}
+
 /**
  * @brief Setup-Funktion, die einmalig beim Start ausgeführt wird.
  *
@@ -221,6 +232,8 @@ void setup() {
 		Serial.println("=== Dump wifi_config NVS ===");
 		dumpNamespace("wifi_config");
 		Serial.println("=== Ende Dump ===");
+
+		printBoardInfos();
 	}
 }
 

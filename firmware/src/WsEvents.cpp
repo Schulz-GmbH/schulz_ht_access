@@ -54,11 +54,60 @@ ParsedMessage parseWebSocketMessage(const char *jsonData) {
  * @param msg Die geparste Nachricht.
  */
 void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
+	if (msg.command == "init") {
+		StaticJsonDocument<512> doc;
+		JsonObject details = doc.createNestedObject("details");
+
+		// 1) logging
+		JsonObject logging = details.createNestedObject("logging");
+		logging["fileLogging"] = LLog::isFileLogging();
+
+		// 2) routes
+		JsonArray routes = details.createNestedArray("routes");
+		routes.add("/logfile");
+		routes.add("/logs/device");
+		routes.add("/logs");  // dein Listing-Endpunkt
+		routes.add("/ws");
+
+		// 3) serial
+		JsonObject serial = details.createNestedObject("serial");
+		serial["available"] = serialBridge->isDeviceConnected();
+		serial["baudRate"] = serialBridge->getBaudRate();
+
+		// 4) version
+		JsonObject version = details.createNestedObject("version");
+		version["firmware"] = FIRMWARE_VERSION;
+		version["web"] = WEB_VERSION;
+
+		// 5) wlan
+		JsonObject wlan = details.createNestedObject("wlan");
+		JsonObject connection = wlan.createNestedObject("connection");
+
+		connection["status"] = wifiManager.isEnabled();
+		connection["connected"] = (WiFi.status() == WL_CONNECTED);
+		connection["ip"] = WiFi.localIP().toString();
+		connection["gateway"] = WiFi.gatewayIP().toString();
+		connection["subnet"] = WiFi.subnetMask().toString();
+		connection["ssid"] = wifiManager.currentNetwork();
+		// du kannst hier auch gespeicherte Netzwerke reinschreiben, wenn du magst:
+		JsonArray saved = wlan.createNestedArray("networks");
+		for (auto &n : wifiManager.listNetworks()) {
+			JsonObject o = saved.createNestedObject();
+			o["ssid"] = n.ssid;
+		}
+
+		// Antwort als plain text JSON (ohne sendResponse, weil wir hier ein Objekt, kein Array haben)
+		String s;
+		serializeJson(doc, s);
+		// client->text(s);
+
+		sendResponse(client, "system", "init", "success", details);
+		return;
+	}
 	if (msg.command != "wifi") {
 		sendResponse(client, "system", "response", "error", "", "Unknown command");
 		return;
-	}
-	if (msg.key == "get") {
+	} else if (msg.key == "get") {
 		String ssid = wifiManager.currentNetwork();
 		StaticJsonDocument<128> doc;
 		auto arr = doc.createNestedArray("details");
@@ -83,8 +132,15 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 		bool ok = WiFi.status() == WL_CONNECTED;
 		sendResponse(client, "system", "wifi", "status", ok ? "connected" : "disconnected", "");
 	} else if (msg.key == "connect") {
-		bool ok = wifiManager.connectSaved();
-		sendResponse(client, "system", "wifi", "connected", ok ? "true" : "false", ok ? "" : "No saved network in range");
+		if (msg.value.length() != 0) {
+			bool ok = wifiManager.connectSaved();
+			sendResponse(client, "system", "wifi", "connected", ok ? "true" : "false", ok ? "" : "No saved network in range");
+			return;
+		} else {
+			bool ok = wifiManager.connect(msg.value);
+			sendResponse(client, "system", "wifi", "connected", ok ? "true" : "false", ok ? "" : "No saved network in range");
+			return;
+		}
 	} else if (msg.key == "disconnect") {
 		wifiManager.disconnect();
 		sendResponse(client, "system", "wifi", "disconnect", "true", "");
@@ -102,6 +158,9 @@ void handleSystemEvent(AsyncWebSocketClient *client, const ParsedMessage &msg) {
 			JsonObject o = arr.createNestedObject();
 			o["ssid"] = n.ssid;
 			o["password"] = n.password;
+			o["rssi"] = n.rssi;
+			o["security"] = n.encryptionType;
+			o["channel"] = n.channel;
 		}
 		sendResponse(client, "system", "wifi", "list", arr, "");
 	} else if (msg.key == "scan") {
@@ -184,11 +243,13 @@ void scanNetworksTask(void *param) {
 	AsyncWebSocketClient *c = (AsyncWebSocketClient *)param;
 	auto nets = wifiManager.scan();
 	StaticJsonDocument<512> doc;
-	auto arr = doc.createNestedArray("networks");
+	JsonArray arr = doc.createNestedArray("networks");
 	for (auto &n : nets) {
 		JsonObject o = arr.createNestedObject();
 		o["ssid"] = n.ssid;
 		o["rssi"] = n.rssi;
+		o["security"] = n.encryptionType;
+		o["channel"] = n.channel;
 	}
 	sendResponse(c, "system", "wifi", "scan", arr, "");
 	vTaskDelete(nullptr);

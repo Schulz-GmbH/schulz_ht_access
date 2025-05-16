@@ -18,6 +18,9 @@
 struct WiFiNetwork {
 	String ssid;
 	String password;
+	int32_t rssi;
+	wifi_auth_mode_t encryptionType;
+	int32_t channel;
 };
 
 /**
@@ -64,6 +67,14 @@ class WiFiManager {
 	bool connect(const String &ssid, const String &password);
 
 	/**
+	 * @brief Verbindet STA mit gegebenem SSID.
+	 * Prüft ob die SSID bekannt ist und verbindet sich mit den STA mit dem Netzwerk.
+	 * @param ssid SSID des Netzwerks.
+	 * @return true bei Erfolg, false sonst.
+	 */
+	bool connect(const String &ssid);
+
+	/**
 	 * @brief Trennt die Station-Verbindung.
 	 * @return true bei Erfolg, false sonst.
 	 */
@@ -78,6 +89,12 @@ class WiFiManager {
 	 * @brief Deaktiviert die Station-Funktion.
 	 */
 	void deactivate();
+
+	/**
+	 * @brief Gibt den Status der Station-Funktion zurück.
+	 * @return true, wenn STA aktiviert ist, false sonst.
+	 */
+	bool isEnabled() const;
 
 	bool addNetwork(const String &ssid, const String &password);
 	bool removeNetwork(const String &ssid);

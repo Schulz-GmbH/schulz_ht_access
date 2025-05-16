@@ -109,6 +109,20 @@ bool WiFiManager::connect(const String &ssid, const String &password) {
 	return false;
 }
 
+bool WiFiManager::connect(const String &ssid) {
+	if (!enabled) return false;
+
+	if (existsNetwork(ssid)) {
+		for (const auto &nw : networks) {
+			if (nw.ssid == ssid) {
+				return connect(nw.ssid, nw.password);
+			}
+		}
+	} else {
+		logger.log({"system", "error", "wifi"}, "Netzwerk nicht gefunden: " + ssid);
+	}
+	return false;
+}
 /**
  * @brief Trennt die bestehende WLAN-Verbindung (Station-Modus).
  *
@@ -141,6 +155,13 @@ void WiFiManager::deactivate() {
 		saveConfig();
 		logger.log({"system", "info", "wifi"}, "STA deaktiviert");
 	}
+}
+
+/**
+ * @brief Gibt den Status des STA-Modus zurück.
+ */
+bool WiFiManager::isEnabled() const {
+	return enabled;
 }
 
 /**
