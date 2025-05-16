@@ -61,20 +61,20 @@ function createWrapper(method: (...args: any[]) => void, level: string) {
 		const prefix = `[${getTimestamp()}][${level}]`;
 		method.call(console, prefix, ...args);
 
-		const stringified = args
-			.map((arg) => {
-				if (typeof arg === "object") {
-					try {
-						return JSON.stringify(arg);
-					} catch {
-						return "[Object]";
-					}
-				}
-				return String(arg);
-			})
-			.join(" ");
+		// const stringified = args
+		// 	.map((arg) => {
+		// 		if (typeof arg === "object") {
+		// 			try {
+		// 				return JSON.stringify(arg);
+		// 			} catch {
+		// 				return "[Object]";
+		// 			}
+		// 		}
+		// 		return String(arg);
+		// 	})
+		// 	.join(" ");
 
-		await saveLogToIndexedDB(`${prefix} ${stringified}`);
+		// await saveLogToIndexedDB(`${prefix} ${stringified}`);
 	};
 }
 

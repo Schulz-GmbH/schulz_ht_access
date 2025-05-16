@@ -14,9 +14,10 @@
 					class="p-4 align-middle bg-transparent border-b border-gray-200 whitespace-nowrap shadow-transparent">
 					<slot :name="col.slot" :row="row" :column="col" :value="row[col.key]">
 						<!-- Fallback: einfache Anzeige des Werts -->
-						<div class="flex px-2">
-							<div class="my-auto">
-								<h6 class="mb-0 text-sm leading-normal">
+						<div class="flex pr-2">
+							<div class="my-auto flex w-26 lg:w-auto">
+								<h6 class="mb-0 text-sm leading-normal
+								flex-1 overflow-hidden whitespace-nowrap truncate">
 									{{ row[col.key] }}
 								</h6>
 							</div>

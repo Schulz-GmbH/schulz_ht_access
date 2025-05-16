@@ -1,6 +1,19 @@
 import { reactive } from "vue";
 
-export type ToastType = "success" | "info" | "warning" | "danger" | "fuchsia" | "slate" | "lime" | "red" | "orange" | "cyan" | "gray" | "dark";
+export type ToastType =
+	| "success"
+	| "info"
+	| "warning"
+	| "danger"
+	| "error"
+	| "fuchsia"
+	| "slate"
+	| "lime"
+	| "red"
+	| "orange"
+	| "cyan"
+	| "gray"
+	| "dark";
 
 export type ToastPosition =
 	| "top-left"
