@@ -49,15 +49,18 @@ export { default } from './single-file'
 				<div
 					class="bg-white rounded-2xl p-4 shadow flex flex-col items-center justify-between space-y-2 text-xs">
 					<div class="flex w-full items-center justify-between">
-						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm">
+						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
+							@click.stop="openRename(filename)">
 							<i class="fas fa-comment-dots"></i>
 							<span class="sr-only flex-1 truncate mx-4">Umbenennen</span>
 						</div>
-						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm">
+						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
+							@click.stop="shareLog(filename)">
 							<i class="fas fa-paper-plane"></i>
 							<span class="sr-only flex-1 truncate mx-4">Versenden</span>
 						</div>
-						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm">
+						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
+							@click.stop="openDelete(filename)">
 							<i class="fas fa-trash-alt"></i>
 							<span class="sr-only flex-1 truncate mx-4">Löschen</span>
 						</div>
@@ -71,8 +74,8 @@ export { default } from './single-file'
 								<div class="log-scroll overflow-y-auto h-full">
 									<textarea name="log-content" readonly
 										class="w-full h-full bg-transparent border-none outline-none no-scrollbar">
-						{{ content }}
-					</textarea>
+										{{ content }}
+									</textarea>
 								</div>
 							</div>
 						</div>
@@ -80,8 +83,24 @@ export { default } from './single-file'
 				</div>
 			</div>
 		</div>
-
 	</div>
+
+	<!-- Modal Umbenennen -->
+	<Modal v-model="renameModalVisible" @confirm="doRename" @close="renameModalVisible = false">
+		<template #header>🖊️ Umbenennen</template>
+		<template #default>
+			<input v-model="newFilename" type="text" class="w-full border rounded px-2 py-1"
+				placeholder="Neuer Dateiname" />
+		</template>
+	</Modal>
+
+	<!-- Modal Löschen -->
+	<Modal v-model="deleteModalVisible" @confirm="doDelete" @close="deleteModalVisible = false">
+		<template #header>⚠️ Löschen bestätigen</template>
+		<template #default>
+			Soll die Log-Datei <strong>{{ pendingFilename }}</strong> wirklich gelöscht werden?
+		</template>
+	</Modal>
 </template>
 
 <script lang="ts">

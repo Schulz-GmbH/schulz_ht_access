@@ -1,49 +1,67 @@
 import { defineComponent, ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getLogByFilename, deleteLogByFilename } from "@/_utils/log/IndexedDBService";
+
+import { getLogByFilename } from "@/_utils/log/IndexedDBService";
+import { useLogActions } from "./composable/useLogActions";
+
+import Modal from "@/components/Modal/modal.vue";
 
 export default defineComponent({
 	name: "SingleFile",
+	components: { Modal },
 	setup() {
 		const route = useRoute();
 		const router = useRouter();
 		const filename = route.params.filename as string;
 		const content = ref("");
 
+		// aus Composable
+		const { pendingFilename, newFilename, prepareRename, doRename, prepareDelete, doDelete, shareLog } = useLogActions();
+
+		// eigene State-Variablen für die beiden Modals
+		const renameModalVisible = ref(false);
+		const deleteModalVisible = ref(false);
+
 		onMounted(async () => {
 			const rec = await getLogByFilename(filename);
 			content.value = rec?.log ?? "Kein Log gefunden.";
 		});
 
-		async function rename() {
-			const newName = window.prompt("Neuer Dateiname:", filename);
-			if (!newName || newName.trim() === "" || newName === filename) return;
-			await deleteLogByFilename(filename);
-			router.replace({ name: "LogFile", params: { filename: newName } });
+		// Hilfsfunktionen, die zusätzlich das Modal öffnen
+		function openRename(fn: string) {
+			prepareRename(fn);
+			renameModalVisible.value = true;
+		}
+		function openDelete(fn: string) {
+			prepareDelete(fn);
+			deleteModalVisible.value = true;
 		}
 
-		async function remove() {
-			if (!window.confirm(`"${filename}" wirklich löschen?`)) return;
-			await deleteLogByFilename(filename);
-			router.push({ name: "LogFiles" });
+		async function onDoRename() {
+			await doRename();
+			renameModalVisible.value = false;
+		}
+		async function onDoDelete() {
+			await doDelete();
+			router.push("/LogFiles");
 		}
 
-		async function send() {
-			if (navigator.share) {
-				await navigator.share({ title: filename, text: content.value });
-			} else {
-				const blob = new Blob([content.value], { type: "text/plain" });
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement("a");
-				a.href = url;
-				a.download = filename;
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
-				URL.revokeObjectURL(url);
-			}
-		}
+		return {
+			filename,
+			content,
 
-		return { filename, content, rename, remove, send };
+			// für Modals
+			openRename,
+			openDelete,
+			renameModalVisible,
+			deleteModalVisible,
+
+			// aus Composable
+			pendingFilename,
+			newFilename,
+			doRename: onDoRename,
+			doDelete: onDoDelete,
+			shareLog,
+		};
 	},
 });
