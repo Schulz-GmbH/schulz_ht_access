@@ -1,94 +1,157 @@
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, reactive, computed, onMounted, onBeforeUpdate, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-
-import { useSystemStore } from "@/store/system/index.store";
-
-// Components
-import Table from "@/components/Table/table.vue";
-
-import type { TableColumn } from "@/components/Table/_types/column";
-import type { TableMeta } from "@/components/Table/_types/meta";
-import type { TableParams } from "@/components/Table/_types/params";
-
 import { getAllLogRecords } from "@/_utils/log/IndexedDBService";
-
-interface LogRecord {
-	filename: string;
-	timestamp: string;
-	log: string;
-}
+import { useLogActions } from "./composable/useLogActions";
+import Modal from "@/components/Modal/modal.vue";
 
 export default defineComponent({
 	name: "LogFiles",
-	components: { Table },
+	components: { Modal },
 	setup() {
 		const router = useRouter();
-		const rawLogs = ref<LogRecord[]>([]);
-		const logs = ref<any[]>([]);
-		const params = ref<TableParams>({ size: 10, page: 1 });
-		const meta = ref<TableMeta>({ totalElements: 0, totalPages: 0, from: 0, to: 0 });
+		const logs = ref<{ filename: string; date: string }[]>([]);
+		const query = ref("");
 
-		const columns: TableColumn[] = [
-			{ key: "filename", label: "Filename", sortable: true },
-			{ key: "date", label: "Datum", sortable: true },
-			{ key: "view", label: "", sortable: false, slot: "view" },
-			{ key: "action", label: "", sortable: false, slot: "action" },
-		];
+		// aus Composable
+		const { pendingFilename, newFilename, prepareRename, doRename, prepareDelete, doDelete, shareLog } = useLogActions();
+
+		// eigene State-Variablen für die beiden Modals
+		const renameModalVisible = ref(false);
+		const deleteModalVisible = ref(false);
+
+		// Hilfsfunktionen, die zusätzlich das Modal öffnen
+		function openRename(fn: string) {
+			prepareRename(fn);
+			renameModalVisible.value = true;
+		}
+		function openDelete(fn: string) {
+			prepareDelete(fn);
+			deleteModalVisible.value = true;
+		}
+
+		// Swipe-Refs
+		const itemRefs = reactive<Record<string, HTMLElement>>({});
+		const btnsRefs = reactive<Record<string, HTMLElement>>({});
+
+		function makeRefSetter(store: Record<string, HTMLElement>) {
+			return (key: string) => (el: any) => {
+				if (el instanceof HTMLElement) store[key] = el;
+			};
+		}
+		const setItemRef = makeRefSetter(itemRefs);
+		const setBtnRef = makeRefSetter(btnsRefs);
+
+		// Swipe-State
+		const openId = ref<string | null>(null);
+		const startX: Record<string, number> = {};
 
 		async function loadLogs() {
 			const all = await getAllLogRecords();
-			// sortiere absteigend nach timestamp
 			all.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
-			rawLogs.value = all;
-
-			// baue Tabelle
-			const start = (params.value.page - 1) * params.value.size;
-			const slice = rawLogs.value.slice(start, start + params.value.size);
-			logs.value = slice.map((r) => ({
+			logs.value = all.map((r) => ({
 				filename: r.filename,
 				date: r.timestamp.split("T")[0],
-				// view: `<button class="btn btn-sm">Ansehen</button>`,
-				// action: `<button class="btn btn-danger btn-sm">Löschen</button>`,
 			}));
-
-			meta.value = {
-				totalElements: rawLogs.value.length,
-				totalPages: Math.ceil(rawLogs.value.length / params.value.size),
-				from: start + 1,
-				to: start + slice.length,
-			};
 		}
 
-		// Neu laden bei Seiten- oder Größenwechsel
-		function onParamsChange(newParams: TableParams) {
-			params.value = newParams;
-			loadLogs();
-		}
-
-		function viewLog(filename: string) {
-			// zu /log/<filename> routen
-			router.push({ path: `/log/${filename}` });
-		}
-
-		async function deleteLog(filename: string) {
-			if (confirm(`Wirklich "${filename}" löschen?`)) {
-				// await deleteLogByFilename(filename);
-				loadLogs();
-			}
-		}
-
-		onMounted(() => {
-			loadLogs();
+		onMounted(loadLogs);
+		onBeforeUpdate(() => {
+			Object.keys(itemRefs).forEach((k) => delete itemRefs[k]);
+			Object.keys(btnsRefs).forEach((k) => delete btnsRefs[k]);
+			openId.value = null;
 		});
 
+		const filteredLogs = computed(() =>
+			logs.value.filter((l) => l.filename.toLowerCase().includes(query.value.toLowerCase()) || l.date.includes(query.value)),
+		);
+
+		function viewLog(fn: string) {
+			router.push(`/log/${fn}`);
+		}
+
+		async function onDoRename() {
+			await doRename();
+			await loadLogs();
+			renameModalVisible.value = false;
+		}
+		async function onDoDelete() {
+			await doDelete();
+			await loadLogs();
+			deleteModalVisible.value = false;
+		}
+
+		// --- Swipe Handling ---
+		function onTouchStart(e: TouchEvent, id: string) {
+			if (openId.value && openId.value !== id) {
+				const prevEl = itemRefs[openId.value];
+				const prevBtns = btnsRefs[openId.value];
+				if (prevEl && prevBtns) {
+					prevEl.style.transform = "translateX(0)";
+					prevBtns.style.opacity = "0";
+				}
+				openId.value = null;
+			}
+			startX[id] = e.changedTouches[0].clientX;
+		}
+
+		function onTouchMove(e: TouchEvent, id: string) {
+			const dx = e.changedTouches[0].clientX - (startX[id] || 0);
+			const el = itemRefs[id];
+			const btn = btnsRefs[id];
+			if (!el || !btn) return;
+			const translate = Math.max(Math.min(dx, 0), -192);
+			el.style.transform = `translateX(${translate}px)`;
+			btn.style.opacity = `${Math.min(Math.abs(translate) / btn.clientWidth, 1)}`;
+		}
+
+		function onTouchEnd(e: TouchEvent, id: string) {
+			const dx = e.changedTouches[0].clientX - (startX[id] || 0);
+			const el = itemRefs[id];
+			const btn = btnsRefs[id];
+			if (!el || !btn) return;
+			const open = dx < -40;
+			el.style.transform = open ? "translateX(-192px)" : "translateX(0)";
+			btn.style.opacity = open ? "1" : "0";
+			openId.value = open ? id : null;
+		}
+
+		function handleDocumentClick(e: MouseEvent) {
+			if (!openId.value) return;
+			const el = itemRefs[openId.value];
+			if (el && !el.contains(e.target as Node)) {
+				const btns = btnsRefs[openId.value];
+				el.style.transform = "translateX(0)";
+				if (btns) btns.style.opacity = "0";
+				openId.value = null;
+			}
+		}
+		onMounted(() => document.addEventListener("click", handleDocumentClick));
+		onUnmounted(() => document.removeEventListener("click", handleDocumentClick));
+
 		return {
-			columns,
-			logs,
-			meta,
-			params,
-			onParamsChange,
+			query,
+			filteredLogs,
 			viewLog,
-			deleteLog,
+
+			// für Swipe
+			setItemRef,
+			setBtnRef,
+			onTouchStart,
+			onTouchMove,
+			onTouchEnd,
+
+			// für Modals
+			openRename,
+			openDelete,
+			renameModalVisible,
+			deleteModalVisible,
+
+			// aus Composable
+			pendingFilename,
+			newFilename,
+			doRename: onDoRename,
+			doDelete: onDoDelete,
+			shareLog,
 		};
 	},
 });

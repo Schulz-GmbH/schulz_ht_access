@@ -1,5 +1,3 @@
-// src/_utils/log/IndexedDBService.ts
-
 /** @brief Name der IndexedDB-Datenbank. */
 const DB_NAME = "AppLogs";
 /** @brief Name des Objekt-Stores für Log-Einträge. */
@@ -121,6 +119,39 @@ export async function deleteLogByFilename(filename: string): Promise<void> {
 		tx.onerror = () => reject(tx.error);
 		tx.onabort = () => reject(tx.error);
 	});
+}
+
+/**
+ * @brief Benennt einen Log-Eintrag um (via keyPath 'filename').
+ *
+ * 1) Holen des bestehenden Records
+ * 2) Schreiben unter neuem Key
+ * 3) Löschen des alten Eintrags
+ */
+export async function renameLogByFilename(oldFilename: string, newFilename: string): Promise<void> {
+	const db = await openDB();
+	// 1) Existierenden Datensatz holen
+	const existingReq = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).get(oldFilename);
+
+	const existing: LogRecord | undefined = await new Promise((res, rej) => {
+		existingReq.onsuccess = () => res(existingReq.result);
+		existingReq.onerror = () => rej(existingReq.error);
+	});
+
+	if (!existing) {
+		throw new Error(`Log "${oldFilename}" nicht gefunden.`);
+	}
+
+	// 2) Neues Record mit neuem Filename schreiben
+	const newRecord: LogRecord = {
+		filename: newFilename,
+		log: existing.log,
+		timestamp: new Date().toISOString(),
+	};
+	await putLogRecord(db, newRecord);
+
+	// 3) Alten Eintrag löschen
+	await deleteLogByFilename(oldFilename);
 }
 
 /**
