@@ -9,7 +9,7 @@ import { useDevice } from "@/_utils/composables/useDevice";
 
 // Components
 import NavigationBar from "@/components/NavigationBar/NavigationBar.vue";
-import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import Sidebar from "@/components/Sidebar/sidebar.vue";
 import Footer from "@/components/Footer/Footer.vue";
 
 type AppLayoutType = DefineComponent<{}, {}, {}>;
@@ -26,12 +26,12 @@ const AppLayout: AppLayoutType = defineComponent({
 
 		const appStore = useAppStore();
 
-		const layoutClasses = computed(() => ({
-			hideNavbar: !appStore.navbar.opened,
-			openNavbar: appStore.navbar.opened,
-			animation: appStore.navbar.animation,
-			mobile: isMobile.value,
-		}));
+		const hideNavbar = computed(() => !appStore.navbar.opened);
+		const openNavbar = computed(() => appStore.navbar.opened);
+		const animation = computed(() => appStore.navbar.animation);
+		const mobile = isMobile;
+
+		const layoutClasses = { hideNavbar, openNavbar, animation, mobile };
 
 		function handleClickOutside() {
 			appStore.closeNavbar(true);
@@ -39,6 +39,10 @@ const AppLayout: AppLayoutType = defineComponent({
 
 		return {
 			layoutClasses,
+			hideNavbar,
+			openNavbar,
+			animation,
+			mobile,
 			handleClickOutside,
 		};
 	},

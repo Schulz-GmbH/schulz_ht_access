@@ -8,14 +8,21 @@
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "tailwindcss";
 
-@import "../components/navbar/navbar.components.css";
-
 @theme {
 	--breakpoint-sm: 567px;
 	--breakpoint-md: 768px;
 	--breakpoint-lg: 992px;
 	--breakpoint-xl: 1200px;
 
+	--text-xxs: 0.65rem;
+	--text-sm: 0.875rem;
+
+	--tw-leading: 1.5rem;
+
+	--tracking-none: 0;
+
+	--spacing-5\.3: 1.325rem;
+	--spacing-4: 1rem;
 	--spacing-2\.7: 0.675rem;
 	--spacing-5\.5: 1.375rem;
 	--space-7: 1.75rem;
@@ -23,11 +30,20 @@
 
 	--space--34: -8.5rem;
 
-	--boxShadow-soft-xl: 0 20px 27px rgba(0, 0, 0, 0.05);
-	--boxShadow-soft-2xl: 0 0.3125rem 0.625rem rgba(0, 0, 0, 0.12);
-	--boxShadow-soft-3xl: 0 8px 26px -4px hsla(0, 0%, 8%, 0.15), 0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
+	--radius-10: 2.5rem;
+	--radius-circle: 50%;
+
+	--shadow-soft-xl: 0 20px 27px rgba(0, 0, 0, 0.05);
+	--shadow-soft-2xl: 0 0.3125rem 0.625rem rgba(0, 0, 0, 0.12);
+	--shadow-soft-3xl: 0 8px 26px -4px hsla(0, 0%, 8%, 0.15), 0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
 
 	--ease-soft-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+
+	/* --color-primary: #344767; */
+	--color-gray-200: rgb(233 236 239);
+	--color-slate-700: rgb(53 72 104);
+
+	--font-sans: "Open Sans", sans-serif;
 }
 
 @layer base {
@@ -40,15 +56,56 @@
 		margin-bottom: 0.5rem;
 		color: #344767;
 	}
-	h6 {
-		font-size: 1rem;
-		line-height: 1.625;
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		letter-spacing: -0.05rem;
 	}
+
+	h1,
+	h2,
+	h3 {
+		font-weight: 700;
+	}
+
 	h4,
 	h5,
 	h6 {
 		font-weight: 600;
 	}
+
+	h1 {
+		font-size: 3rem;
+		line-height: 1.25;
+	}
+
+	h2 {
+		font-size: 2.25rem;
+		line-height: 1.3;
+	}
+
+	h3 {
+		font-size: 1.875rem;
+		line-height: 1.375;
+	}
+
+	h4 {
+		font-size: 1.5rem;
+		line-height: 1.375;
+	}
+
+	h5 {
+		font-size: 1.25rem;
+		line-height: 1.375;
+	}
+
+	h6 {
+		font-size: 1rem;
+		line-height: 1.625;
+	}
+
 	p {
 		line-height: 1.625;
 		font-weight: 400;
@@ -56,15 +113,32 @@
 	}
 
 	a {
-		margin-bottom: 0.5rem;
+		/* margin-bottom: 0.5rem; */
 		color: #344767;
 	}
 }
 
 /* 1) Custom‑Utility in der Tailwind‑Utilities‑Layer */
 @layer utilities {
+	/* füge die Utility-Klasse um line-height hinzu */
+	.text-xxs {
+		font-size: var(--text-xxs);
+		line-height: 1rem;
+	}
+
+	a {
+		letter-spacing: -0.025rem;
+		text-decoration: none;
+	}
+
+	.shadow-soft-sm {
+		-tw-shadow:
+			0 0.25rem 0.375rem -0.0625rem hsla(0, 0%, 8%, 0.12),
+			0 0.125rem 0.25rem -0.0625rem hsla(0, 0%, 8%, 0.07);
+		--tw-shadow-colored: 0 0.25rem 0.375rem -0.0625rem var(--tw-shadow-color), 0 0.125rem 0.25rem -0.0625rem var(--tw-shadow-color);
+		box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+	}
 	.shadow-soft-xl {
-		/* exakt dein gewünschter Schatten */
 		box-shadow: 0 20px 27px rgba(0, 0, 0, 0.05);
 	}
 	.shadow-soft-2xl {
@@ -75,6 +149,10 @@
 			0 8px 26px -4px hsla(0, 0%, 8%, 0.15),
 			0 8px 9px -5px hsla(0, 0%, 8%, 0.06);
 	}
+
+	/* .after\:duration-250::after {
+		@apply duration-250;
+	} */
 }
 
 @media (max-width: 768px) {
@@ -83,13 +161,25 @@
 	}
 }
 
+html {
+	line-height: 1.5;
+	-webkit-text-size-adjust: 100%;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+	font-family: Open Sans;
+}
+
+html,
+body {
+	height: 100%;
+	min-height: 100vh;
+	touch-action: manipulation; /* verhindert das Double-Tap-Zoom für alle Tap-Gesten */
+}
+
 body {
 	padding: 0;
 	margin: 0;
-
-	font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	color: var(--color-white);
 	line-height: 1.6;
 	font-size: 16px;
-	background-color: rgb(34, 197, 94) !important;
 }

@@ -1,5 +1,6 @@
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 
+import { systemStatusService } from "@/_service/systemStatusService";
 // Types
 
 // Components
@@ -7,9 +8,10 @@ import { defineComponent } from 'vue'
 // Templates
 
 export default defineComponent({
-	name: 'AppMain',
+	name: "AppMain",
 	components: {},
 	setup() {
-		return {}
+		systemStatusService();
+		return {};
 	},
-})
+});

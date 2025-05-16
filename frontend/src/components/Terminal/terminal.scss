@@ -1,0 +1,7 @@
+.terminal-content {
+	// height: 400px; /* oder was immer Du brauchst */
+	// overflow-y: auto;
+}
+textarea.no-scrollbar::-webkit-scrollbar {
+	// display: none;
+}

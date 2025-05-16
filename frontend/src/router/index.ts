@@ -1,13 +1,57 @@
-import { createRouter, type RouteRecordRaw, NavigationGuard } from "vue-router";
+// src/router/index.ts
+
+import { createRouter, RouterView, type RouteRecordRaw, NavigationGuard } from "vue-router";
 import { routerConfig } from "@/router/config";
+
+import { setRouteChange } from "@/_utils/composables/useRouteListener";
 
 // Components
 
 // Layouts
 import BasisLayout from "@/layouts/basis.layout.vue";
-
 import BasisView from "@/views/basis/basis.view.vue";
-import { group } from "console";
+
+// Pages
+import Dashboard from "@/pages/dashboard/dashboard.vue";
+
+import LogFiles from "@/pages/LogFiles/log-files.vue";
+import SingleFile from "@/pages/LogFiles/single-file.vue";
+
+import Settings from "@/pages/Settings/settings.vue";
+
+import AboutUs from "@/pages/AboutUs/about-us.vue";
+import License from "@/pages/License/license.vue";
+
+import { terminalDefs } from "./terminal.routes";
+
+// 1) Terminal-Kind-Routen erzeugen
+const terminalChildRoutes: RouteRecordRaw[] = terminalDefs.map((def) => ({
+	path: `/type-${def.suffix}`, // relativ zu /terminal
+	name: def.name,
+	component: () =>
+		import(
+			/* webpackChunkName: "terminal-type-${def.suffix}" */
+			`@/pages/Terminal/type-${def.suffix}/terminal-type-${def.suffix}.vue`
+		),
+	meta: {
+		title: def.title,
+		icon: "fas fa-terminal",
+		group: "Devices",
+	},
+}));
+
+// 2) Ein einziges Terminal-Group-Objekt
+const terminalGroup: RouteRecordRaw = {
+	path: "terminal", // relativ zur Root-Children-Routes
+	component: RouterView, // leeres <RouterView /> für die Kind-Komponenten
+	meta: {
+		title: "Terminal",
+		icon: "fas fa-terminal",
+		group: "Devices",
+		hidden: true,
+	},
+	children: terminalChildRoutes,
+};
 
 /**
  * Route configurations for the Vue application.
@@ -17,7 +61,7 @@ import { group } from "console";
  * are defined within the meta property of each route.
  */
 
-export const errorRoutes: Array<RouteRecordRaw> = [
+export const errorRoutes: RouteRecordRaw[] = [
 	{
 		path: "/403",
 		component: BasisView,
@@ -37,33 +81,76 @@ export const errorRoutes: Array<RouteRecordRaw> = [
 	},
 ];
 
-export const constantRoutes: Array<RouteRecordRaw> = [
+export const constantRoutes: RouteRecordRaw[] = [
 	{
 		path: "/",
 		name: "Dashboard",
-		component: BasisView,
+		component: Dashboard,
 		meta: {
 			title: "IoT Dashboard",
 			icon: "fas fa-home",
 			group: "",
-			hidden: false,
-			dev: false,
-			tags: [
-				{ name: "author", value: "Simon Marcel Linden" },
-				{
-					name: "description",
-					value: "Willkommen auf der Startseite der Anwendung.",
-				},
-				{
-					name: "og:description",
-					value: "Willkommen auf der Startseite der Anwendung.",
-				},
-			],
+		},
+	},
+	terminalGroup,
+	{
+		path: "log",
+		name: "LogFiles",
+		component: LogFiles,
+		meta: {
+			title: "Log Files",
+			icon: "fas fa-file-alt",
+			group: "Settings",
+		},
+	},
+	{
+		path: "settings",
+		name: "Settings",
+		component: Settings,
+		meta: {
+			title: "Settings",
+			icon: "fas fa-cog",
+			group: "Settings",
+		},
+	},
+	{
+		path: "about-us",
+		name: "AboutUs",
+		component: AboutUs,
+		meta: {
+			title: "About Us",
+			icon: "fa-solid fa-users",
+			group: "Footer",
+			hidden: true,
+		},
+	},
+	{
+		path: "license",
+		name: "License",
+		component: License,
+		meta: {
+			title: "License",
+			icon: "fa-solid fa-file",
+			group: "Footer",
+			hidden: true,
 		},
 	},
 ];
 
-export const developmentRoutes: Array<RouteRecordRaw> = [
+export const dynamicRoutes: RouteRecordRaw[] = [
+	{
+		path: "log/:filename", // relativ
+		name: "SingleFile",
+		component: SingleFile,
+		meta: {
+			title: "Single Log File",
+			breadcrumb: { parent: "LogFiles" },
+			hidden: true,
+		},
+	},
+];
+
+export const developmentRoutes: RouteRecordRaw[] = [
 	{
 		path: "routes",
 		name: "RoutesPage",
@@ -72,28 +159,16 @@ export const developmentRoutes: Array<RouteRecordRaw> = [
 			title: "Application Routes",
 			hidden: true,
 			dev: true,
-			tags: [
-				{ name: "author", value: "Simon Marcel Linden" },
-				{
-					name: "description",
-					value: "Diese Seite ist ausschließlich im Entwicklungsmodus zugänglich.",
-				},
-				{
-					name: "og:description",
-					value: "Entwickler-Tool zur Anzeige und Überprüfung aller definierten Anwendungsrouten.",
-				},
-			],
 		},
 	},
 ];
 
-export const routes: Array<RouteRecordRaw> = [
+export const routes: RouteRecordRaw[] = [
 	{
 		path: "/",
-		name: "RedirectHome",
 		component: BasisLayout,
-		redirect: { name: "Home" },
-		children: [...constantRoutes, ...(process.env.NODE_ENV === "development" ? developmentRoutes : [])],
+		redirect: { name: "Dashboard" },
+		children: [...constantRoutes, ...dynamicRoutes, ...(process.env.NODE_ENV === "development" ? developmentRoutes : [])],
 	},
 	...errorRoutes,
 ];
@@ -130,6 +205,10 @@ router.beforeEach((to, from, next) => {
 	for (const middleware of globalMiddlewares) {
 		middleware(to, from, next);
 	}
+});
+
+router.afterEach((to) => {
+	setRouteChange(to);
 });
 
 export function resetRouter() {

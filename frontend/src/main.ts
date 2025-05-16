@@ -17,8 +17,11 @@ import { usePWA } from "./registerSW";
 import App from "./app.main.vue";
 import { router } from "./router";
 
+// Services
+import { SocketService } from "./_service/socket";
+
 // Stores
-import { useSettingsStore } from "@/store/settings/index.store";
+import { useSystemStore } from "@/store/system/index.store";
 
 // Helpers and services
 import { hookConsole } from "@/_utils/hooks/console-hock";
@@ -53,6 +56,10 @@ const app = createApp(App);
 app.use(pinia);
 app.use(router);
 
+app.config.errorHandler = (err, vm, info) => {
+	console.error("UNHANDLED VUE ERROR:", err, info);
+};
+
 /**
  * Mount the Vue application to a DOM element.
  *
@@ -61,9 +68,9 @@ app.use(router);
  */
 router.isReady().then(() => {
 	app.mount("#app");
-
-	const settingsStore = useSettingsStore();
-	settingsStore.setRoutes();
+	SocketService.connect();
+	const systemStore = useSystemStore();
+	systemStore.setRoutes();
 
 	usePWA();
 });

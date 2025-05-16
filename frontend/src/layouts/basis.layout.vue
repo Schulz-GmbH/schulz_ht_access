@@ -1,8 +1,9 @@
 <template>
+	<Notifications />
 	<div id="network-status">
 		<NetworkStatusBanner />
 	</div>
-	<div id="basis-layout" class="relative h-full">
+	<div id="basis-layout" class="relative h-full flex flex-col flex-1 overflow-hidden">
 		<AppLayout />
 	</div>
 </template>

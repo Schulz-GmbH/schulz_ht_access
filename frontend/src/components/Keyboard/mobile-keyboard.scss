@@ -1,0 +1,37 @@
+.mobile-keyboard button:focus,
+.mobile-keyboard input:focus {
+	outline: none;
+}
+
+.mobile-keyboard button,
+.keyboard-container input {
+	user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+	-webkit-touch-callout: none;
+}
+
+.flex.transition-all {
+	transition-property: flex, height;
+	transition-duration: 0.3s;
+}
+
+/* Slide-Up Animation */
+.slide-up-enter-active,
+.slide-up-leave-active {
+	transition:
+		transform 0.3s ease-out,
+		opacity 0.3s ease-out;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+	transform: translateY(100%);
+	opacity: 0;
+}
+.slide-up-enter-to,
+.slide-up-leave-from {
+	transform: translateY(0);
+	opacity: 1;
+}
