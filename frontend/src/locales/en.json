@@ -1,0 +1,6 @@
+{
+	"greeting": "Hello, {name}!",
+	"message": {
+		"welcome": "Welcome to our application."
+	}
+}

@@ -13,6 +13,7 @@
 		"allowJs": true, // → erlaubt JS‑Dateien mit require()
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true, // <-- JSON-Importe erlauben
 		"esModuleInterop": true,
 		"baseUrl": ".",
 		"paths": {
