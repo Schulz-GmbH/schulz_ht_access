@@ -26,8 +26,8 @@ export default defineComponent({
 		// Sprache als Union-Type
 		const language = ref<AppLocale>(locale.value as AppLocale);
 		const languageOptions: { value: AppLocale; labelKey: string }[] = [
-			{ value: 'de', labelKey: 'pages.settings.language.de' },
-			{ value: 'en', labelKey: 'pages.settings.language.en' },
+			{ value: 'de', labelKey: 'language.de' },
+			{ value: 'en', labelKey: 'language.en' },
 		];
 
 		function changeLanguage() {
