@@ -19,7 +19,7 @@
 				<ul class="flex flex-col pl-0 mb-0">
 					<template v-for="block in sortedRoutes" :key="block.group || 'ungrouped'">
 						<li v-if="block.group" class="px-4 py-1 font-semibold text-slate-500">
-							{{ block.group }}
+							{{ $t(block.group) }}
 						</li>
 
 						<li v-for="routeObj in block.items" :key="routeObj.path" class="mt-0.5 w-full">
@@ -29,9 +29,11 @@
 									<i :class="routeObj.meta!.icon"></i>
 								</div>
 								<span class="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">
-									{{ routeObj.meta!.title }}
+									{{ $t(routeObj.meta!.title as string) }}
 									<small v-if="routeObj.meta?.dev || routeObj.meta?.hidden"
-										class="text-xs text-red-500 ml-1">DEV</small>
+										class="text-xs text-red-500 ml-1">
+										{{ $t('components.sidebar.devBadge') }}
+									</small>
 								</span>
 							</router-link>
 						</li>

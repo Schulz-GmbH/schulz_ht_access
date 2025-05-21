@@ -8,8 +8,9 @@
 						<div class="flex-none px-3 w-1/2 xl:w-2/3">
 							<p class="mb-0 font-sans font-semibold leading-normal text-sm"
 								:class="systemStore.serial.available && systemStore.serial.connected ? 'text-lime-500' : 'text-red-500'">
-								{{ systemStore.serial.available && systemStore.serial.connected ? 'Verbunden' :
-									'Getrennt' }}
+								{{ systemStore.serial.available && systemStore.serial.connected
+									? $t('components.terminal.connected')
+									: $t('components.terminal.disconnected') }}
 							</p>
 						</div>
 					</div>

@@ -4,7 +4,7 @@
 		leave-from-class="translate-y-0" leave-to-class="-translate-y-full">
 		<div v-show="bannerVisible" ref="banner"
 			class="fixed top-0 left-0 right-0 bg-red-700 text-white text-center py-2 shadow-md transform">
-			📡 Du bist offline – einige Funktionen sind möglicherweise nicht verfügbar.
+			{{ $t('components.networkStatusBanner.offlineMessage') }}
 		</div>
 	</transition>
 </template>

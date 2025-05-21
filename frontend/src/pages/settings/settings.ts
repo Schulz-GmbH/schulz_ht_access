@@ -1,8 +1,12 @@
 // src/pages/Settings/settings.ts
+// src/pages/Settings/settings.ts
 import { defineComponent, ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useSystemStore } from '@/store/system/index';
 import { loadSavedNetworks, scanNetworks, connectToNetwork } from '@/_service/system-wifi-service';
 import Modal from '@/components/modal/modal.vue';
+
+import { useI18n } from 'vue-i18n';
+import type { AppLocale } from '@/i18n';
 
 interface WifiNetwork {
 	ssid: string;
@@ -15,30 +19,36 @@ export default defineComponent({
 	name: 'Settings',
 	components: { Modal },
 	setup() {
+		// I18n
+		const { t, locale } = useI18n();
 		const systemStore = useSystemStore();
 
+		// Sprache als Union-Type
+		const language = ref<AppLocale>(locale.value as AppLocale);
+		const languageOptions: { value: AppLocale; labelKey: string }[] = [
+			{ value: 'de', labelKey: 'pages.settings.language.de' },
+			{ value: 'en', labelKey: 'pages.settings.language.en' },
+		];
+
+		function changeLanguage() {
+			// Pinia und Vue-I18n
+			systemStore.setLanguage(language.value);
+			locale.value = language.value;
+		}
+
+		// WLAN-Logik
 		const loadingScannedNetworks = ref(false);
-
-		// Aktuell verbundenes SSID
 		const currentSSID = computed(() => systemStore.wlan.connection.ssid);
-
-		// Alle gespeicherten Netzwerke aus dem Store, ohne das aktuell Verbundene
 		const savedNetworks = computed(() => systemStore.wlan.savedNetworks.filter((n) => n.ssid !== currentSSID.value));
-
-		// Ref für die gescannten Netzwerke
 		const scannedNetworks = ref<WifiNetwork[]>([]);
-
-		// Andere Netzwerke = gescannte minus gespeicherte minus aktuelles
 		const otherNetworks = computed(() =>
 			scannedNetworks.value.filter((n) => n.ssid !== currentSSID.value && !systemStore.wlan.savedNetworks.some((s) => s.ssid === n.ssid))
 		);
 
 		let scanInterval: number | undefined;
-
 		async function getSaved() {
 			await loadSavedNetworks();
 		}
-
 		async function getScanned() {
 			loadingScannedNetworks.value = true;
 			const arr = await scanNetworks();
@@ -50,43 +60,37 @@ export default defineComponent({
 			}));
 			loadingScannedNetworks.value = false;
 		}
-
 		function startAutoScan() {
 			getScanned();
 			scanInterval = window.setInterval(getScanned, 30_000);
 		}
-
 		function stopAutoScan() {
 			if (scanInterval) clearInterval(scanInterval);
 			scanInterval = undefined;
 			scannedNetworks.value = [];
 		}
 
-		// Direkt verbinden für gespeicherte Netze
 		async function onClickSaved(ssid: string) {
 			try {
 				await connectToNetwork(ssid);
 			} catch {
-				// Fehlerbehandlung hier
+				// Fehlerbehandlung
 			}
 		}
 
-		// Modal‐Flow für neue Netze
+		// Passwort-Modal für neue Netze
 		const passwordModalVisible = ref(false);
 		const selectedSSID = ref('');
 		const password = ref('');
-
 		function openPasswordModal(ssid: string) {
 			selectedSSID.value = ssid;
 			password.value = '';
 			passwordModalVisible.value = true;
 		}
-
 		async function confirmPassword() {
 			try {
 				await connectToNetwork(selectedSSID.value, password.value);
 			} catch {
-				// Fehlerbehandlung hier
 			} finally {
 				passwordModalVisible.value = false;
 			}
@@ -114,9 +118,7 @@ export default defineComponent({
 				startAutoScan();
 			}
 		});
-
 		onUnmounted(stopAutoScan);
-
 		watch(
 			() => systemStore.wlan.connection.status,
 			async (isOn) => {
@@ -130,6 +132,10 @@ export default defineComponent({
 		);
 
 		return {
+			t,
+			language,
+			languageOptions,
+			changeLanguage,
 			systemStore,
 			loadingScannedNetworks,
 			currentSSID,

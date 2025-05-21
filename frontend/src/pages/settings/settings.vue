@@ -1,5 +1,5 @@
 <template>
-	<div class="p-2 space-y-6" id="settings">
+	<div class="p-2 space-y-6" id="wlan">
 		<!-- Header -->
 		<div class="space-y-1 text-xs">
 			<div class="flex items-center justify-center mb-2">
@@ -7,17 +7,19 @@
 					<i class="text-xl fas fa-wifi text-slate-700"></i>
 				</div>
 			</div>
-			<h2 class="text-2xl font-semibold text-center">WLAN</h2>
+			<h2 class="text-2xl font-semibold text-center">
+				{{ $t('pages.settings.header.wlan.title') }}
+			</h2>
 			<p class="text-center text-slate-500">
-				Make a WLAN connection, show available networks and manage the settings for connecting.
+				{{ $t('pages.settings.header.wlan.description') }}
 			</p>
 		</div>
 
 		<!-- Toggle WLAN On/Off -->
 		<div class="bg-white rounded-2xl p-4 shadow flex flex-col items-center justify-between space-y-2 text-xs">
 			<div class="flex w-full items-center justify-between">
-				<div>
-					<div class="font-medium text-sm">WLAN</div>
+				<div class="font-medium text-sm">
+					{{ $t('pages.settings.toggle.wlan') }}
 				</div>
 				<label class="relative inline-block w-10 h-5">
 					<input type="checkbox" class="sr-only peer" @change="onToggleCheckbox('wlan', $event)"
@@ -43,7 +45,9 @@
 
 		<!-- Meine Netzwerke -->
 		<div v-if="systemStore.wlan.connection.status" class="text-xs space-y-2">
-			<div class="font-semibold text-slate-500 uppercase px-2">My Networks</div>
+			<div class="font-semibold text-slate-500 uppercase px-2">
+				{{ $t('pages.settings.networks.myNetworks') }}
+			</div>
 			<ul class="bg-white rounded-2xl shadow divide-y divide-slate-200">
 				<li v-for="net in savedNetworks" :key="net.ssid"
 					class="flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer"
@@ -59,13 +63,15 @@
 					</div>
 				</li>
 				<li v-if="savedNetworks.length === 0" class="px-4 py-3 text-center text-slate-400">
-					No saved Networks
+					{{ $t('pages.settings.networks.noSaved') }}
 				</li>
 			</ul>
 		</div>
 		<!-- Andere Netzwerke -->
 		<div v-if="systemStore.wlan.connection.status" class="text-xs space-y-2">
-			<div class="font-semibold text-slate-500 uppercase px-2">Other Networks</div>
+			<div class="font-semibold text-slate-500 uppercase px-2">
+				{{ $t('pages.settings.networks.otherNetworks') }}
+			</div>
 			<ul class="bg-white rounded-2xl shadow divide-y divide-slate-200">
 				<li v-if="loadingScannedNetworks" class="px-4 py-3 text-center text-slate-500">
 					<i class="fas fa-spinner fa-spin mr-2"></i> Scan Networks…
@@ -85,13 +91,47 @@
 				</li>
 				<li v-if="!loadingScannedNetworks && otherNetworks.length === 0"
 					class="px-4 py-3 text-center text-slate-400">
-					No other networks within range
+					{{ $t('pages.settings.networks.noOther') }}
 				</li>
 			</ul>
 		</div>
 	</div>
 
-	<div class="p-2 space-y-6" id="settings">
+
+	<!-- Sprache umschalten -->
+	<div class="p-2 space-y-6" id="logging">
+		<!-- Header -->
+		<div class="space-y-1 text-xs">
+			<div class="flex items-center justify-center mb-2">
+				<div class="flex justify-center items-center w-12 h-12 rounded-xl bg-slate-800/10 p-3 text-slate-700">
+					<i class="text-xl fas fa-language text-slate-700"></i>
+				</div>
+			</div>
+			<h2 class="text-2xl font-semibold text-center">
+				{{ $t('language.label') }}
+			</h2>
+			<p class="text-center text-slate-500">
+				{{ $t('language.description') }}
+			</p>
+		</div>
+		<div class="bg-white rounded-2xl shadow p-4 flex items-center justify-between text-xs">
+			<div class="font-medium text-sm">
+				{{ $t('language.label') }}
+			</div>
+			<label class="relative inline-block w-26 h-5">
+				<select id="languageSelect" v-model="language" @change="changeLanguage"
+					class=" px-4 w-full h-full rounded-full bg-slate-800/10 text-center">
+					<option v-for="opt in languageOptions" :key="opt.value" :value="opt.value"
+						class="bg-white text-slate-700">
+						{{ $t(opt.labelKey) }}
+					</option>
+				</select>
+			</label>
+		</div>
+	</div>
+
+
+	<div class="p-2 space-y-6" id="logging">
 		<!-- Header -->
 		<div class="space-y-1 text-xs">
 			<div class="flex items-center justify-center mb-2">
@@ -99,16 +139,18 @@
 					<i class="text-xl fas fa-file-lines text-slate-700"></i>
 				</div>
 			</div>
-			<h2 class="text-2xl font-semibold text-center">Logging</h2>
-			<p class="text-center text-sm text-slate-500">
-				Extended logs include system tasks for error identification.
+			<h2 class="text-2xl font-semibold text-center">
+				{{ $t('pages.settings.header.logging.title') }}
+			</h2>
+			<p class="text-center text-slate-500">
+				{{ $t('pages.settings.header.logging.description') }}
 			</p>
 		</div>
 
 		<!-- Toggle WLAN On/Off -->
 		<div class="bg-white rounded-2xl shadow p-4 flex items-center justify-between text-xs">
-			<div>
-				<div class="font-medium text-sm">Logging</div>
+			<div class="font-medium text-sm">
+				{{ $t('pages.settings.toggle.logging') }}
 			</div>
 			<label class="relative inline-block w-10 h-5">
 				<input type="checkbox" class="sr-only peer" @change="onToggleCheckbox('logging', $event)"
@@ -122,14 +164,16 @@
 
 	<!-- Passwort-Modal -->
 	<Modal v-model="passwordModalVisible" @confirm="confirmPassword">
-		<template #header>Passwort eingeben für „{{ selectedSSID }}“</template>
+		<template #header>
+			{{ $t('pages.settings.modal.passwordHeader', { ssid: selectedSSID }) }}
+		</template>
 		<template #default>
-			<input v-model="password" type="password" placeholder="Passwort"
+			<input v-model="password" type="password" :placeholder="$t('pages.settings.modal.passwordPlaceholder')"
 				class="w-full p-2 rounded bg-slate-800/10 text-white" />
 		</template>
 		<template #footer>
-			<button class="btn" @click="passwordModalVisible = false">Abbrechen</button>
-			<button class="btn btn-primary" @click="confirmPassword">Verbinden</button>
+			<button class="btn" @click="passwordModalVisible = false">{{ $t('buttons.cancel') }}</button>
+			<button class="btn btn-primary" @click="confirmPassword">{{ $t('buttons.connect') }}</button>
 		</template>
 	</Modal>
 </template>

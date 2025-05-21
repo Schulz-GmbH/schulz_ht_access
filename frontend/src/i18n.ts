@@ -4,10 +4,14 @@ import de from '@/locales/de.json';
 
 export const messages = { en, de };
 
+export type AppLocale = 'de' | 'en';
+export type Locale = keyof typeof messages;
+
 export const i18n = createI18n({
 	legacy: false,
-	locale: 'de',
-	fallbackLocale: 'en',
+	globalInjection: true,
+	locale: 'de' as AppLocale,
+	fallbackLocale: 'en' as AppLocale,
 	messages,
 });
 

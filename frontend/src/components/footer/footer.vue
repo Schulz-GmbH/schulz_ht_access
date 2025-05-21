@@ -12,7 +12,7 @@
 						<li class="nav-item">
 							<router-link :to="{ name: 'AboutUs' }"
 								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
-								target="_blank">About Us
+								target="_blank">{{ $t('pages.about-us.meta.title') }}
 							</router-link>
 
 						</li>
@@ -20,13 +20,13 @@
 							<a href="https://www.schulz-hygiene.de"
 								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
 								target="_blank" rel="noopener noreferrer">
-								Webseite
+								{{ $t('pages.website.meta.title') }}
 							</a>
 						</li>
 						<li class="nav-item">
 							<router-link :to="{ name: 'License' }"
 								class="block px-4 pt-0 pb-1 font-normal transition-colors ease-soft-in-out text-sm text-slate-500"
-								target="_blank">License
+								target="_blank">{{ $t('pages.license.meta.title') }}
 							</router-link>
 						</li>
 					</ul>

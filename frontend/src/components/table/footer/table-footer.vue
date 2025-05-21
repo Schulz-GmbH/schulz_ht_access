@@ -1,6 +1,6 @@
 <template>
 	<div class="px-6 py-2 text-right text-sm text-gray-400">
-		<slot>Letzte Aktualisierung: {{ new Date().toLocaleString() }}</slot>
+		<slot> {{ $t('components.table.lastUpdated', { date: new Date().toLocaleString() }) }}</slot>
 		<TableControls v-if="footerControl" :meta="meta" :params="params" @updateParams="forward" />
 	</div>
 </template>

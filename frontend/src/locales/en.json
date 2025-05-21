@@ -1,6 +1,327 @@
 {
-	"greeting": "Hello, {name}!",
-	"message": {
-		"welcome": "Welcome to our application."
+	"language": {
+		"label": "Language",
+		"description": "Select the language of the application.",
+		"de": "German",
+		"en": "English"
+	},
+	"buttons": {
+		"ok": "OK",
+		"cancel": "Cancel",
+		"connect": "Connect",
+		"disconnect": "Disconnect",
+		"delete": "Delete",
+		"view": "View",
+		"rename": "Rename",
+		"save": "Save",
+		"edit": "Edit",
+		"add": "Add",
+		"remove": "Remove",
+		"refresh": "Refresh",
+		"scan": "Scan",
+		"rescan": "Rescan",
+		"close": "Close",
+		"copy": "Copy",
+		"paste": "Paste",
+		"selectAll": "Select All",
+		"selectNone": "Select None",
+		"select": "Select",
+		"search": "Search",
+		"clear": "Clear",
+		"confirm": "Confirm",
+		"yes": "Yes",
+		"no": "No",
+		"continue": "Continue",
+		"back": "Back",
+		"next": "Next",
+		"previous": "Previous",
+		"finish": "Finish",
+		"upload": "Upload",
+		"download": "Download",
+		"print": "Print",
+		"export": "Export",
+		"import": "Import",
+		"settings": "Settings",
+		"help": "Help",
+		"info": "Info",
+		"warning": "Warning",
+		"error": "Error",
+		"success": "Success",
+		"send": "Send",
+		"receive": "Receive",
+		"apply": "Apply",
+		"reset": "Reset",
+		"install": "Install",
+		"uninstall": "Uninstall",
+		"update": "Update",
+		"configure": "Configure",
+		"test": "Test",
+		"validate": "Validate",
+		"execute": "Execute",
+		"abort": "Abort",
+		"stop": "Stop",
+		"start": "Start",
+		"pause": "Pause",
+		"resume": "Resume",
+		"load": "Load",
+		"unload": "Unload",
+		"toggle": "Toggle",
+		"expand": "Expand",
+		"collapse": "Collapse",
+		"maximize": "Maximize",
+		"minimize": "Minimize",
+		"fullscreen": "Fullscreen",
+		"restore": "Restore",
+		"zoomIn": "Zoom In",
+		"zoomOut": "Zoom Out",
+		"zoomReset": "Zoom Reset",
+		"fullscreenExit": "Exit Fullscreen",
+		"fullscreenEnter": "Enter Fullscreen",
+		"fullscreenToggle": "Toggle Fullscreen",
+		"fullscreenOn": "Fullscreen On",
+		"fullscreenOff": "Fullscreen Off",
+		"mail": "E-Mail"
+	},
+	"components": {
+		"sidebar": {
+			"devBadge": "DEV"
+		},
+		"footer": {
+			"copyright": "© 2025, Schulz Hygiene GmbH.",
+			"aboutLink": "About Us",
+			"websiteLink": "Website",
+			"licenseLink": "License"
+		},
+		"networkStatusBanner": {
+			"offlineMessage": "📡 You are offline – some features may not be available."
+		},
+		"terminal": {
+			"connected": "Connected",
+			"disconnected": "Disconnected"
+		},
+		"logo": {
+			"alt": "Schulz GmbH – logo",
+			"title": "Schulz GmbH – logo"
+		},
+		"breadcrumb": {
+			"pages": "Pages"
+		},
+		"modal": {
+			"cancel": "Cancel",
+			"ok": "OK"
+		},
+		"mobileKeyboard": {
+			"placeholder": "Input…"
+		},
+		"table": {
+			"lastUpdated": "Last updated: {date}"
+		}
+	},
+	"pages": {
+		"dashboard": {
+			"meta": {
+				"title": "Dashboard",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"widgets": {
+				"wlan": {
+					"title": "Wi-Fi",
+					"statusActive": "Active",
+					"statusDisabled": "Disabled",
+					"connectionConnected": "connected",
+					"connectionDisconnected": "disconnected"
+				},
+				"appVersion": {
+					"title": "App Version",
+					"upToDate": "Up to Date"
+				},
+				"extendedLogging": {
+					"title": "Extended Logging",
+					"statusLabel": "Status",
+					"active": "Active",
+					"disabled": "Disabled"
+				}
+			},
+			"table": {
+				"title": "Last 6 Log Files",
+				"view": "View {filename}",
+				"delete": "Delete {filename}"
+			}
+		},
+		"settings": {
+			"meta": {
+				"group": "Settings",
+				"title": "Settings",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"header": {
+				"wlan": {
+					"title": "Wi-Fi",
+					"description": "Make a Wi-Fi connection, show available networks and manage the connection settings."
+				},
+				"logging": {
+					"title": "Logging",
+					"description": "Extended logs include system tasks for error identification."
+				}
+			},
+			"toggle": {
+				"wlan": "Wi-Fi",
+				"logging": "Logging"
+			},
+			"networks": {
+				"myNetworks": "My Networks",
+				"otherNetworks": "Other Networks",
+				"noSaved": "No saved networks",
+				"scanLoading": "Scan Networks…",
+				"noOther": "No other networks within range"
+			},
+			"modal": {
+				"passwordHeader": "Enter password for “{ssid}”",
+				"passwordPlaceholder": "Password",
+				"cancel": "Cancel",
+				"connect": "Connect"
+			}
+		},
+		"about-us": {
+			"meta": {
+				"title": "About Us",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "About Us",
+			"intro": "Welcome to HS-Access, your internal desktop and web solution for Schulz GmbH. Our team continuously works to provide you the best user experience.",
+			"versionHeading": "Version & Changelog",
+			"versions": {
+				"release": "(May 28 2025) Initial release"
+			},
+			"teamHeading": "Our Team",
+			"team": {
+				"itAdmin": "IT Administrator: {link}",
+				"fullStack": "Full-Stack Developer: {link}"
+			},
+			"supportHeading": "Feedback & Bug Reports",
+			"support": "If you find bugs or have feedback, please open an issue on {issuesLink} or send us an email at {email}."
+		},
+		"license": {
+			"meta": {
+				"title": "License & Terms of Use",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "License & Terms of Use",
+			"intro": "HS-Access is protected by copyright. This application is intended for internal use only. Any redistribution, reproduction, public distribution or modification—whether electronic or physical—is prohibited without express written permission.",
+			"sections": {
+				"allowed": {
+					"heading": "Permitted Use",
+					"items": {
+						"installation": "Installation and operation within Schulz GmbH.",
+						"updates": "Updates and patches provided by the development team."
+					}
+				},
+				"prohibited": {
+					"heading": "Prohibited Actions",
+					"items": {
+						"transfer": "Sharing with third parties of any kind.",
+						"copyModify": "Copying or modifying the source code.",
+						"reverse": "Reverse engineering or decompilation."
+					}
+				}
+			},
+			"footer": "© 2025 HS-Access Team. All rights reserved."
+		},
+		"website": {
+			"meta": {
+				"title": "Website",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			}
+		},
+		"log-file": {
+			"meta": {
+				"title": "Log File",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"search": {
+				"placeholder": "Search"
+			},
+			"empty": "No log files found.",
+			"modal": {
+				"renameHeader": "🖊️ Rename",
+				"renamePlaceholder": "New filename",
+				"deleteHeader": "⚠️ Confirm Deletion",
+				"deleteBody": "Do you really want to delete the log file \"{filename}\"?"
+			}
+		},
+		"single-log-file": {
+			"meta": {
+				"title": "Log File",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "Log File",
+			"description": "In the following area, you'll see the full contents of the log file \"{filename}\". You can rename it, permanently delete it, or send it via email. To scroll, simply swipe up or down.",
+			"modal": {
+				"renameHeader": "🖊️ Rename",
+				"renamePlaceholder": "New filename",
+				"deleteHeader": "⚠️ Confirm Deletion",
+				"deleteBody": "Do you really want to delete the log file \"{filename}\"?"
+			}
+		},
+		"not-found": {
+			"meta": {
+				"title": "Page Not Found",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "Page Not Found",
+			"description": "The page you are looking for does not exist."
+		},
+		"forbidden": {
+			"meta": {
+				"title": "403 - Access Denied",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "Access Denied",
+			"description": "You do not have permission to view this page."
+		},
+		"error": {
+			"meta": {
+				"title": "Error",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "Error",
+			"message": "An error occurred. Please try again later."
+		},
+		"application-routes": {
+			"meta": {
+				"title": "Application Routes",
+				"author": "Developer: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build Date: {date}"
+			},
+			"title": "Application Routes",
+			"description": "Manage application routes and settings."
+		}
+	},
+	"groups": {
+		"dashboard": "Dashboard",
+		"settings": "Settings",
+		"devices": "Devices",
+		"footer": "Footer"
 	}
 }

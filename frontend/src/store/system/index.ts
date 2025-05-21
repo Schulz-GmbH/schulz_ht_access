@@ -4,37 +4,39 @@ import { reactive, toRefs, watch } from 'vue';
 import { constantRoutes, developmentRoutes } from '@/router';
 import { systemConfig } from '@/_utils/config/system';
 import { setSystemConfig } from '@/_utils/cache/system-storage';
-import { SystemConfig } from '@/_utils/config/system';
+import type { SystemConfig } from '@/_utils/config/system';
+import type { Locale } from '@/i18n';
 import type { RouteRecordRaw } from 'vue-router';
 
-/**
- * Erweiterung des SystemConfig um dynamische Routenlisten
- */
-type State = SystemConfig & {
+// Erweiterter Zustand inkl. dynamischer Route-Liste
+interface State extends SystemConfig {
 	routes: RouteRecordRaw[];
-};
+}
 
-/**
- * Methoden des System-Stores
- */
-type Actions = {
-	getCacheData: () => SystemConfig;
-	setRoutes: () => void;
-};
+// Definition des Storeschnittstelle für Setup-Store
+export interface SystemStore extends State {
+	loading: boolean;
+	version: { firmware: string; web: string };
+	logging: { state: boolean };
+	wlan: State['wlan'];
+	serial: State['serial'];
+	language: Locale;
 
-/**
- * Pinia-Store für Layout-Einstellungen.
- * Nutzt ein `reactive` Objekt und `toRefs`, um Typensicherheit und Reaktivität zu gewährleisten.
- */
-export const useSystemStore = defineStore('system', () => {
-	// Reaktiver State basierend auf der aktuellen Layout-Konfiguration
+	// Aktionen
+	getCacheData(): SystemConfig;
+	setRoutes(): void;
+	setLanguage(lang: Locale): void;
+}
+
+export const useSystemStore = defineStore('system', (): SystemStore => {
+	// Initial-State
 	const state = reactive<State>({
 		...systemConfig,
 		routes: [],
 		loading: false,
 	});
 
-	// Watcher: Bei jeglicher Änderung im State (deep) speichere aktualisierte Konfig
+	// Persistiere relevanten Teil bei Änderungen
 	watch(
 		() => ({
 			loading: state.loading,
@@ -42,19 +44,15 @@ export const useSystemStore = defineStore('system', () => {
 			logging: state.logging,
 			wlan: { savedNetworks: state.wlan.savedNetworks },
 			serial: state.serial,
+			language: state.language,
 		}),
-		(newVal) => {
-			setSystemConfig({ ...newVal });
-		},
+		(newVal) => setSystemConfig({ ...newVal }),
 		{ deep: true }
 	);
 
-	// Wandelt alle State-Properties in Ref-Objekte um
-	const refs = toRefs(state);
+	// Ref-Wege
+	const { loading, version, logging, wlan, serial, language, routes } = toRefs(state);
 
-	/**
-	 * Getter: Gibt ein flaches Objekt aller aktuellen Systems zurück.
-	 */
 	function getCacheData(): SystemConfig {
 		return {
 			loading: state.loading,
@@ -62,34 +60,33 @@ export const useSystemStore = defineStore('system', () => {
 			logging: state.logging,
 			wlan: state.wlan,
 			serial: state.serial,
+			language: state.language,
 		};
 	}
 
-	function setRoutes() {
+	function setRoutes(): void {
 		const all = [...constantRoutes, ...developmentRoutes];
-
-		const flatten = (routes: RouteRecordRaw[]): RouteRecordRaw[] =>
-			routes.flatMap((route) => {
-				const children = route.children ? flatten(route.children) : [];
-				return [route, ...children];
-			});
-
+		const flatten = (rts: RouteRecordRaw[]): RouteRecordRaw[] => rts.flatMap((r) => (r.children ? flatten(r.children) : []).concat(r));
 		state.routes = flatten(all);
 	}
 
-	// Statt `...toRefs(state)` explizit zurückgeben:
-	const { loading, version, logging, wlan } = toRefs(state);
+	function setLanguage(lang: Locale): void {
+		state.language = lang;
+	}
 
-	// Exportiere jede Property als Ref plus den Getter
 	return {
-		loading,
-		version,
-		logging,
-		wlan,
-		serial: toRefs(state).serial,
-		routes: toRefs(state).routes,
-		showLogo: toRefs(state as any).showLogo, // oder sicherer: vorher casten
+		// State-Refs
+		loading: loading.value,
+		version: version.value,
+		logging: logging.value,
+		wlan: wlan.value,
+		serial: serial.value,
+		language: language.value,
+		routes: routes.value,
+
+		// Aktionen
 		getCacheData,
 		setRoutes,
+		setLanguage,
 	};
 });

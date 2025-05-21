@@ -1,34 +1,3 @@
-<!-- <template>
-	<div class="h-full p-4 space-y-4">
-		<div class="flex items-center justify-between mb-4">
-			<div class="space-x-2">
-				<button @click="rename"
-					class="px-3 py-1 rounded shadow-sm text-sm border border-gray-400 text-gray-700 hover:bg-gray-100">
-					<i class="fas fa-edit"></i> Umbenennen
-				</button>
-				<button @click="remove"
-					class="px-3 py-1 rounded shadow-sm text-sm bg-red-500 text-white hover:bg-red-600">
-					<i class="fas fa-trash"></i> Löschen
-				</button>
-				<button @click="send"
-					class="px-3 py-1 rounded shadow-sm text-sm bg-blue-600 text-white hover:bg-blue-700">
-					<i class="fas fa-paper-plane"></i> Versenden
-				</button>
-			</div>
-		</div>
-
-		<pre class="h-full bg-gray-50 py-4 rounded overflow-auto whitespace-pre-wrap">{{ content }}</pre>
-	</div>
-</template>
-
-
-<script lang="ts">
-export { default } from './single-file'
-
-</script>
-
-<style src="./single-file.scss" scoped></style> -->
-
 <template>
 	<div class="flex flex-col flex-1 min-h-0 w-full px-6 py-6 mx-auto overflow-hidden">
 		<div class="flex flex-wrap flex-1 -mx-3 xl:flex-col">
@@ -42,9 +11,8 @@ export { default } from './single-file'
 					</div>
 					<h2 class="text-2xl font-semibold text-center">Log-Datei</h2>
 					<p class="text-center text-slate-500 mb-1">
-						In the following area, you'll see the full contents of the log file "{{ filename }}."
-						You can rename it, permanently delete it, or send it via email.
-						To scroll, simply swipe up or down.</p>
+						{{ $t('pages.single-log-file.description', { filename }) }}
+					</p>
 				</div>
 				<div
 					class="bg-white rounded-2xl p-4 shadow flex flex-col items-center justify-between space-y-2 text-xs">
@@ -52,17 +20,17 @@ export { default } from './single-file'
 						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
 							@click.stop="openRename(filename)">
 							<i class="fas fa-comment-dots"></i>
-							<span class="sr-only flex-1 truncate mx-4">Umbenennen</span>
+							<span class="sr-only flex-1 truncate mx-4">{{ $t('buttons.rename') }}</span>
 						</div>
 						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
 							@click.stop="shareLog(filename)">
 							<i class="fas fa-paper-plane"></i>
-							<span class="sr-only flex-1 truncate mx-4">Versenden</span>
+							<span class="sr-only flex-1 truncate mx-4">{{ $t('buttons.send') }}</span>
 						</div>
 						<div class="w-1/3 flex w-full items-center justify-center font-medium text-sm"
 							@click.stop="openDelete(filename)">
 							<i class="fas fa-trash-alt"></i>
-							<span class="sr-only flex-1 truncate mx-4">Löschen</span>
+							<span class="sr-only flex-1 truncate mx-4">{{ $t('buttons.delete') }}</span>
 						</div>
 					</div>
 				</div>

@@ -58,6 +58,17 @@ app.use(pinia);
 app.use(i18n);
 app.use(router);
 
+// System-Store laden
+const systemStore = useSystemStore();
+// Sprache aus Store in i18n übernehmen
+(i18n.global as any).locale.value = systemStore.language;
+
+// 4) Auf Änderungen an systemStore.language reagieren
+systemStore.$subscribe((_, state) => {
+	// Immer, wenn `state.language` sich ändert, auf i18n übertragen:
+	(i18n.global as any).locale.value = state.language;
+});
+
 app.config.errorHandler = (err, vm, info) => {
 	console.error('UNHANDLED VUE ERROR:', err, info);
 };

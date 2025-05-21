@@ -11,8 +11,8 @@
 				</section>
 				<footer class="modal-footer">
 					<slot name="footer">
-						<button class="btn" @click="close">Abbrechen</button>
-						<button class="btn btn-primary" @click="confirm">OK</button>
+						<button class="btn" @click="close">{{ $t('buttons.cancel') }}</button>
+						<button class="btn btn-primary" @click="confirm">{{ $t('buttons.ok') }}</button>
 					</slot>
 				</footer>
 			</div>

@@ -1,4 +1,5 @@
 // src/_utils/config/system.config.ts
+import type { Locale } from '@/i18n';
 import { getSystemConfig } from '@/_utils/cache/system-storage';
 import type { PersistSystemConfig } from '@/_utils/cache/system-storage';
 
@@ -14,6 +15,7 @@ export interface SystemConfig {
 		savedNetworks: Array<{ ssid: string; security: string; channel?: string; rssi?: number }>;
 	};
 	serial: { available: boolean; baudRate: number; connected: boolean };
+	language: Locale;
 }
 
 /**
@@ -25,13 +27,14 @@ const DEFAULT_SETTINGS_CONFIG: Readonly<SystemConfig> = {
 	logging: { state: false },
 	wlan: { connection: { status: false, connected: false, ssid: '', ip: '', gateway: '', subnet: '' }, savedNetworks: [] },
 	serial: { available: false, baudRate: 9600, connected: false },
+	language: 'de',
 };
 
 // const storageData: Partial<SystemConfig> = getSystemConfig() ?? {};
 // const { serial: _ignoreSerial, ...persisted } = storageData;
 
 const storageData = (getSystemConfig() ?? {}) as Partial<SystemConfig>;
-const { serial: _ignoreSerial, wlan: persistedWlan, ...persisted } = storageData;
+const { serial: _ignoreSerial, wlan: persistedWlan, language: persistedLanguage, ...persisted } = storageData;
 
 /**
  * Aktuelle System-Konfiguration (Zusammenführung aus Standard- und gespeicherten Einstellungen)
@@ -39,6 +42,7 @@ const { serial: _ignoreSerial, wlan: persistedWlan, ...persisted } = storageData
 export const systemConfig: SystemConfig = {
 	...DEFAULT_SETTINGS_CONFIG,
 	...persisted,
+	language: persistedLanguage ?? DEFAULT_SETTINGS_CONFIG.language,
 	wlan: {
 		...DEFAULT_SETTINGS_CONFIG.wlan,
 		...(persistedWlan ?? {}),

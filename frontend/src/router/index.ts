@@ -36,7 +36,7 @@ const terminalChildRoutes: RouteRecordRaw[] = terminalDefs.map((def) => ({
 	meta: {
 		title: def.title,
 		icon: 'fas fa-terminal',
-		group: 'Devices',
+		group: 'groups.devices',
 	},
 }));
 
@@ -47,7 +47,7 @@ const terminalGroup: RouteRecordRaw = {
 	meta: {
 		title: 'Terminal',
 		icon: 'fas fa-terminal',
-		group: 'Devices',
+		group: 'groups.settings',
 		hidden: true,
 	},
 	children: terminalChildRoutes,
@@ -66,7 +66,7 @@ export const errorRoutes: RouteRecordRaw[] = [
 		path: '/403',
 		component: BasisView,
 		meta: {
-			title: '403 - Forbidden',
+			title: 'pages.forbidden.meta.title',
 			hidden: true,
 		},
 	},
@@ -75,7 +75,7 @@ export const errorRoutes: RouteRecordRaw[] = [
 		name: 'NotFound',
 		component: BasisView,
 		meta: {
-			title: '404 - Page not found',
+			title: 'pages.not-found.meta.title',
 			hidden: true,
 		},
 	},
@@ -87,7 +87,7 @@ export const constantRoutes: RouteRecordRaw[] = [
 		name: 'Dashboard',
 		component: Dashboard,
 		meta: {
-			title: 'IoT Dashboard',
+			title: 'pages.dashboard.meta.title',
 			icon: 'fas fa-home',
 			group: '',
 		},
@@ -98,9 +98,9 @@ export const constantRoutes: RouteRecordRaw[] = [
 		name: 'LogFiles',
 		component: LogFiles,
 		meta: {
-			title: 'Log Files',
+			title: 'pages.log-file.meta.title',
 			icon: 'fas fa-file-alt',
-			group: 'Settings',
+			group: 'groups.settings',
 		},
 	},
 	{
@@ -108,9 +108,9 @@ export const constantRoutes: RouteRecordRaw[] = [
 		name: 'Settings',
 		component: Settings,
 		meta: {
-			title: 'Settings',
+			title: 'pages.settings.meta.title',
 			icon: 'fas fa-cog',
-			group: 'Settings',
+			group: 'groups.settings',
 		},
 	},
 	{
@@ -118,9 +118,9 @@ export const constantRoutes: RouteRecordRaw[] = [
 		name: 'AboutUs',
 		component: AboutUs,
 		meta: {
-			title: 'About Us',
+			title: 'pages.about-us.meta.title',
 			icon: 'fa-solid fa-users',
-			group: 'Footer',
+			group: 'groups.footer',
 			hidden: true,
 		},
 	},
@@ -129,9 +129,9 @@ export const constantRoutes: RouteRecordRaw[] = [
 		name: 'License',
 		component: License,
 		meta: {
-			title: 'License',
+			title: 'pages.license.meta.title',
 			icon: 'fa-solid fa-file',
-			group: 'Footer',
+			group: 'groups.footer',
 			hidden: true,
 		},
 	},
@@ -143,7 +143,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
 		name: 'SingleFile',
 		component: SingleFile,
 		meta: {
-			title: 'Single Log File',
+			title: 'pages.single-log-file.meta.title',
 			breadcrumb: { parent: 'LogFiles' },
 			hidden: true,
 		},
@@ -156,7 +156,7 @@ export const developmentRoutes: RouteRecordRaw[] = [
 		name: 'RoutesPage',
 		component: () => import('@/pages/routes/routes.vue'),
 		meta: {
-			title: 'Application Routes',
+			title: 'pages.application-routes.meta.title',
 			hidden: true,
 			dev: true,
 		},

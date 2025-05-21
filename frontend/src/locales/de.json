@@ -1,6 +1,327 @@
 {
-	"greeting": "Hallo, {name}!",
-	"message": {
-		"welcome": "Willkommen in unserer Anwendung."
+	"language": {
+		"label": "Sprache",
+		"description": "Wähle die Sprache der Anwendung.",
+		"de": "Deutsch",
+		"en": "Englisch"
+	},
+	"buttons": {
+		"ok": "OK",
+		"cancel": "Abbrechen",
+		"connect": "Verbinden",
+		"disconnect": "Trennen",
+		"delete": "Löschen",
+		"view": "Anzeigen",
+		"rename": "Umbenennen",
+		"save": "Speichern",
+		"edit": "Bearbeiten",
+		"add": "Hinzufügen",
+		"remove": "Entfernen",
+		"refresh": "Aktualisieren",
+		"scan": "Scannen",
+		"close": "Schließen",
+		"copy": "Kopieren",
+		"paste": "Einfügen",
+		"selectAll": "Alles auswählen",
+		"selectNone": "Nichts auswählen",
+		"select": "Auswählen",
+		"search": "Suchen",
+		"clear": "Löschen",
+		"confirm": "Bestätigen",
+		"yes": "Ja",
+		"no": "Nein",
+		"continue": "Fortfahren",
+		"back": "Zurück",
+		"next": "Weiter",
+		"previous": "Vorherige",
+		"finish": "Fertig",
+		"upload": "Hochladen",
+		"download": "Herunterladen",
+		"print": "Drucken",
+		"export": "Exportieren",
+		"import": "Importieren",
+		"settings": "Einstellungen",
+		"help": "Hilfe",
+		"info": "Info",
+		"warning": "Warnung",
+		"error": "Fehler",
+		"success": "Erfolg",
+		"send": "Versenden",
+		"receive": "Empfangen",
+		"apply": "Anwenden",
+		"reset": "Zurücksetzen",
+		"install": "Installieren",
+		"uninstall": "Deinstallieren",
+		"update": "Aktualisieren",
+		"configure": "Konfigurieren",
+		"test": "Testen",
+		"validate": "Validieren",
+		"execute": "Ausführen",
+		"abort": "Abbrechen",
+		"stop": "Stoppen",
+		"start": "Starten",
+		"pause": "Pause",
+		"resume": "Fortsetzen",
+		"load": "Laden",
+		"unload": "Entladen",
+		"toggle": "Umschalten",
+		"expand": "Erweitern",
+		"collapse": "Einklappen",
+		"maximize": "Maximieren",
+		"minimize": "Minimieren",
+		"fullscreen": "Vollbild",
+		"restore": "Wiederherstellen",
+		"zoomIn": "Vergrößern",
+		"zoomOut": "Verkleinern",
+		"zoomReset": "Zoom zurücksetzen",
+		"fullscreenExit": "Vollbild beenden",
+		"fullscreenEnter": "Vollbild aktivieren",
+		"fullscreenToggle": "Vollbild umschalten",
+		"fullscreenOn": "Vollbild aktiv",
+		"fullscreenOff": "Vollbild deaktiviert",
+		"mail": "E-Mail"
+	},
+	"components": {
+		"sidebar": {
+			"devBadge": "DEV"
+		},
+		"footer": {
+			"copyright": "© 2025, Schulz Hygiene GmbH.",
+			"aboutLink": "Über uns",
+			"websiteLink": "Webseite",
+			"licenseLink": "Lizenz"
+		},
+		"networkStatusBanner": {
+			"offlineMessage": "📡 Du bist offline – einige Funktionen sind möglicherweise nicht verfügbar."
+		},
+		"terminal": {
+			"connected": "Verbunden",
+			"disconnected": "Getrennt"
+		},
+		"logo": {
+			"alt": "Schulz GmbH – Logo",
+			"title": "Schulz GmbH – Logo"
+		},
+		"breadcrumb": {
+			"pages": "Start"
+		},
+		"modal": {
+			"cancel": "Abbrechen",
+			"ok": "OK"
+		},
+		"mobileKeyboard": {
+			"placeholder": "Eingabe…"
+		},
+		"table": {
+			"lastUpdated": "Letzte Aktualisierung: {date}"
+		}
+	},
+	"pages": {
+		"dashboard": {
+			"meta": {
+				"title": "Dashboard",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"widgets": {
+				"wlan": {
+					"title": "WLAN",
+					"statusActive": "Aktiv",
+					"statusDisabled": "Deaktiviert",
+					"connectionConnected": "verbunden",
+					"connectionDisconnected": "getrennt"
+				},
+				"appVersion": {
+					"title": "App Version",
+					"upToDate": "Up to Date"
+				},
+				"extendedLogging": {
+					"title": "Erweitertes Logging",
+					"statusLabel": "Status",
+					"active": "Aktiv",
+					"disabled": "Deaktiviert"
+				}
+			},
+			"table": {
+				"title": "Letzte 6 Log-Dateien",
+				"view": "Anzeigen {filename}",
+				"delete": "Löschen {filename}"
+			}
+		},
+		"settings": {
+			"meta": {
+				"title": "Einstellungen",
+				"group": "Einstellungen",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"header": {
+				"wlan": {
+					"title": "WLAN",
+					"description": "Stelle eine WLAN-Verbindung her, zeige verfügbare Netzwerke an und verwalte die Verbindungs-Einstellungen."
+				},
+				"logging": {
+					"title": "Logging",
+					"description": "Erweiterte Logs enthalten Systemausgaben zur Fehleranalyse."
+				}
+			},
+			"toggle": {
+				"wlan": "WLAN",
+				"logging": "Logging"
+			},
+			"networks": {
+				"myNetworks": "Meine Netzwerke",
+				"otherNetworks": "Andere Netzwerke",
+				"noSaved": "Keine gespeicherten Netzwerke",
+				"scanLoading": "Netzwerke scannen…",
+				"noOther": "Keine weiteren Netzwerke in Reichweite"
+			},
+			"modal": {
+				"passwordHeader": "Passwort eingeben für „{ssid}“",
+				"passwordPlaceholder": "Passwort",
+				"cancel": "Abbrechen",
+				"connect": "Verbinden"
+			}
+		},
+		"about-us": {
+			"meta": {
+				"title": "Über uns",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Über uns",
+			"intro": "Willkommen bei HS-Access, deiner internen Desktop- und Weblösung für die Firma Schulz GmbH. Unser Team arbeitet kontinuierlich daran, dir die beste Nutzererfahrung zu bieten.",
+			"versionHeading": "Version & Changelog",
+			"versions": {
+				"release": "(28. Mai 2025) Erstveröffentlichung"
+			},
+			"teamHeading": "Unser Team",
+			"team": {
+				"itAdmin": "IT-Administrator: {link}",
+				"fullStack": "Full-Stack-Entwickler: {link}"
+			},
+			"supportHeading": "Feedback & Bug-Meldungen",
+			"support": "Wenn du Bugs findest oder Feedback hast, erstelle bitte ein Issue auf {issuesLink} oder schicke uns eine E-Mail an {email}."
+		},
+		"license": {
+			"meta": {
+				"title": "Lizenz",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Lizenz & Nutzungshinweise",
+			"intro": "HS-Access ist urheberrechtlich geschützt. Diese Anwendung ist ausschließlich für den internen Gebrauch bestimmt. Jede Weiterverbreitung, Vervielfältigung, öffentliche Verfügung oder Bearbeitung – sei es elektronisch oder physisch – ist ohne ausdrückliche schriftliche Genehmigung untersagt.",
+			"sections": {
+				"allowed": {
+					"heading": "Erlaubte Nutzung",
+					"items": {
+						"installation": "Installation und Betrieb innerhalb der Firma Schulz GmbH.",
+						"updates": "Updates und Patches, die durch das Entwicklerteam bereitgestellt werden."
+					}
+				},
+				"prohibited": {
+					"heading": "Untersagte Handlungen",
+					"items": {
+						"transfer": "Weitergabe an Dritte jeglicher Art.",
+						"copyModify": "Kopieren oder Modifizieren des Quellcodes.",
+						"reverse": "Reverse Engineering oder Dekompilierung."
+					}
+				}
+			},
+			"footer": "© 2025 HS-Access Team. Alle Rechte vorbehalten."
+		},
+		"website": {
+			"meta": {
+				"title": "Webseite",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Webseite"
+		},
+		"log-file": {
+			"meta": {
+				"title": "Log-Datei",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"search": {
+				"placeholder": "Suchen"
+			},
+			"empty": "Keine Log-Dateien gefunden.",
+			"modal": {
+				"renameHeader": "🖊️ Umbenennen",
+				"renamePlaceholder": "Neuer Dateiname",
+				"deleteHeader": "⚠️ Löschen bestätigen",
+				"deleteBody": "Soll die Log-Datei „{filename}“ wirklich gelöscht werden?"
+			}
+		},
+		"single-log-file": {
+			"meta": {
+				"title": "Log-Datei",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Log-Datei",
+			"description": "Im folgenden Bereich siehst du den vollständigen Inhalt der Log-Datei „{filename}“. Du kannst sie umbenennen, dauerhaft löschen oder per E-Mail verschicken. Um zu scrollen, wische einfach nach oben oder unten.",
+			"modal": {
+				"renameHeader": "🖊️ Umbenennen",
+				"renamePlaceholder": "Neuer Dateiname",
+				"deleteHeader": "⚠️ Löschen bestätigen",
+				"deleteBody": "Soll die Log-Datei „{filename}“ wirklich gelöscht werden?"
+			}
+		},
+		"not-found": {
+			"meta": {
+				"title": "404 - Seite nicht gefunden",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Seite nicht gefunden",
+			"message": "Die angeforderte Seite existiert nicht oder wurde entfernt."
+		},
+		"forbidden": {
+			"meta": {
+				"title": "403 - Zugriff verweigert",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Zugriff verweigert",
+			"message": "Du hast keine Berechtigung, diese Seite zu sehen."
+		},
+		"error": {
+			"meta": {
+				"title": "Error",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Fehler",
+			"message": "Ein Fehler ist aufgetreten. Bitte versuche es später erneut."
+		},
+		"application-routes": {
+			"meta": {
+				"title": "Anwendungsrouten",
+				"author": "Entwickler: {link}",
+				"version": "Version: {version}",
+				"buildDate": "Build-Datum: {date}"
+			},
+			"title": "Anwendungsrouten",
+			"description": "Hier sind die Routen der Anwendung aufgelistet."
+		}
+	},
+	"groups": {
+		"dashboard": "Dashboard",
+		"settings": "Einstellungen",
+		"devices": "Geräte",
+		"footer": "Fußzeile"
 	}
 }

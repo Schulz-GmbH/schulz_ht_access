@@ -1,5 +1,6 @@
 // src/_utils/cache/system.storage.cache.ts
 import type { SystemConfig } from '@/_utils/config/system';
+import type { Locale } from '@/i18n';
 import { CacheKey } from '@/_utils/constants/cache-key';
 
 /**
@@ -7,7 +8,7 @@ import { CacheKey } from '@/_utils/constants/cache-key';
  * • alle Top-Level-Feldern von SystemConfig sind optional
  * • aber in `wlan` nur Partial (wir speichern ja nur savedNetworks)
  */
-export type PersistSystemConfig = Omit<Partial<SystemConfig>, 'wlan'> & { wlan?: Partial<SystemConfig['wlan']> };
+export type PersistSystemConfig = Omit<Partial<SystemConfig>, 'wlan'> & { wlan?: Partial<SystemConfig['wlan']>; language?: Locale };
 
 /**
  * Holt die gespeicherte System-Konfiguration aus dem `localStorage`.

@@ -4,8 +4,9 @@
 			<!-- Input + Toggle + Enter -->
 			<div class="flex mb-4">
 				<input v-model="command" ref="inputEl" :readonly="isMobile" @focus="showKeyboard"
-					class="flex-1 px-2 py-1 border border-gray-300 rounded-l-lg bg-white text-lg" placeholder="Eingabe…"
-					@mousedown.prevent="showKeyboard" @touchstart.prevent="showKeyboard" />
+					class="flex-1 px-2 py-1 border border-gray-300 rounded-l-lg bg-white text-lg"
+					:placeholder="$t('components.mobileKeyboard.placeholder')" @mousedown.prevent="showKeyboard"
+					@touchstart.prevent="showKeyboard" />
 				<button @click.stop="keyboardVisible == false ? showKeyboard() : switchKeyboard()"
 					class="px-4 bg-gray-200 border-t border-b border-r border-gray-300 rounded-r-lg hover:bg-gray-300 flex items-center space-x-1">
 					<i class="fas fa-keyboard"></i>

@@ -7,7 +7,8 @@
 				<div class="p-4">
 					<div class="relative border border-gray-300 rounded-full">
 						<i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-						<input v-model="query" type="search" placeholder="Suchen" :disabled="!filteredLogs.length"
+						<input v-model="query" type="search" :placeholder="$t('pages.log-file.search.placeholder')"
+							:disabled="!filteredLogs.length"
 							class="w-full pl-10 pr-4 py-2 rounded-full focus:outline-none placeholder-gray-400" />
 					</div>
 				</div>
@@ -48,7 +49,7 @@
 					</li>
 
 					<li v-else class="text-center text-gray-500">
-						Keine Log-Dateien gefunden.
+						{{ $t('pages.log-file.empty') }}
 					</li>
 				</ul>
 			</div>
@@ -56,18 +57,18 @@
 
 		<!-- Modal Umbenennen -->
 		<Modal v-model="renameModalVisible" @confirm="doRename" @close="renameModalVisible = false">
-			<template #header>🖊️ Umbenennen</template>
+			<template #header>{{ $t('pages.log-file.modal.renameHeader') }}</template>
 			<template #default>
 				<input v-model="newFilename" type="text" class="w-full border rounded px-2 py-1"
-					placeholder="Neuer Dateiname" />
+					:placeholder="$t('pages.log-files.modal.renamePlaceholder')" />
 			</template>
 		</Modal>
 
 		<!-- Modal Löschen -->
 		<Modal v-model="deleteModalVisible" @confirm="doDelete" @close="deleteModalVisible = false">
-			<template #header>⚠️ Löschen bestätigen</template>
+			<template #header>{{ $t('pages.log-files.modal.deleteHeader') }}</template>
 			<template #default>
-				Soll die Log-Datei <strong>{{ pendingFilename }}</strong> wirklich gelöscht werden?
+				{{ $t('pages.log-files.modal.deleteBody', { filename: pendingFilename }) }}
 			</template>
 		</Modal>
 	</div>
