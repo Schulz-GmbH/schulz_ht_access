@@ -25,6 +25,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import type { RouteRecordRaw } from 'vue-router';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 /**
  * Ein einzelner Breadcrumb-Eintrag.
@@ -36,6 +37,7 @@ type Crumb = { text: string; to: string };
 export default defineComponent({
 	name: 'Breadcrumb',
 	setup() {
+		const { t } = useI18n();
 		/// Aktuelle Route (reagiert auf Änderungen)
 		const route = useRoute();
 
@@ -50,8 +52,8 @@ export default defineComponent({
 		 * @param name Routenname
 		 * @returns RouteRecordRaw oder undefined
 		 */
-		function findRoute(name: string): RouteRecordRaw | undefined {
-			return router.getRoutes().find((r) => r.name === name) as RouteRecordRaw | undefined;
+		function findRoute(name: string) {
+			return router.getRoutes().find((r) => r.name === name);
 		}
 
 		/**
@@ -62,7 +64,7 @@ export default defineComponent({
 		 * (`:param`) automatisch substituiert.
 		 */
 		function buildCrumbs() {
-			const chain: Crumb[] = [];
+			const chain: Array<{ text: string; to: string }> = [];
 			let currentName = route.name as string | undefined;
 
 			while (currentName) {
@@ -70,9 +72,11 @@ export default defineComponent({
 				if (!rr || !rr.meta?.title) break;
 
 				// 1a) Beschriftung: bei SingleFile den Dateinamen nehmen
-				let text = (rr.meta as any).title as string;
+				let text = rr.meta.title as string;
 				if (currentName === 'SingleFile' && route.params.filename) {
 					text = String(route.params.filename);
+				} else {
+					text = t(rr.meta.title as string);
 				}
 
 				// 1b) Link mit Params substituieren
@@ -106,6 +110,6 @@ export default defineComponent({
 		/// Listener bei jedem Routenwechsel
 		router.afterEach(buildCrumbs);
 
-		return { breadcrumbs, handleLink };
+		return { breadcrumbs, handleLink, t };
 	},
 });
