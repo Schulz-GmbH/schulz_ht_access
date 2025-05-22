@@ -250,6 +250,11 @@
 				"version": "Version: {version}",
 				"buildDate": "Build Date: {date}"
 			},
+			"header": {
+				"title": "Log Files",
+				"description": "In the following area, you'll see all log files. You can rename them, permanently delete them, or send them via email. To scroll, simply swipe up or down.",
+				"listHeader": "Log Files"
+			},
 			"search": {
 				"placeholder": "Search"
 			},

@@ -250,9 +250,17 @@
 				"version": "Version: {version}",
 				"buildDate": "Build-Datum: {date}"
 			},
+			"header": {
+				"log": {
+					"title": "Log-Files",
+					"description": "Hier werden alle Log-Dateien aufgelistet. Du kannst sie umbenennen, löschen oder per E-Mail versenden.",
+					"listHeader": "Log-Dateien"
+				}
+			},
 			"search": {
 				"placeholder": "Suchen"
 			},
+
 			"empty": "Keine Log-Dateien gefunden.",
 			"modal": {
 				"renameHeader": "🖊️ Umbenennen",

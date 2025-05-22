@@ -1,3 +1,4 @@
+// src/components/terminal/LogFiles.ts
 import { defineComponent, ref, reactive, computed, onMounted, onBeforeUpdate, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAllLogRecords } from '@/_utils/log/indexed-db-service';
@@ -61,9 +62,15 @@ export default defineComponent({
 			openId.value = null;
 		});
 
-		const filteredLogs = computed(() =>
-			logs.value.filter((l) => l.filename.toLowerCase().includes(query.value.toLowerCase()) || l.date.includes(query.value))
-		);
+		const filteredLogs = computed(() => {
+			const raw = query.value.trim().toLowerCase().replace(/[-_]/g, ' ');
+			if (!raw) return logs.value;
+			return logs.value.filter((l) => {
+				const nameNorm = l.filename.toLowerCase().replace(/[-_]/g, ' ');
+				const dateNorm = l.date; // Datum behält das ursprüngliche Format
+				return nameNorm.includes(raw) || dateNorm.includes(query.value);
+			});
+		});
 
 		function viewLog(fn: string) {
 			router.push(`/log/${fn}`);
@@ -110,7 +117,7 @@ export default defineComponent({
 			const btn = btnsRefs[id];
 			if (!el || !btn) return;
 			const open = dx < -40;
-			el.style.transform = open ? 'translateX(-192px)' : 'translateX(0)';
+			el.style.transform = open ? 'translateX(-0px)' : 'translateX(0)';
 			btn.style.opacity = open ? '1' : '0';
 			openId.value = open ? id : null;
 		}
@@ -125,6 +132,7 @@ export default defineComponent({
 				openId.value = null;
 			}
 		}
+
 		onMounted(() => document.addEventListener('click', handleDocumentClick));
 		onUnmounted(() => document.removeEventListener('click', handleDocumentClick));
 
@@ -132,21 +140,18 @@ export default defineComponent({
 			query,
 			filteredLogs,
 			viewLog,
-
-			// für Swipe
+			// Swipe
 			setItemRef,
 			setBtnRef,
 			onTouchStart,
 			onTouchMove,
 			onTouchEnd,
-
-			// für Modals
+			// Modals
 			openRename,
 			openDelete,
 			renameModalVisible,
 			deleteModalVisible,
-
-			// aus Composable
+			// Composable
 			pendingFilename,
 			newFilename,
 			doRename: onDoRename,
